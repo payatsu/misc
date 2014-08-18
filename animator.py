@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 '''
 Python script for generating an animation.
@@ -189,7 +190,8 @@ def show_help(file):
         position_suffix=position_suffix,
         time_fmt=time_fmt,
         time_filled_fmt=time_filled_fmt,
-        gnuplot_conf=gnuplot_conf)
+        gnuplot_conf=gnuplot_conf
+    )
     print(aaa)
 
 show_help(None)
