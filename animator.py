@@ -183,14 +183,14 @@ def show_help(file):
 	これらのインストールは例えば次のようにして行える．
 		$ sudo apt-get install gnuplot avconv
     '''.format(
-        prog_name=os.path.basename(sys.argv[0]),
-        trace_prefix=trace_prefix,
-        trace_suffix=trace_suffix,
-        position_prefix=position_prefix,
-        position_suffix=position_suffix,
-        time_fmt=time_fmt,
-        time_filled_fmt=time_filled_fmt,
-        gnuplot_conf=gnuplot_conf
+        prog_name = os.path.basename(sys.argv[0]),
+        trace_prefix = trace_prefix,
+        trace_suffix = trace_suffix,
+        position_prefix = position_prefix,
+        position_suffix = position_suffix,
+        time_fmt = time_fmt,
+        time_filled_fmt = time_filled_fmt,
+        gnuplot_conf = gnuplot_conf
     )
     print(aaa)
 
@@ -236,9 +236,9 @@ def generate_sample():
         conf.close()
 
     def main():
-        print('generating sample position files...', end='', flush=True)
+        print('generating sample position files...', end = '', flush = True)
 
-        freq = 1.0/2.0/2.0/2.0/2.0/2.0/2.0/2.0
+        freq = 2.0 ** -7.0
         dt = 1.0
         limit = 600.0
 
@@ -262,11 +262,11 @@ def generate_sample():
     main()
 
 def generate_position_files():
-    print('generating position files...', end='', flush=True)
+    print('generating position files...', end = '', flush = True)
 
     trace_files = glob.glob(target_dir + os.sep + trace_prefix + '*.' + trace_suffix)
     if not trace_files:
-        print('error: no trace files', file=sys.stderr)
+        print('error: no trace files', file = sys.stderr)
         show_help(sys.stderr)
         exit(1)
 
@@ -283,7 +283,7 @@ def generate_snapshot_images():
 
     generating_images = '\rgenerating snapshot images...'
     for time in frange(begin_time, end_time, interval):
-        print(generating_images, time, 'of [begin:', begin_time, 'end:', end_time, ']', end='', flush=True)
+        print(generating_images, time, 'of [begin:', begin_time, 'end:', end_time, ']', end = '', flush = True)
         time_formatted = '{0: ' + time_fmt + '}'.format(time)
         time_filled = '{0: ' + time_filled_fmt + '}'.format(time)
         position_file = target_dir + os.sep + position_prefix + time_filled + '.' + position_suffix
@@ -291,7 +291,7 @@ def generate_snapshot_images():
         if not os.path.isfile(position_file):
             open(position_file, 'w').close()
 
-        pipe = subprocess.Popen('gnuplot', stdin=subprocess.PIPE)
+        pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
         pipe.write(
             'set terminal ' + img_terminal + ' enhanced size ' + width + ', ' + height + ' font "LiberationSans-Regular.ttf, 16"\n'
             'set output "' + output_image + '"\n'
@@ -307,7 +307,7 @@ def generate_snapshot_images():
     print(generating_images, 'done.                                          ')
 
 def generate_animation():
-    print('generating an animation video...', end='', flush=True)
+    print('generating an animation video...', end = '', flush = True)
 
     symlink_fmt = target_dir + os.sep + 'snapshot-%05d'
     for img in glob.glob(target_dir + os.sep + 'snapshot-*.' + img_fmt):
