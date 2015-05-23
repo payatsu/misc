@@ -8,13 +8,13 @@ apt-get install --yes yasm
 
 apt-get install --yes libmp3lame-dev libvpx-dev libwebp-dev libx264-dev libxext-dev libxfixes-dev
 
-mkdir /usr/local/src/libav
+mkdir -p /usr/local/src/libav
 cd /usr/local/src/libav
 
 wget https://libav.org/releases/libav-11.1.tar.gz
 tar xzvf libav-11.1.tar.gz
 
-mkdir /usr/local/src/libav/build
+mkdir -p /usr/local/src/libav/build
 cd /usr/local/src/libav/build
 
 /usr/local/src/libav/libav-11.1/configure --enable-gpl \
