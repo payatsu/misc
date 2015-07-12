@@ -50,9 +50,9 @@ x_col = 2
 y_col = 3
 output_animation = 'animation.mp4'
 
-def show_help(file):
-    aaa = \
-    '''
+def show_help(file = sys.stdout):
+	text = \
+	'''
                     << ヘルプ >>
 [名前]
 	{prog_name} - アニメーション動画を生成する．
@@ -62,7 +62,7 @@ def show_help(file):
 
 [説明]
 	テキストログをもとに，ノードが動くアニメーション動画を生成する
-	シェルスクリプト．
+	スクリプト．
 	** 無保証 **
 
 [オプション]
@@ -100,7 +100,7 @@ def show_help(file):
 		トレースファイルの構文は， 1 カラム目が時刻， 2 カラム目以降が
 		その時刻におけるそのノードに関する付加的な情報となっている．
 		これを必要な行数分だけ列挙することでトレースファイルが構成される．
-		1 カラム目の書式は，TIME_FMT で指定した printf 書式(%{time_fmt})で
+		1 カラム目の書式は，time_fmt で指定した printf 書式(%{time_fmt})で
 		表現されていなければならない．
 
 		例：テキストファイル {trace_prefix}001234.{trace_suffix} の
@@ -182,153 +182,152 @@ def show_help(file):
 	* avconv または ffmpeg
 	これらのインストールは例えば次のようにして行える．
 		$ sudo apt-get install gnuplot avconv
-    '''.format(
-        prog_name = os.path.basename(sys.argv[0]),
-        trace_prefix = trace_prefix,
-        trace_suffix = trace_suffix,
-        position_prefix = position_prefix,
-        position_suffix = position_suffix,
-        time_fmt = time_fmt,
-        time_filled_fmt = time_filled_fmt,
-        gnuplot_conf = gnuplot_conf
-    )
-    print(aaa)
-
-show_help(None)
+	'''.format(
+		prog_name = os.path.basename(sys.argv[0]),
+		trace_prefix = trace_prefix,
+		trace_suffix = trace_suffix,
+		position_prefix = position_prefix,
+		position_suffix = position_suffix,
+		time_fmt = time_fmt,
+		time_filled_fmt = time_filled_fmt,
+		gnuplot_conf = gnuplot_conf
+	)
+	print(text)
 
 def frange(x, y, jump):
-    while x < y:
-        yield x
-        x += jump
+	while x < y:
+		yield x
+		x += jump
 
 def startup():
-    parser = argparse.ArgumentParser(description = 'options')
+	parser = argparse.ArgumentParser(description = 'options')
 
-    '''
-    TODO Under construction...
-    '''
+	'''
+	TODO Under construction...
+	'''
 
 def generate_sample():
-    def hypotrochoid(theta):
-        rc = 50.0
-        rm = 30.0
-        rd = 50.0
-        return ((rc-rm)*cos(theta) + rd*cos((rc-rm)*theta/rm),
-                (rc-rm)*sin(theta) - rd*sin((rc-rm)*theta/rm))
+	def hypotrochoid(theta):
+		rc = 50.0
+		rm = 30.0
+		rd = 50.0
+		return ((rc-rm)*cos(theta) + rd*cos((rc-rm)*theta/rm),
+				(rc-rm)*sin(theta) - rd*sin((rc-rm)*theta/rm))
 
-    def epitrochoid(theta):
-        rc = 30.0
-        rm = 20.0
-        rd = 5.0
-        return ((rc+rm)*cos(theta) - rd*cos((rc+rm)*theta/rm),
-                (rc+rm)*sin(theta) - rd*sin((rc+rm)*theta/rm))
+	def epitrochoid(theta):
+		rc = 30.0
+		rm = 20.0
+		rd = 5.0
+		return ((rc+rm)*cos(theta) - rd*cos((rc+rm)*theta/rm),
+				(rc+rm)*sin(theta) - rd*sin((rc+rm)*theta/rm))
 
-    def generate_gnuplot_conf():
-        conf = open('gnuplot.conf', 'w')
-        conf.write(
-            'set size square\n'
-            'set grid lt 1 lc rgb "black"\n'
-            'set xrange [-100:100]\n'
-            'set yrange [-100:100]\n'
-            'set style line 1 lc rgb "web-green"\n'
-            'set style line 2 lc rgb "red"\n'
-        )
-        conf.close()
+	def generate_gnuplot_conf():
+		conf = open('gnuplot.conf', 'w')
+		conf.write(
+			'''set size square
+set grid lt 1 lc rgb "black"
+set xrange [-100:100]
+set yrange [-100:100]
+set style line 1 lc rgb "web-green"
+set style line 2 lc rgb "red"
+''')
+		conf.close()
 
-    def main():
-        print('generating sample position files...', end = '', flush = True)
+	def main():
+		print('generating sample position files...', end = '', flush = True)
 
-        freq = 2.0 ** -7.0
-        dt = 1.0
-        limit = 600.0
+		generate_gnuplot_conf()
 
-        generate_gnuplot_conf
+		freq = 2.0 ** -7.0
+		dt = 1.0
+		limit = 600.0
 
-        for t in frange(0.0, limit, dt):
-            pos = open('time_{0: 09.2f}.pos'.format(t), 'w')
-            s = 0.0
-            for s in frange(0.0, t, dt):
-                p = hypotrochoid(2*pi*freq*s)
-                pos.write('0 {0} {1} 0 0 0\n'.format(p[0], p[1]))
-            p = hypotrochoid(2*pi*freq*(s-dt))
-            pos.write('0 {0} {1} 0 0 1\n'.format(p[0], p[1]))
-            p = epitrochoid(2*pi*freq*t)
-            pos.write('1 {0} {1} 0 0 2\n'.format(p[0], p[1]))
-            pos.close()
+		for t in frange(0.0, limit, dt):
+			pos = open(('time_{0:' + time_filled_fmt + '}.pos').format(t), 'w')
+			s = 0.0
+			for s in frange(0.0, t, dt):
+				p = hypotrochoid(2*pi*freq*s)
+				pos.write('0 {0} {1} 0 0 0\n'.format(p[0], p[1]))
+			p = hypotrochoid(2*pi*freq*(s-dt))
+			pos.write('0 {0} {1} 0 0 1\n'.format(p[0], p[1]))
+			p = epitrochoid(2*pi*freq*t)
+			pos.write('1 {0} {1} 0 0 2\n'.format(p[0], p[1]))
+			pos.close()
 
-        print(' done.')
-        return 0
+		print(' done.')
+		return 0
 
-    main()
+	main()
 
 def generate_position_files():
-    print('generating position files...', end = '', flush = True)
+	print('generating position files...', end = '', flush = True)
 
-    trace_files = glob.glob(target_dir + os.sep + trace_prefix + '*.' + trace_suffix)
-    if not trace_files:
-        print('error: no trace files', file = sys.stderr)
-        show_help(sys.stderr)
-        exit(1)
+	trace_files = glob.glob(target_dir + os.sep + trace_prefix + '*.' + trace_suffix)
+	if not trace_files:
+		print('error: no trace files', file = sys.stderr)
+		show_help(sys.stderr)
+		exit(1)
 
-    '''
-    TODO Under construction
-    '''
+	'''
+	TODO Under construction
+	'''
 
-    print(' done.')
+	print(' done.')
 
 def generate_snapshot_images():
-    gnuplot_conf = target_dir + os.sep + gnuplot_conf
-    if os.path.isfile(gnuplot_conf):
-        load_file = 'load "' + gnuplot_conf + '"'
+	global gnuplot_conf
+	gnuplot_conf = target_dir + os.sep + gnuplot_conf
+	if os.path.isfile(gnuplot_conf):
+		load_file = 'load "' + gnuplot_conf + '"'
 
-    generating_images = '\rgenerating snapshot images...'
-    for time in frange(begin_time, end_time, interval):
-        print(generating_images, time, 'of [begin:', begin_time, 'end:', end_time, ']', end = '', flush = True)
-        time_formatted = '{0: ' + time_fmt + '}'.format(time)
-        time_filled = '{0: ' + time_filled_fmt + '}'.format(time)
-        position_file = target_dir + os.sep + position_prefix + time_filled + '.' + position_suffix
-        output_image = target_dir + os.sep + position_prefix + time_filled + '.' + img_fmt
-        if not os.path.isfile(position_file):
-            open(position_file, 'w').close()
+	generating_images = '\rgenerating snapshot images...'
+	for time in frange(begin_time, end_time, interval):
+		print(generating_images, time, 'of [begin:', begin_time, 'end:', end_time, ']', end = '', flush = True)
+		time_formatted = ('{0:' + time_fmt + '}').format(time)
+		time_filled = ('{0:' + time_filled_fmt + '}').format(time)
+		position_file = target_dir + os.sep + position_prefix + time_filled + '.' + position_suffix
+		output_image = target_dir + os.sep + position_prefix + time_filled + '.' + img_fmt
+		if not os.path.isfile(position_file):
+			open(position_file, 'w').close()
 
-        pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
-        pipe.write(
-            'set terminal ' + img_terminal + ' enhanced size ' + width + ', ' + height + ' font "LiberationSans-Regular.ttf, 16"\n'
-            'set output "' + output_image + '"\n'
-            'set xlabel "' + x_label + '"\n'
-            'set ylabel "' + y_label + '"\n'
-            'set label 1 "time = ' + time_formatted + time_unit + '" at graph 0.05, 0.95 left\n'
-            'set key box\n'
-            + load_file + '\n'
-            'plot "' + position_file + '" u ' + x_col + ':' + y_col + ':' + color_col + ' w p pt 7 ps 2 lc variable t "nodes"\n'
-        )
-        pipe.close()
+		pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
+		pipe.communicate(input = (
+			'set terminal ' + img_terminal + ' enhanced size {0:d}, {1:d} font "LiberationSans-Regular.ttf, 16"\n'
+			'set output "' + output_image + '"\n'
+			'set xlabel "' + x_label + '"\n'
+			'set ylabel "' + y_label + '"\n'
+			'set label 1 "time = ' + time_formatted + time_unit + '" at graph 0.05, 0.95 left\n'
+			'set key box\n'
+			+ load_file + '\n'
+			'plot "' + position_file + '" u {2:d}:{3:d}:{4:d} w p pt 7 ps 2 lc variable t "nodes"\n').format(width, height, x_col, y_col, color_col).encode()
+		)
+		pipe.wait()
 
-    print(generating_images, 'done.                                          ')
+	print(generating_images, 'done.                                          ')
 
 def generate_animation():
-    print('generating an animation video...', end = '', flush = True)
+	print('generating an animation video...', end = '', flush = True)
 
-    symlink_fmt = target_dir + os.sep + 'snapshot-%05d'
-    for img in glob.glob(target_dir + os.sep + 'snapshot-*.' + img_fmt):
-        os.remove(img)
+	symlink_fmt = target_dir + os.sep + 'snapshot-%05d'
+	for img in glob.glob(target_dir + os.sep + 'snapshot-*.' + img_fmt):
+		os.remove(img)
 
-    # TODO Under construction
-    if os.name == 'nt':
-        pass
-    elif os.name == 'posix':
-        pass
-    else:
-        raise 'Unknown OS'
+	# TODO Under construction
+	if os.name == 'nt':
+		pass
+	elif os.name == 'posix':
+		pass
+	else:
+		raise 'Unknown OS'
 
-    '''
-    TODO シンボリックリンクの作成。
-    '''
+	'''
+	TODO シンボリックリンクの作成。
+	'''
 
-    subprocess.check_call(['avconv', '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + img_fmt, '-r', frame_rate, target_dir + os.sep + output_animation])
+	subprocess.check_call(['avconv', '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + img_fmt, '-r', frame_rate, target_dir + os.sep + output_animation])
 
-    print(' done.')
-    print('generated -> "{0}"'.format(output_animation))
+	print(' done.')
+	print('generated -> "{0}"'.format(output_animation))
 
 if __name__ == '__main__':
-    startup()
+	startup()
