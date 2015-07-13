@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -11,7 +11,7 @@ import glob
 import os
 import subprocess
 import sys
-from math import sin, cos, pi
+import math
 
 # configuration parameters
 
@@ -33,21 +33,7 @@ gnuplot_conf = 'gnuplot.conf'
 color_col = 6
 
 # default parameters, and its values
-animate_flag = False
-begin_time = 0
-clip_flag = False
-end_time = 1000
 img_terminal = 'pngcairo'
-img_fmt = 'png'
-height = 600
-interval = 1
-frame_rate = 20
-position_file_generate_flag = False
-generate_sample = False
-target_dir = './'
-width = 800
-x_col = 2
-y_col = 3
 output_animation = 'animation.mp4'
 
 def show_help(file = sys.stdout):
@@ -200,26 +186,41 @@ def frange(x, y, jump):
 		x += jump
 
 def startup():
-	parser = argparse.ArgumentParser(description = 'options')
+	parser = argparse.ArgumentParser(description = 'Generate an animation.', add_help = False)
 
-	'''
-	TODO Under construction...
-	'''
+	parser.add_argument('-a', action = 'store_true')
+	parser.add_argument('-b', default = 0, type = float)
+	parser.add_argument('-c', action = 'store_true')
+	parser.add_argument('-C', action = 'store_true')
+	parser.add_argument('-e', default = 1000, type = float)
+	parser.add_argument('-f', default = 'png', choices = ['png', 'jpg', 'jpeg', 'gif'])
+	parser.add_argument('-h', default = 600, type = int)
+	parser.add_argument('-H', action = 'store_true')
+	parser.add_argument('-i', default = 1, type = float)
+	parser.add_argument('-r', default = 20, type = int)
+	parser.add_argument('-s', action = 'store_true')
+	parser.add_argument('-S', action = 'store_true')
+	parser.add_argument('-t', default = '.')
+	parser.add_argument('-w', default = 800, type = int)
+	parser.add_argument('-x', default = 2, type = int)
+	parser.add_argument('-y', default = 3, type = int)
+
+	return parser.parse_args(sys.argv[1:])
 
 def generate_sample():
 	def hypotrochoid(theta):
 		rc = 50.0
 		rm = 30.0
 		rd = 50.0
-		return ((rc-rm)*cos(theta) + rd*cos((rc-rm)*theta/rm),
-				(rc-rm)*sin(theta) - rd*sin((rc-rm)*theta/rm))
+		return ((rc-rm)*math.cos(theta) + rd*math.cos((rc-rm)*theta/rm),
+				(rc-rm)*math.sin(theta) - rd*math.sin((rc-rm)*theta/rm))
 
 	def epitrochoid(theta):
 		rc = 30.0
 		rm = 20.0
 		rd = 5.0
-		return ((rc+rm)*cos(theta) - rd*cos((rc+rm)*theta/rm),
-				(rc+rm)*sin(theta) - rd*sin((rc+rm)*theta/rm))
+		return ((rc+rm)*math.cos(theta) - rd*math.cos((rc+rm)*theta/rm),
+				(rc+rm)*math.sin(theta) - rd*math.sin((rc+rm)*theta/rm))
 
 	def generate_gnuplot_conf():
 		conf = open('gnuplot.conf', 'w')
@@ -246,11 +247,11 @@ set style line 2 lc rgb "red"
 			pos = open(('time_{0:' + time_filled_fmt + '}.pos').format(t), 'w')
 			s = 0.0
 			for s in frange(0.0, t, dt):
-				p = hypotrochoid(2*pi*freq*s)
+				p = hypotrochoid(2*math.pi*freq*s)
 				pos.write('0 {0} {1} 0 0 0\n'.format(p[0], p[1]))
-			p = hypotrochoid(2*pi*freq*(s-dt))
+			p = hypotrochoid(2*math.pi*freq*(s))
 			pos.write('0 {0} {1} 0 0 1\n'.format(p[0], p[1]))
-			p = epitrochoid(2*pi*freq*t)
+			p = epitrochoid(2*math.pi*freq*t)
 			pos.write('1 {0} {1} 0 0 2\n'.format(p[0], p[1]))
 			pos.close()
 
@@ -259,10 +260,10 @@ set style line 2 lc rgb "red"
 
 	main()
 
-def generate_position_files():
+def generate_position_files(args):
 	print('generating position files...', end = '', flush = True)
 
-	trace_files = glob.glob(target_dir + os.sep + trace_prefix + '*.' + trace_suffix)
+	trace_files = glob.glob(args.t + os.sep + trace_prefix + '*.' + trace_suffix)
 	if not trace_files:
 		print('error: no trace files', file = sys.stderr)
 		show_help(sys.stderr)
@@ -274,19 +275,19 @@ def generate_position_files():
 
 	print(' done.')
 
-def generate_snapshot_images():
+def generate_snapshot_images(args):
 	global gnuplot_conf
-	gnuplot_conf = target_dir + os.sep + gnuplot_conf
+	gnuplot_conf = args.t + os.sep + gnuplot_conf
 	if os.path.isfile(gnuplot_conf):
 		load_file = 'load "' + gnuplot_conf + '"'
 
 	generating_images = '\rgenerating snapshot images...'
-	for time in frange(begin_time, end_time, interval):
-		print(generating_images, time, 'of [begin:', begin_time, 'end:', end_time, ']', end = '', flush = True)
+	for time in frange(args.b, args.e, args.i):
+		print(generating_images, time, 'of [begin:', args.b, 'end:', args.e, ']', end = '', flush = True)
 		time_formatted = ('{0:' + time_fmt + '}').format(time)
 		time_filled = ('{0:' + time_filled_fmt + '}').format(time)
-		position_file = target_dir + os.sep + position_prefix + time_filled + '.' + position_suffix
-		output_image = target_dir + os.sep + position_prefix + time_filled + '.' + img_fmt
+		position_file = args.t + os.sep + position_prefix + time_filled + '.' + position_suffix
+		output_image = args.t + os.sep + position_prefix + time_filled + '.' + args.f
 		if not os.path.isfile(position_file):
 			open(position_file, 'w').close()
 
@@ -299,35 +300,61 @@ def generate_snapshot_images():
 			'set label 1 "time = ' + time_formatted + time_unit + '" at graph 0.05, 0.95 left\n'
 			'set key box\n'
 			+ load_file + '\n'
-			'plot "' + position_file + '" u {2:d}:{3:d}:{4:d} w p pt 7 ps 2 lc variable t "nodes"\n').format(width, height, x_col, y_col, color_col).encode()
+			'plot "' + position_file + '" u {2:d}:{3:d}:{4:d} w p pt 7 ps 2 lc variable t "nodes"\n').format(args.w, args.h, args.x, args.y, color_col).encode()
 		)
 		pipe.wait()
 
 	print(generating_images, 'done.                                          ')
 
-def generate_animation():
+def generate_animation(args):
 	print('generating an animation video...', end = '', flush = True)
 
-	symlink_fmt = target_dir + os.sep + 'snapshot-%05d'
-	for img in glob.glob(target_dir + os.sep + 'snapshot-*.' + img_fmt):
+	symlink_fmt = args.t + os.sep + 'snapshot-%05d'
+	for img in glob.glob(args.t + os.sep + 'snapshot-*.' + args.f):
 		os.remove(img)
 
-	# TODO Under construction
 	if os.name == 'nt':
-		pass
+		raise NotImplemented
 	elif os.name == 'posix':
-		pass
+		import posix
+		symlink_fmt_py = symlink_fmt.replace('%', '{0:') + '}.' + args.f
+		for (offset, item) in enumerate(sorted(glob.glob(args.t + os.sep + position_prefix + '*.' + args.f))):
+			if args.b <= float(item.lstrip(args.t + os.sep + position_prefix).rstrip('.' + args.f)) < args.e:
+				posix.symlink(item, symlink_fmt_py.format(offset))
 	else:
 		raise 'Unknown OS'
 
-	'''
-	TODO シンボリックリンクの作成。
-	'''
-
-	subprocess.check_call(['avconv', '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + img_fmt, '-r', frame_rate, target_dir + os.sep + output_animation])
+	subprocess.check_call(['/usr/bin/avconv', '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + args.f, '-r', str(args.r), args.t + os.sep + output_animation])
 
 	print(' done.')
 	print('generated -> "{0}"'.format(output_animation))
 
+def cleanup():
+	for f in \
+		glob.glob(args.t + os.sep + position_prefix + '*.' + position_suffix) \
+		+ glob.glob(args.t + os.sep + position_prefix + '*.' + args.f) \
+		+ glob.glob(args.t + os.sep + 'snapshot-*.' + args.f):
+		os.remove(f)
+
+	if os.path.isfile(args.t + os.sep + gnuplot_conf):
+		os.remove(args.t + os.sep + gnuplot_conf)
+	if os.path.isfile(args.t + os.sep + output_animation):
+		os.remove(args.t + os.sep + output_animation)
+
 if __name__ == '__main__':
-	startup()
+	args = startup()
+
+	if args.C:
+		cleanup()
+
+	if args.S:
+		generate_sample()
+
+	if args.s:
+		generate_position_files(args)
+
+	if args.c:
+		generate_snapshot_images(args)
+
+	if args.a:
+		generate_animation(args)
