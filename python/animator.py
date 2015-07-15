@@ -315,14 +315,11 @@ def generate_animation(args):
 	for img in glob.glob(args.t + os.sep + 'snapshot-*.' + args.f):
 		os.remove(img)
 
-	if os.name == 'nt':
-		raise NotImplemented
-	elif os.name == 'posix':
-		import posix
+	if os.name == 'posix' or os.name == 'nt':
 		symlink_fmt_py = symlink_fmt.replace('%', '{:') + '}.' + args.f
 		for (offset, item) in enumerate(sorted(glob.glob(args.t + os.sep + position_prefix + '*.' + args.f))):
 			if args.b <= float(item.lstrip(args.t + os.sep + position_prefix).rstrip('.' + args.f)) < args.e:
-				posix.symlink(item, symlink_fmt_py.format(offset))
+				os.symlink(item, symlink_fmt_py.format(offset))
 	else:
 		raise 'Unknown OS'
 
