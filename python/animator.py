@@ -7,6 +7,7 @@ Python script for generating an animation.
 '''
 
 import argparse
+import distutils.spawn
 import glob
 import os
 import subprocess
@@ -33,7 +34,7 @@ gnuplot_conf = 'gnuplot.conf'
 color_col = 6
 
 # default parameters, and its values
-img_terminal = 'pngcairo'
+img_terminals = {'png': 'pngcairo', 'jpeg': 'jpeg', 'jpg': 'jpeg', 'gif': 'gif'}
 output_animation = 'animation.mp4'
 
 def show_help(file = sys.stdout):
@@ -91,8 +92,8 @@ def show_help(file = sys.stdout):
 
 		例：テキストファイル {trace_prefix}001234.{trace_suffix} の
 		の中身が，
-		`printf %{time_fmt} 567` 3.14 2.718 1.414 1.732 1
-		`printf %{time_fmt} 568` 1.11 2.222 3.333 4.444 1
+		{t1:{time_fmt}} 3.14 2.718 1.414 1.732 1
+		{t2:{time_fmt}} 1.11 2.222 3.333 4.444 1
 		となっている場合，これはノード番号 1234 のノードのトレースファイル
 		であり，その一行目は時刻 567 におけるノード 1234 の情報を表し，
 		その二行目は時刻 568 におけるノード 1234 の情報を表している．
@@ -112,7 +113,7 @@ def show_help(file = sys.stdout):
 		がその時刻におけるそのノードに関する付加的な情報となっている．
 		これを必要な行数分だけ列挙することでポジションファイルが構成される．
 
-		例：テキストファイル {position_prefix}`printf %{time_filled_fmt} 567`.{position_suffix} の
+		例：テキストファイル {position_prefix}{t1:{time_filled_fmt}}.{position_suffix} の
 		中身が，
 		1234 3.14 2.718 1.414 1.732 1
 		1235 0.301 0.477 0.602 0.698 2
@@ -172,6 +173,8 @@ def show_help(file = sys.stdout):
 		prog_name = os.path.basename(sys.argv[0]),
 		trace_prefix = trace_prefix,
 		trace_suffix = trace_suffix,
+		t1 = 567,
+		t2 = 568,
 		position_prefix = position_prefix,
 		position_suffix = position_suffix,
 		time_fmt = time_fmt,
@@ -225,34 +228,34 @@ def generate_sample():
 	def generate_gnuplot_conf():
 		conf = open('gnuplot.conf', 'w')
 		conf.write(
-			'''set size square
-set grid lt 1 lc rgb "black"
-set xrange [-100:100]
-set yrange [-100:100]
-set style line 1 lc rgb "web-green"
-set style line 2 lc rgb "red"
-''')
+			'''
+			set size square
+			set grid lt 1 lc rgb "black"
+			set xrange [-100:100]
+			set yrange [-100:100]
+			set style line 1 lc rgb "web-green"
+			set style line 2 lc rgb "red"
+			''')
 		conf.close()
 
 	def main():
 		print('generating sample position files...', end = '', flush = True)
 
 		generate_gnuplot_conf()
-
 		freq = 2.0 ** -7.0
 		dt = 1.0
 		limit = 600.0
 
 		for t in frange(0.0, limit, dt):
-			pos = open(('time_{0:' + time_filled_fmt + '}.pos').format(t), 'w')
+			pos = open(('time_{:{}}.pos').format(t, time_filled_fmt), 'w')
 			s = 0.0
 			for s in frange(0.0, t, dt):
 				p = hypotrochoid(2*math.pi*freq*s)
-				pos.write('0 {0} {1} 0 0 0\n'.format(p[0], p[1]))
+				pos.write('0 {} {} 0 0 0\n'.format(p[0], p[1]))
 			p = hypotrochoid(2*math.pi*freq*(s))
-			pos.write('0 {0} {1} 0 0 1\n'.format(p[0], p[1]))
+			pos.write('0 {} {} 0 0 1\n'.format(p[0], p[1]))
 			p = epitrochoid(2*math.pi*freq*t)
-			pos.write('1 {0} {1} 0 0 2\n'.format(p[0], p[1]))
+			pos.write('1 {} {} 0 0 2\n'.format(p[0], p[1]))
 			pos.close()
 
 		print(' done.')
@@ -276,32 +279,31 @@ def generate_position_files(args):
 	print(' done.')
 
 def generate_snapshot_images(args):
-	global gnuplot_conf
-	gnuplot_conf = args.t + os.sep + gnuplot_conf
-	if os.path.isfile(gnuplot_conf):
-		load_file = 'load "' + gnuplot_conf + '"'
+	load_file = 'load "' + args.t + os.sep + gnuplot_conf + '"' if os.path.isfile(args.t + os.sep + gnuplot_conf) else ''
 
 	generating_images = '\rgenerating snapshot images...'
 	for time in frange(args.b, args.e, args.i):
-		print(generating_images, time, 'of [begin:', args.b, 'end:', args.e, ']', end = '', flush = True)
-		time_formatted = ('{0:' + time_fmt + '}').format(time)
-		time_filled = ('{0:' + time_filled_fmt + '}').format(time)
+		print('{} {} of [begin: {} end: {}]'.format(generating_images, time, args.b, args.e), end = '', flush = True)
+		time_filled = ('{:{}}').format(time, time_filled_fmt)
 		position_file = args.t + os.sep + position_prefix + time_filled + '.' + position_suffix
-		output_image = args.t + os.sep + position_prefix + time_filled + '.' + args.f
-		if not os.path.isfile(position_file):
-			open(position_file, 'w').close()
+		os.path.isfile(position_file) or open(position_file, 'w').close()
 
 		pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
-		pipe.communicate(input = (
-			'set terminal ' + img_terminal + ' enhanced size {0:d}, {1:d} font "LiberationSans-Regular.ttf, 16"\n'
-			'set output "' + output_image + '"\n'
-			'set xlabel "' + x_label + '"\n'
-			'set ylabel "' + y_label + '"\n'
-			'set label 1 "time = ' + time_formatted + time_unit + '" at graph 0.05, 0.95 left\n'
-			'set key box\n'
-			+ load_file + '\n'
-			'plot "' + position_file + '" u {2:d}:{3:d}:{4:d} w p pt 7 ps 2 lc variable t "nodes"\n').format(args.w, args.h, args.x, args.y, color_col).encode()
-		)
+		pipe.communicate(
+			'''
+			set terminal {} enhanced size {:d}, {:d} font "LiberationSans-Regular.ttf, 16"
+			set output "{}"
+			set xlabel "{}"
+			set ylabel "{}"
+			set label 1 "time = {:{}}{}" at graph 0.05, 0.95 left
+			set key box
+			{}
+			plot "{}" u {:d}:{:d}:{:d} w p pt 7 ps 2 lc variable t "nodes"
+			'''.format(img_terminals[args.f],
+					   args.w, args.h,
+					   args.t + os.sep + position_prefix + time_filled + '.' + args.f,
+					   x_label, y_label, time, time_fmt, time_unit,
+					   load_file, position_file, args.x, args.y, color_col).encode('utf-8'))
 		pipe.wait()
 
 	print(generating_images, 'done.                                          ')
@@ -317,17 +319,19 @@ def generate_animation(args):
 		raise NotImplemented
 	elif os.name == 'posix':
 		import posix
-		symlink_fmt_py = symlink_fmt.replace('%', '{0:') + '}.' + args.f
+		symlink_fmt_py = symlink_fmt.replace('%', '{:') + '}.' + args.f
 		for (offset, item) in enumerate(sorted(glob.glob(args.t + os.sep + position_prefix + '*.' + args.f))):
 			if args.b <= float(item.lstrip(args.t + os.sep + position_prefix).rstrip('.' + args.f)) < args.e:
 				posix.symlink(item, symlink_fmt_py.format(offset))
 	else:
 		raise 'Unknown OS'
 
-	subprocess.check_call(['/usr/bin/avconv', '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + args.f, '-r', str(args.r), args.t + os.sep + output_animation])
+	ffmpeg_or_avconv = distutils.spawn.find_executable('ffmpeg') or distutils.spawn.find_executable('avconv', path = '/usr/bin/')
 
-	print(' done.')
-	print('generated -> "{0}"'.format(output_animation))
+	subprocess.check_call([ffmpeg_or_avconv, '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + args.f, '-r', str(args.r), args.t + os.sep + output_animation])
+
+	print(' done.\n'
+		  'generated -> "' + output_animation + '"')
 
 def cleanup():
 	for f in \
@@ -336,25 +340,14 @@ def cleanup():
 		+ glob.glob(args.t + os.sep + 'snapshot-*.' + args.f):
 		os.remove(f)
 
-	if os.path.isfile(args.t + os.sep + gnuplot_conf):
-		os.remove(args.t + os.sep + gnuplot_conf)
-	if os.path.isfile(args.t + os.sep + output_animation):
-		os.remove(args.t + os.sep + output_animation)
+	os.path.isfile(args.t + os.sep + gnuplot_conf) and os.remove(args.t + os.sep + gnuplot_conf)
+	os.path.isfile(args.t + os.sep + output_animation) and os.remove(args.t + os.sep + output_animation)
 
 if __name__ == '__main__':
 	args = startup()
-
-	if args.C:
-		cleanup()
-
-	if args.S:
-		generate_sample()
-
-	if args.s:
-		generate_position_files(args)
-
-	if args.c:
-		generate_snapshot_images(args)
-
-	if args.a:
-		generate_animation(args)
+	args.H and (show_help() or exit(0))
+	args.C and cleanup()
+	args.S and generate_sample()
+	args.s and generate_position_files(args)
+	args.c and generate_snapshot_images(args)
+	args.a and generate_animation(args)

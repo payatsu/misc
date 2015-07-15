@@ -18,4 +18,4 @@ if 17 < years:
 	months = (years - 17) * 12
 	years = 17
 
-print('You are {years} years, {months} months, {days} days old.'.format(years = years, months = months, days = days))
+print('You are {} years, {} months, {} days old.'.format(years, months, days))
