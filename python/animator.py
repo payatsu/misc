@@ -230,11 +230,11 @@ def generate_sample():
 		conf.write(
 			'''
 			set size square
-			set grid lt 1 lc rgb "black"
+			set grid lt 1 lc rgb 'black'
 			set xrange [-100:100]
 			set yrange [-100:100]
-			set style line 1 lc rgb "web-green"
-			set style line 2 lc rgb "red"
+			set style line 1 lc rgb 'web-green'
+			set style line 2 lc rgb 'red'
 			''')
 		conf.close()
 
@@ -279,7 +279,7 @@ def generate_position_files(args):
 	print(' done.')
 
 def generate_snapshot_images(args):
-	load_file = 'load "' + args.t + os.sep + gnuplot_conf + '"' if os.path.isfile(args.t + os.sep + gnuplot_conf) else ''
+	load_file = 'load \'' + args.t + os.sep + gnuplot_conf + '\'' if os.path.isfile(args.t + os.sep + gnuplot_conf) else ''
 
 	generating_images = '\rgenerating snapshot images...'
 	for time in frange(args.b, args.e, args.i):
@@ -291,14 +291,14 @@ def generate_snapshot_images(args):
 		pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
 		pipe.communicate(
 			'''
-			set terminal {} enhanced size {:d}, {:d} font "LiberationSans-Regular.ttf, 16"
-			set output "{}"
-			set xlabel "{}"
-			set ylabel "{}"
-			set label 1 "time = {:{}}{}" at graph 0.05, 0.95 left
+			set terminal {} enhanced size {:d}, {:d} font 'LiberationSans-Regular.ttf, 16'
+			set output '{}'
+			set xlabel '{}'
+			set ylabel '{}'
+			set label 1 'time = {:{}}{}' at graph 0.05, 0.95 left
 			set key box
 			{}
-			plot "{}" u {:d}:{:d}:{:d} w p pt 7 ps 2 lc variable t "nodes"
+			plot '{}' u {:d}:{:d}:{:d} w p pt 7 ps 2 lc variable t 'nodes'
 			'''.format(img_terminals[args.f],
 					   args.w, args.h,
 					   args.t + os.sep + position_prefix + time_filled + '.' + args.f,
@@ -331,7 +331,7 @@ def generate_animation(args):
 	subprocess.check_call([ffmpeg_or_avconv, '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + args.f, '-r', str(args.r), args.t + os.sep + output_animation])
 
 	print(' done.\n'
-		  'generated -> "' + output_animation + '"')
+		  'generated -> \'' + output_animation + '\'')
 
 def cleanup():
 	for f in \
