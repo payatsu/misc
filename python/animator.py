@@ -9,10 +9,10 @@ Python script for generating an animation.
 import argparse
 import distutils.spawn
 import glob
+import math
 import os
 import subprocess
 import sys
-import math
 
 # configuration parameters
 
@@ -27,19 +27,16 @@ time_filled_fmt = '0' + time_fmt
 
 x_label = 'x [m]'
 y_label = 'y [m]'
-
 time_unit = '[sec]'
 
 gnuplot_conf = 'gnuplot.conf'
+output_animation = 'animation.mp4'
 color_col = 6
 
-# default parameters, and its values
 img_terminals = {'png': 'pngcairo', 'jpeg': 'jpeg', 'jpg': 'jpeg', 'gif': 'gif'}
-output_animation = 'animation.mp4'
 
 def show_help(file = sys.stdout):
-	text = \
-	'''
+	print('''
                     << ヘルプ >>
 [名前]
 	{prog_name} - アニメーション動画を生成する．
@@ -179,9 +176,7 @@ def show_help(file = sys.stdout):
 		position_suffix = position_suffix,
 		time_fmt = time_fmt,
 		time_filled_fmt = time_filled_fmt,
-		gnuplot_conf = gnuplot_conf
-	)
-	print(text)
+		gnuplot_conf = gnuplot_conf), file = file)
 
 def frange(x, y, jump):
 	while x < y:
@@ -208,25 +203,19 @@ def startup():
 	parser.add_argument('-x', default = 2, type = int)
 	parser.add_argument('-y', default = 3, type = int)
 
-	return parser.parse_args(sys.argv[1:])
+	return parser.parse_args()
 
 def generate_sample():
-	def hypotrochoid(theta):
-		rc = 50.0
-		rm = 30.0
-		rd = 50.0
+	def hypotrochoid(theta, rc = 50.0, rm = 30.0, rd = 50.0):
 		return ((rc-rm)*math.cos(theta) + rd*math.cos((rc-rm)*theta/rm),
 				(rc-rm)*math.sin(theta) - rd*math.sin((rc-rm)*theta/rm))
 
-	def epitrochoid(theta):
-		rc = 30.0
-		rm = 20.0
-		rd = 5.0
+	def epitrochoid(theta, rc = 30.0, rm = 20.0, rd = 5.0):
 		return ((rc+rm)*math.cos(theta) - rd*math.cos((rc+rm)*theta/rm),
 				(rc+rm)*math.sin(theta) - rd*math.sin((rc+rm)*theta/rm))
 
 	def generate_gnuplot_conf():
-		with open('gnuplot.conf', 'w') as conf:
+		with open(gnuplot_conf, 'w') as conf:
 			conf.write(
 				'''
 				set size square
@@ -247,10 +236,9 @@ def generate_sample():
 
 		for t in frange(0.0, limit, dt):
 			with open(('time_{:{}}.pos').format(t, time_filled_fmt), 'w') as pos:
-				s = 0.0
 				for s in frange(0.0, t, dt):
 					pos.write('0 {0[0]} {0[1]} 0 0 0\n'.format(hypotrochoid(2*math.pi*freq*s)))
-				pos.write('0 {0[0]} {0[1]} 0 0 1\n'.format(hypotrochoid(2*math.pi*freq*s)))
+				pos.write('0 {0[0]} {0[1]} 0 0 1\n'.format(hypotrochoid(2*math.pi*freq*t)))
 				pos.write('1 {0[0]} {0[1]} 0 0 2\n'.format(epitrochoid(2*math.pi*freq*t)))
 		print(' done.')
 
@@ -282,7 +270,7 @@ def generate_snapshot_images(args):
 		pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
 		pipe.communicate(
 			'''
-			set terminal {} enhanced size {:d}, {:d} font 'LiberationSans-Regular.ttf, 16'
+			set terminal {} enhanced size {:d}, {:d}'
 			set output '{}'
 			set xlabel '{}'
 			set ylabel '{}'
