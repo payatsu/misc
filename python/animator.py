@@ -226,17 +226,16 @@ def generate_sample():
 				(rc+rm)*math.sin(theta) - rd*math.sin((rc+rm)*theta/rm))
 
 	def generate_gnuplot_conf():
-		conf = open('gnuplot.conf', 'w')
-		conf.write(
-			'''
-			set size square
-			set grid lt 1 lc rgb 'black'
-			set xrange [-100:100]
-			set yrange [-100:100]
-			set style line 1 lc rgb 'web-green'
-			set style line 2 lc rgb 'red'
-			''')
-		conf.close()
+		with open('gnuplot.conf', 'w') as conf:
+			conf.write(
+				'''
+				set size square
+				set grid lt 1 lc rgb 'black'
+				set xrange [-100:100]
+				set yrange [-100:100]
+				set style line 1 lc rgb 'web-green'
+				set style line 2 lc rgb 'red'
+				''')
 
 	def main():
 		print('generating sample position files...', end = '', flush = True)
@@ -247,19 +246,13 @@ def generate_sample():
 		limit = 600.0
 
 		for t in frange(0.0, limit, dt):
-			pos = open(('time_{:{}}.pos').format(t, time_filled_fmt), 'w')
-			s = 0.0
-			for s in frange(0.0, t, dt):
-				p = hypotrochoid(2*math.pi*freq*s)
-				pos.write('0 {} {} 0 0 0\n'.format(p[0], p[1]))
-			p = hypotrochoid(2*math.pi*freq*(s))
-			pos.write('0 {} {} 0 0 1\n'.format(p[0], p[1]))
-			p = epitrochoid(2*math.pi*freq*t)
-			pos.write('1 {} {} 0 0 2\n'.format(p[0], p[1]))
-			pos.close()
-
+			with open(('time_{:{}}.pos').format(t, time_filled_fmt), 'w') as pos:
+				s = 0.0
+				for s in frange(0.0, t, dt):
+					pos.write('0 {0[0]} {0[1]} 0 0 0\n'.format(hypotrochoid(2*math.pi*freq*s)))
+				pos.write('0 {0[0]} {0[1]} 0 0 1\n'.format(hypotrochoid(2*math.pi*freq*s)))
+				pos.write('1 {0[0]} {0[1]} 0 0 2\n'.format(epitrochoid(2*math.pi*freq*t)))
 		print(' done.')
-		return 0
 
 	main()
 
@@ -272,9 +265,7 @@ def generate_position_files(args):
 		show_help(sys.stderr)
 		exit(1)
 
-	'''
-	TODO Under construction
-	'''
+	raise NotImplemented
 
 	print(' done.')
 
@@ -324,7 +315,6 @@ def generate_animation(args):
 		raise 'Unknown OS'
 
 	ffmpeg_or_avconv = distutils.spawn.find_executable('ffmpeg') or distutils.spawn.find_executable('avconv', path = '/usr/bin/')
-
 	subprocess.check_call([ffmpeg_or_avconv, '-loglevel', 'error', '-y', '-i', symlink_fmt + '.' + args.f, '-r', str(args.r), args.t + os.sep + output_animation])
 
 	print(' done.\n'
