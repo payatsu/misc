@@ -237,9 +237,9 @@ def generate_sample():
 		for t in frange(0.0, limit, dt):
 			with open(('time_{:{}}.pos').format(t, time_filled_fmt), 'w') as pos:
 				for s in frange(0.0, t, dt):
-					pos.write('0 {0[0]} {0[1]} 0 0 0\n'.format(hypotrochoid(2*math.pi*freq*s)))
-				pos.write('0 {0[0]} {0[1]} 0 0 1\n'.format(hypotrochoid(2*math.pi*freq*t)))
-				pos.write('1 {0[0]} {0[1]} 0 0 2\n'.format(epitrochoid(2*math.pi*freq*t)))
+					pos.write('0 {} {} 0 0 0\n'.format(*hypotrochoid(2*math.pi*freq*s)))
+				pos.write('0 {} {} 0 0 1\n'.format(*hypotrochoid(2*math.pi*freq*t)))
+				pos.write('1 {} {} 0 0 2\n'.format(*epitrochoid(2*math.pi*freq*t)))
 		print(' done.')
 
 	main()
@@ -270,7 +270,7 @@ def generate_snapshot_images(args):
 		pipe = subprocess.Popen('gnuplot', stdin = subprocess.PIPE)
 		pipe.communicate(
 			'''
-			set terminal {} enhanced size {:d}, {:d}'
+			set terminal {} enhanced size {:d}, {:d}
 			set output '{}'
 			set xlabel '{}'
 			set ylabel '{}'
