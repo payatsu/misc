@@ -1,0 +1,161 @@
+#!/bin/sh
+
+# テキストファイルの文字コードを変換するためのシェルスクリプト．
+
+COMMAND_NAME=`basename $0`
+
+# ヘルプを表示する．
+show_help(){
+	cat << EOF
+
+                    <<ヘルプ>>
+[名前]
+        $COMMAND_NAME - テキストファイルのエンコード方式を変更する．
+
+[書式]
+        $COMMAND_NAME [-c encode [-e os] file...|-g file...|-h|-l ]
+
+[説明]
+        このプログラムは，テキストファイルのエンコード方式を変換する事を
+        目的としたシェルスクリプトである．
+        主に，引数として与えたファイルを対象として動作する．**無保証**．
+
+[オプション]
+        -c encode  --- 変換先のエンコード方式を指定する．
+                       変換用途で使用するときは必ず指定すること．
+        -e os      --- 改行コードの形式を指定する．
+                       unix mac dos のどれかを指定する．省略可．
+        -g         --- テキストファイルのエンコード方式を調べて表示する．
+        -h         --- このヘルプを表示する．
+        -l         --- 利用可能なエンコード方式を(別名を含めて)一覧表示する．
+
+[使用例]
+        * report.texをEUCに変換．
+            $COMMAND_NAME -c euc-jp report.tex
+        * hoge.cとfuga.cをWindows向けに変換．
+            $COMMAND_NAME -c sjis -e dos hoge.c fuga.c
+        * poem.txtのエンコード方式を調べる．
+            $COMMAND_NAME -g poem.txt
+        * 利用可能なエンコード方式を一覧表示する．
+            $COMMAND_NAME -l
+[その他]
+        * Emacsが無いとほぼ全ての機能が機能できない．
+        * Emacs使ってるので，対象のファイル数が多い場合に，Emacsを
+          起動するところがオーバーヘッドになって実行に時間がかかるかもしれない．
+EOF
+}
+
+# コマンドライン引数解析．
+C_FLAG=FALSE
+C_ARG=''
+E_FLAG=FALSE
+E_ARG=''
+G_FLAG=FALSE
+H_FLAG=FALSE
+L_FLAG=FALSE
+while getopts c:e:ghl OPTION
+do
+    case $OPTION in
+		c) C_FLAG=TRUE
+			C_ARG=$OPTARG
+			;;
+		e) E_FLAG=TRUE
+			E_ARG=$OPTARG
+			;;
+		g) G_FLAG=TRUE
+			;;
+		h) H_FLAG=TRUE
+			;;
+		l) L_FLAG=TRUE
+			;;
+		\?)
+			show_help
+			exit 1
+			;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+# Emacsが使用可能か確認する．
+check_emacs(){
+	if ! which emacs > /dev/null
+	then
+		echo "$COMMAND_NAME : エラー．emacsが見つかりません．" 1>2&
+		echo '$COMMAND_NAME : emacsをインストールしてください．' 1>&2
+		exit 1
+	fi
+}
+
+# 文字コード変換する．
+convert_character_encoding(){
+	if [ $# = 0 ]
+	then
+		echo "$COMMAND_NAME : エラー．引数がありません．" 2>&1
+		show_help
+		exit 1
+	fi
+	check_emacs
+	echo "convert to $ENCODE"
+	for FILE in "$@"
+	do
+		emacs --quick --batch --find-file $FILE --eval "(set-buffer-file-coding-system '${ENCODE})" --eval "(save-buffer)"
+	done
+}
+
+# ファイルの現在の文字コードを表示する．
+guess_character_encoding(){
+	if [ $# = 0 ]
+	then
+		echo "$COMMAND_NAME : エラー．引数がありません．" 2>&1
+		show_help
+		exit 1
+	fi
+	check_emacs
+	for FILE in "$@"
+	do
+		emacs --quick --batch --find-file $FILE --eval '(message "%s : %s" (buffer-name) buffer-file-coding-system)'
+	done
+}
+
+# 利用可能な文字コードをリスト表示する．
+list_available_character_encoding(){
+	if [ $# != 0 ]
+	then
+		echo "$COMMAND_NAME : エラー．引数は不要です．" 2>&1
+		show_help
+		exit 1
+	fi
+	check_emacs
+	emacs --quick --batch --eval '(list-coding-systems)' --eval '(switch-to-buffer "*Help*")' --eval '(princ (buffer-string))' | grep -e '^..--' | cut -d ' ' -f 3- | sort
+}
+
+# オプションに応じて挙動を変える．
+# 基本的には択一な動作をする．
+if [ $C_FLAG = TRUE ]
+then
+	ENCODE=$C_ARG
+	if [ $E_FLAG = TRUE ]
+	then
+		ENCODE=${ENCODE}-${E_ARG}
+	fi
+	convert_character_encoding "$@"
+else if [ $E_FLAG = TRUE ]
+then
+	: # 未完．
+else  if [ $G_FLAG = TRUE ]
+then
+	guess_character_encoding "$@"
+else if [ $H_FLAG = TRUE ]
+then
+	show_help
+else if [ $L_FLAG = TRUE ]
+then
+	list_available_character_encoding
+else
+	echo "$COMMAND_NAME : エラー．オプションを指定してください．" 1>&2
+	show_help
+fi
+fi
+fi
+fi
+fi
