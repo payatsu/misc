@@ -2,6 +2,7 @@
  * @file number-game-solver.cpp
  * @details 数当てゲームに回答してくるプログラム．
  */
+
 #include<ctime>
 #include<iostream>
 #include<fstream>
@@ -11,6 +12,7 @@
 #include<algorithm>
 #include<random>
 #include"common.hpp"
+
 template<base_t range>
 std::set<number>& all_combination(base_t i, std::set<number>& numbers, const std::vector<base_t>& seq)
 {
@@ -21,6 +23,7 @@ std::set<number>& all_combination(base_t i, std::set<number>& numbers, const std
 	}
 	return numbers;
 }
+
 template<>
 std::set<number>& all_combination<BASE>(base_t i, std::set<number>& numbers, const std::vector<base_t>& seq)
 {
@@ -35,12 +38,14 @@ std::set<number>& all_combination<BASE>(base_t i, std::set<number>& numbers, con
 	}
 	return numbers;
 }
+
 std::set<number> all_combination()
 {
 	std::set<number> numbers;
 	all_combination<BASE-DIGIT+1>(0, numbers, {});
 	return numbers;
 }
+
 int main()
 {
 	std::ios::sync_with_stdio(false);

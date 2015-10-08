@@ -2,6 +2,7 @@
  * @file number-game-questioner.cpp
  * @details  数当てゲームを出題してくるプログラム．
  */
+
 #include<cstring>
 #include<ctime>
 #include<iostream>
@@ -12,17 +13,20 @@
 #include<readline/readline.h>
 #include<readline/history.h>
 #include"common.hpp"
+
 inline bool validate_input(std::shared_ptr<const char> input)
 {
-	return input == nullptr || std::strcmp(input.get(), "") == 0 ||
-		(std::strlen(input.get()) == DIGIT && 
+	return input == nullptr || !std::strcmp(input.get(), "") ||
+		(std::strlen(input.get()) == DIGIT &&
 		std::count_if(input.get(), input.get()+DIGIT, checker()) == DIGIT);
 }
+
 inline bool notify_input_error()
 {
 	std::cerr << INVALID_INPUT << std::endl;
 	return true;
 }
+
 inline number to_number(std::shared_ptr<const char> input)
 {
 	number n;
@@ -51,7 +55,7 @@ inline bool notify_congratulations()
 	std::cout << CONGRATULATIONS << std::endl;
 	return false;
 }
- 
+
 int main()
 {
 	std::ios::sync_with_stdio(false);
