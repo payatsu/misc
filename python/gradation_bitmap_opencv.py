@@ -1,14 +1,13 @@
 #!/usr/bin/python2.7
 
-import cv2, numpy, os
+import cv2, numpy
 
 height = 1080
 width = 1920
-img = numpy.zeros((height, width, 3))
 
-for i in range(height):
-	for j in range(width):
-		img[i, j, 0] = img[i, j, 1] = img[i, j, 2] = j * 255 / width
+cv2.imwrite('gradation.bmp',
+			numpy.tile(numpy.arange(width)*255/width, height).reshape(height, width))
 
-# cv2.imshow('img', img)
-cv2.imwrite(os.getcwd() + os.sep + 'gradation.bmp', img)
+# img = numpy.zeros((height, width, 3))
+# for j in range(width):
+# 	img[:, j, :] = j * 255 / width
