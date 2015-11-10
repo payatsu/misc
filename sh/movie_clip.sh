@@ -25,6 +25,6 @@ shift `expr ${OPTIND} - 1`
 
 for in_file in "$@"
 do
-	out_file=`echo ${in_file} | sed -e 's/\(.*\)\.[^.]\+$/\1_%05d.jpg/'`
-	ffmpeg -i ${in_file} -ss ${start} -t ${duration} -r ${frame_rate} -f image2 ${out_file}
+	out_file=`echo "${in_file}" | sed -e 's/\(.*\)\.[^.]\+$/\1_%05d.jpg/'`
+	ffmpeg -i "${in_file}" -ss ${start} -t ${duration} -r ${frame_rate} -f image2 "${out_file}"
 done
