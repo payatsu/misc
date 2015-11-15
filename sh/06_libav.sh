@@ -46,10 +46,8 @@ SRC_DIR=/usr/local/src/libav/
 ${SUDO}mkdir -p ${SRC_DIR}
 
 cd ${SRC_DIR}
-if [ ! -d ${LIBAV_VERSION} ] ;
-then
-	if ! wget -O- https://libav.org/releases/${LIBAV_VERSION}.tar.gz | ${SUDO}tar xzf - ;
-	then
+if [ ! -d ${LIBAV_VERSION} ]; then
+	if ! wget -O- https://libav.org/releases/${LIBAV_VERSION}.tar.gz | ${SUDO}tar xzf -; then
 		echo \`wget\' failed. 1>&2
 		exit 1
 	fi
@@ -59,8 +57,7 @@ BUILD_DIR=./build-${LIBAV_VERSION}
 ${SUDO}mkdir -p ${BUILD_DIR}
 
 cd ${BUILD_DIR}
-if [ ! -f Makefile ] ;
-then
+if [ ! -f Makefile ]; then
 	if ! ${SUDO}${SRC_DIR}${LIBAV_VERSION}/configure --enable-gpl --enable-nonfree --enable-version3 \
 		 --enable-frei0r \
 		 --enable-gnutls \
@@ -101,14 +98,12 @@ then
 	# libx265 -> x265 not found
 fi
 
-if ! ${SUDO}make -j4 ;
-then
+if ! ${SUDO}make -j4; then
 	echo \`make\' failed. 1>&2
 	exit 1
 fi
 
-if ! ${SUDO}make install ;
-then
+if ! ${SUDO}make install; then
 	echo \`make install\' failed. 1>&2
 	exit 1
 fi
