@@ -19,15 +19,37 @@
 #include <memory>
 #include <png.h>
 
-constexpr png_uint_32 width  = 192;
-constexpr png_uint_32 height = 108;
-constexpr int bitdepth       = 16;
+constexpr png_uint_32 width  = 1920;               // number of horizontal pixels
+constexpr png_uint_32 height = 1080;               // number of vertical pixels
+constexpr int bitdepth       = 16;                 // bitdepth per component
 constexpr int colortype      = PNG_COLOR_TYPE_RGB;
-constexpr int pixelsize      = 6;
+constexpr int pixelsize      = 6;                  // bytes per pixel
+
+struct RGB{
+	png_byte Rmsb_;
+	png_byte Rlsb_;
+	png_byte Gmsb_;
+	png_byte Glsb_;
+	png_byte Bmsb_;
+	png_byte Blsb_;
+	RGB(png_uint_16 R, png_uint_16 G, png_uint_16 B): Rmsb_(R>>8), Rlsb_(R&0xff), Gmsb_(G>>8), Glsb_(G&0xff), Bmsb_(B>>8), Blsb_(B&0xff){}
+};
+
+struct Row{
+	png_bytep row_;
+	Row(png_bytep row): row_(row){}
+	RGB& operator[](int column){return *(RGB*)(row_ + column*pixelsize);}
+};
+
+struct Image{
+	png_bytep block_;
+	Image(png_bytep block): block_(block){}
+	Row operator[](int row){return Row(block_ + row*width*pixelsize);}
+};
 
 int main(int argc, char* argv[])
 {
-	std::unique_ptr<FILE, decltype(&std::fclose)> fp(std::fopen("sample.png", "wb"), std::fclose);
+	std::unique_ptr<FILE, decltype(&std::fclose)> fp(std::fopen("16bpc_img.png", "wb"), std::fclose);
 	if(!fp){
 		std::perror(argv[0]);
 		return -1;
@@ -46,14 +68,14 @@ int main(int argc, char* argv[])
 	std::unique_ptr<png_byte[]> block(new png_byte[height*width*pixelsize]);
 
 	/* Edit from here, */
-	for(int i=0; i<height*width*pixelsize/6; ++i){
-		block[i*6+0] = 0x00;
-		block[i*6+1] = 0x00;
-		block[i*6+2] = 0x00;
-		block[i*6+3] = 0x00;
-		block[i*6+4] = 0x00;
-		block[i*6+5] = 0x00;
+
+	Image image(block.get());
+	for(int row=0; row<height; ++row){
+		for(int column=0; column<width; ++column){
+			image[row][column] = {column*0xffff/width, 0x00, 0x00};
+		}
 	}
+
 	/* to here */
 
 	std::unique_ptr<png_bytep[]> row_ptrs(new png_bytep[height]);
