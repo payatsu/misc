@@ -15,9 +15,11 @@
 #define PNG_NO_SETJMP
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <vector>
 #include <png.h>
@@ -56,13 +58,14 @@ constexpr PseudoPixel cyan   {0x0000, 0xffff, 0xffff};
 constexpr PseudoPixel magenta{0xffff, 0x0000, 0xffff};
 constexpr PseudoPixel yellow {0xffff, 0xffff, 0x0000};
 struct Gradator{
-	PseudoPixel step_;
+	const PseudoPixel step_;
 	PseudoPixel state_;
-	Gradator(const PseudoPixel& step, const PseudoPixel& initial={}): step_(step), state_(initial){}
+	const bool invert_;
+	constexpr Gradator(const PseudoPixel& step, const PseudoPixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
 	PseudoPixel operator()()
 	{
 		PseudoPixel tmp = state_;
-		state_ = state_ + step_;
+		state_ = invert_ ? state_ - step_ : state_ + step_;
 		return tmp;
 	}
 };
@@ -83,7 +86,7 @@ struct Pixel{
 
 struct Row{
 	const png_bytep row_;
-	Row(png_bytep row): row_(row){}
+	constexpr Row(png_bytep row): row_(row){}
 	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
 };
 struct RowBlock{
@@ -94,7 +97,7 @@ struct RowBlock{
 struct Image{
 	const png_bytep block_;
 	const Generator& generator_;
-	Image(png_bytep block, const Generator& generator): block_(block), generator_(generator){}
+	constexpr Image(png_bytep block, const Generator& generator): block_(block), generator_(generator){}
 	Row operator[](int row)const{return Row(block_ + row*generator_.width()*pixelsize);}
 };
 
@@ -141,10 +144,10 @@ struct ColorBar: FixSizedGenerator{
 	}
 };
 
-struct FullField: FixSizedGenerator{
+struct Luster: FixSizedGenerator{
 	virtual void generate(Image image)const override{std::fill(&image[0][0], &image[height()][0], pixel_);}
-	FullField(const Pixel& pixel): pixel_(pixel){}
-	Pixel pixel_;
+	constexpr Luster(const Pixel& pixel): pixel_(pixel){}
+	const Pixel pixel_;
 };
 
 struct Checker: FixSizedGenerator{
@@ -166,36 +169,55 @@ struct Checker: FixSizedGenerator{
 		std::fill(RowBlock::cast(&image[height()/4+1][0]), RowBlock::cast(&image[height()/4*2][0]), *RowBlock::cast(&image[height()/4][0]));
 		std::fill(RowBlock::cast(&image[height()/4*3][0]), RowBlock::cast(&image[height()][0]),     *RowBlock::cast(&image[height()/4][0]));
 	}
-	bool invert_;
-	Checker(bool invert = false): invert_(invert){}
+	const bool invert_;
+	constexpr Checker(bool invert = false): invert_(invert){}
 };
 
-struct Stairs: FixSizedGenerator{
+struct StairStepH: FixSizedGenerator{
 	virtual void generate(Image image)const override
 	{
-		const int stairs = 10;
-		const png_uint_32 stair_height = height()/stairs;
-		int steps = 2;
-		for(png_uint_32 i=0; i<height(); i+=stair_height){
-			fill(image, i, stair_height, steps);
-			steps *= 2;
-		}
-	}
-	void fill(Image image, png_uint_32 row, png_uint_32 stair_height, int steps)const
-	{
-		const png_uint_32 step_width = width()/steps + (width()%steps ? 1 : 0);
-		const PseudoPixel step_color_width = white/steps;
-		for(png_uint_32 i=0, step=0; i<width(); i+=step_width, ++step){
-			if(width() <= i+step_width){
-				std::fill(&image[row][i], &image[row][width()], step_color_width*step);
-			}else{
-				std::fill(&image[row][i], &image[row][i+step_width], step_color_width*step);
+		const png_uint_32 stair_height = height()/stairs_;
+		const png_uint_32 step_width = width()/steps_ + (width()%steps_ ? 1 : 0);
+		bool invert = invert_;
+		for(png_uint_32 row=0; row<height(); row+=stair_height){
+			Gradator gradator{white/steps_, invert ? white : black, invert};
+			for(png_uint_32 column=0; column<width(); column+=step_width){
+				std::fill(&image[row][column], &image[row][std::min(width(), column+step_width)], gradator());
 			}
-		}
-		for(png_uint_32 i=row+1; i<height() && i<row+stair_height; ++i){
-			std::copy(&image[row][0], &image[row][width()], &image[i][0]);
+			std::fill(RowBlock::cast(&image[row+1][0]), RowBlock::cast(&image[std::min(height(), row+stair_height)][0]), *RowBlock::cast(&image[row][0]));
+			invert = !invert;
 		}
 	}
+	const int stairs_;
+	const int steps_;
+	const bool invert_;
+	constexpr StairStepH(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
+	constexpr StairStepH(bool invert): stairs_(1), steps_(20), invert_(invert){}
+};
+
+struct StairStepV: FixSizedGenerator{
+	virtual void generate(Image image)const override
+	{
+		const png_uint_32 stair_width = width()/stairs_;
+		const png_uint_32 step_height = height()/steps_ + (height()%steps_ ? 1 : 0);
+		bool invert = invert_;
+		std::vector<Gradator> gradators;
+		for(int i=0; i<stairs_; ++i){
+			gradators.push_back({white/steps_, invert ? white : black, invert});
+			invert = !invert;
+		}
+		for(png_uint_32 row=0; row<height(); row+=step_height){
+			for(png_uint_32 column=0; column<width(); column+=stair_width){
+				std::fill(&image[row][column], &image[row][std::min(width(), column+stair_width)], gradators.at(column/stair_width)());
+			}
+			std::fill(RowBlock::cast(&image[row+1][0]), RowBlock::cast(&image[std::min(height(), row+step_height)][0]), *RowBlock::cast(&image[row][0]));
+		}
+	}
+	const int stairs_;
+	const int steps_;
+	const bool invert_;
+	constexpr StairStepV(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
+	constexpr StairStepV(bool invert): stairs_(1), steps_(20), invert_(invert){}
 };
 
 struct Lamp: FixSizedGenerator{
@@ -233,6 +255,7 @@ struct CrossHatch: FixSizedGenerator{
 	virtual void generate(Image image)const override
 	{
 		std::fill(&image[0][0], &image[height()][0], black);
+
 		for(png_uint_32 i=0; i<height(); i+=lattice_height_){
 			std::fill(&image[i][0], &image[i][width()], white);
 		}
@@ -246,12 +269,1240 @@ struct CrossHatch: FixSizedGenerator{
 		for(png_uint_32 i=0; i<height(); ++i){
 			image[i][width()-1] = white;
 		}
+
+		const double slope = static_cast<double>(height())/width();
+		for(png_uint_32 i=0; i<width(); ++i){
+			image[slope*i][i] = white;
+			image[height()-slope*i][i] = white;
+		}
+
+		const png_uint_32 radius = height()/2;
+		const png_uint_32 shift_v = height()/2;
+		const png_uint_32 shift_h = width()/2;
+		for(double theta=0; theta<2*M_PI; theta+=2.0*M_PI/5000.0){
+			png_uint_32 row    = std::min(height() - 1, static_cast<png_uint_32>(shift_v + radius*std::sin(theta)));
+			png_uint_32 column = std::min(width()  - 1, static_cast<png_uint_32>(shift_h + radius*std::cos(theta)));
+			image[row][column] = white;
+		}
+
 	}
-	png_uint_32 lattice_width_;
-	png_uint_32 lattice_height_;
-	CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
+	const png_uint_32 lattice_width_;
+	const png_uint_32 lattice_height_;
+	constexpr CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
 };
 
+struct GeneratorExample: FixSizedGenerator{
+	virtual void generate(Image image)const override
+	{
+		for(png_uint_32 row=0; row<height(); ++row){
+			for(png_uint_32 column=0; column<width(); ++column){
+				image[row][column] = black;
+			}
+		}
+	}
+};
+
+// TODO ColorStep
+// TODO Multi
+// TODO Character
+// TODO Focus
+// TODO Pixel, PseudoPixelをColorにリネーム？
+
+constexpr unsigned char char_width  = 8;
+constexpr unsigned char char_height = 8;
+constexpr unsigned char bits[8] = {
+	0b10000000,
+	0b01000000,
+	0b00100000,
+	0b00010000,
+	0b00001000,
+	0b00000100,
+	0b00000010,
+	0b00000001,
+};
+constexpr unsigned char characters[][8] = {
+	{ // NUL
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // SOH
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // STX
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ETX
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // EOT
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ENQ
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ACK
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // BEL
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // BS
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // HT
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // LF
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // VT
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // FF
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // CR
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // SO
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // SI
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DLE
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DC1
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DC2
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DC3
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DC4
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // NAK
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // SYN
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ETB
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // CAN
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // EM
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // SUB
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ESC
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // FS
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // GS
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // RS
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // US
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // ' '
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // !
+		0b00000000,
+		0b00111100,
+		0b00111100,
+		0b00111100,
+		0b00011000,
+		0b00000000,
+		0b00011000,
+		0b00011000,
+	},{ // "
+		0b00000000,
+		0b01100110,
+		0b01100110,
+		0b00100010,
+		0b01000100,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // #
+		0b00000000,
+		0b01000100,
+		0b11111110,
+		0b01000100,
+		0b01000100,
+		0b01000100,
+		0b11111110,
+		0b01000100,
+	},{ // $
+		0b00010000,
+		0b01111100,
+		0b10010010,
+		0b01110000,
+		0b00011100,
+		0b10010010,
+		0b01111100,
+		0b00010000,
+	},{ // %
+		0b11100001,
+		0b10100010,
+		0b11100100,
+		0b00001000,
+		0b00010000,
+		0b00100111,
+		0b01000101,
+		0b10000111,
+	},{ // &
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+		0b01000101,
+		0b10000010,
+		0b01111101,
+	},{ // '
+		0b00000000,
+		0b00110000,
+		0b00110000,
+		0b00010000,
+		0b00100000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // (
+		0b00000110,
+		0b00011000,
+		0b00100000,
+		0b00100000,
+		0b00100000,
+		0b00100000,
+		0b00011000,
+		0b00000110,
+	},{ // )
+		0b01100000,
+		0b00011000,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b00011000,
+		0b01100000,
+	},{ // *
+		0b00000000,
+		0b00000000,
+		0b01000100,
+		0b00101000,
+		0b11111110,
+		0b00101000,
+		0b01000100,
+		0b00000000,
+	},{ // +
+		0b00000000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b11111110,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // ,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01100000,
+		0b00100000,
+		0b01000000,
+	},{ // -
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01111100,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // .
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01100000,
+		0b01100000,
+		0b00000000,
+	},{ // /
+		0b00001100,
+		0b00001000,
+		0b00010000,
+		0b00010000,
+		0b00100000,
+		0b00100000,
+		0b01000000,
+		0b11000000,
+	},{ // 0
+		0b01111100,
+		0b10000110,
+		0b10001010,
+		0b10010010,
+		0b10100010,
+		0b11000010,
+		0b10000010,
+		0b01111100,
+	},{ // 1
+		0b00000000,
+		0b00010000,
+		0b01110000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b01111100,
+	},{ // 2
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b00000100,
+		0b00011000,
+		0b00100000,
+		0b01000000,
+		0b01111100,
+	},{ // 3
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b00000100,
+		0b00111000,
+		0b00000100,
+		0b01000100,
+		0b00111000,
+	},{ // 4
+		0b00000000,
+		0b00001000,
+		0b00011000,
+		0b00101000,
+		0b01001000,
+		0b01111100,
+		0b00001000,
+		0b00001000,
+	},{ // 5
+		0b00000000,
+		0b01111000,
+		0b01000000,
+		0b01000000,
+		0b01111000,
+		0b00000100,
+		0b01000100,
+		0b00111000,
+	},{ // 6
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000000,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+	},{ // 7
+		0b00000000,
+		0b01111100,
+		0b01000100,
+		0b00000100,
+		0b00001000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // 8
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+	},{ // 9
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000100,
+		0b00111100,
+		0b00000100,
+		0b01000100,
+		0b00111000,
+	},{ // :
+		0b00000000,
+		0b00110000,
+		0b00110000,
+		0b00000000,
+		0b00110000,
+		0b00110000,
+		0b00000000,
+		0b00000000,
+	},{ /// ;
+		0b00000000,
+		0b00110000,
+		0b00110000,
+		0b00000000,
+		0b00110000,
+		0b00110000,
+		0b00010000,
+		0b00100000,
+	},{ // <
+		0b00000000,
+		0b00001100,
+		0b00010000,
+		0b00100000,
+		0b01000000,
+		0b00100000,
+		0b00010000,
+		0b00001100,
+	},{ // =
+		0b00000000,
+		0b00000000,
+		0b01111100,
+		0b00000000,
+		0b00000000,
+		0b01111100,
+		0b00000000,
+		0b00000000,
+	},{ // >
+		0b00000000,
+		0b01100000,
+		0b00010000,
+		0b00001000,
+		0b00000100,
+		0b00001000,
+		0b00010000,
+		0b01100000,
+	},{ // ?
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b00000100,
+		0b00011000,
+		0b00010000,
+		0b00000000,
+		0b00110000,
+	},{ // @
+		0b00000000,
+		0b01111100,
+		0b10000010,
+		0b10110010,
+		0b10001010,
+		0b00111010,
+		0b01001010,
+		0b00110100,
+	},{ // A
+		0b00000000,
+		0b00010000,
+		0b00101000,
+		0b01000100,
+		0b01000100,
+		0b01111100,
+		0b10000010,
+		0b10000010,
+	},{ // B
+		0b00000000,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b01111000,
+	},{ // C
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01000100,
+		0b00111000,
+	},{ // D
+		0b00000000,
+		0b01111000,
+		0b01000100,
+		0b01000010,
+		0b01000010,
+		0b01000010,
+		0b01000100,
+		0b01111000,
+	},{ // E
+		0b00000000,
+		0b01111100,
+		0b01000000,
+		0b01000000,
+		0b01111000,
+		0b01000000,
+		0b01000000,
+		0b01111100,
+	},{ // F
+		0b00000000,
+		0b01111100,
+		0b01000000,
+		0b01000000,
+		0b01111100,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+	},{ // G
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000000,
+		0b01011100,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+	},{ // H
+		0b00000000,
+		0b01000100,
+		0b01000100,
+		0b01000100,
+		0b01111100,
+		0b01000100,
+		0b01000100,
+		0b01000100,
+	},{ // I
+		0b00000000,
+		0b00111000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00111000,
+	},{ // J
+		0b00000000,
+		0b00111110,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+	},{ // K
+		0b00000000,
+		0b01000100,
+		0b01001000,
+		0b01001000,
+		0b01010000,
+		0b01101000,
+		0b01000100,
+		0b01000010,
+	},{ // L
+		0b00000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01111100,
+	},{ // M
+		0b00000000,
+		0b11000110,
+		0b10101010,
+		0b10101010,
+		0b10010010,
+		0b10010010,
+		0b10000010,
+		0b10000010,
+	},{ // N
+		0b00000000,
+		0b01100010,
+		0b01010010,
+		0b01010010,
+		0b01001010,
+		0b01001010,
+		0b01000110,
+		0b01000110,
+	},{ // O
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b10000010,
+		0b10000010,
+		0b10000010,
+		0b01000100,
+		0b00111000,
+	},{ // P
+		0b00000000,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b01111000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+	},{ // Q
+		0b00000000,
+		0b01111100,
+		0b10000010,
+		0b10000010,
+		0b10010010,
+		0b10001010,
+		0b10000100,
+		0b01111011,
+	},{ // R
+		0b00000000,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b01111000,
+		0b01000100,
+		0b01000100,
+		0b01000010,
+	},{ // S
+		0b00000000,
+		0b01111000,
+		0b10000100,
+		0b10000000,
+		0b01111000,
+		0b00000100,
+		0b10000100,
+		0b01111000,
+	},{ // T
+		0b00000000,
+		0b11111110,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // U
+		0b00000000,
+		0b01000010,
+		0b01000010,
+		0b01000010,
+		0b01000010,
+		0b01000010,
+		0b01000010,
+		0b00111100,
+	},{ // V
+		0b00000000,
+		0b10000010,
+		0b10000010,
+		0b01000100,
+		0b01000100,
+		0b00101000,
+		0b00101000,
+		0b00010000,
+	},{ // W
+		0b00000000,
+		0b10000010,
+		0b10000010,
+		0b01010100,
+		0b01010100,
+		0b01010100,
+		0b00101000,
+		0b00101000,
+	},{ // X
+		0b00000000,
+		0b01000100,
+		0b00101000,
+		0b00010000,
+		0b00010000,
+		0b00101000,
+		0b01000100,
+		0b01000100,
+	},{ // Y
+		0b00000000,
+		0b01000100,
+		0b01000100,
+		0b00101000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // Z
+		0b00000000,
+		0b11111100,
+		0b00001000,
+		0b00010000,
+		0b00100000,
+		0b01000000,
+		0b10000000,
+		0b11111100,
+	},{ // [
+		0b00000000,
+		0b00011110,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00011110,
+	},{ // '\'
+		0b01100000,
+		0b00100000,
+		0b00010000,
+		0b00010000,
+		0b00001000,
+		0b00001000,
+		0b00000100,
+		0b00000110,
+	},{ // ]
+		0b00000000,
+		0b01111000,
+		0b00001000,
+		0b00001000,
+		0b00001000,
+		0b00001000,
+		0b00001000,
+		0b01111000,
+	},{ // ^
+		0b00010000,
+		0b00101000,
+		0b01000100,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // _
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01111100,
+		0b00000000,
+	},{ // `
+		0b00000000,
+		0b00010000,
+		0b00001100,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // a
+		0b00000000,
+		0b00000000,
+		0b01111000,
+		0b00000100,
+		0b00111100,
+		0b01000100,
+		0b01000100,
+		0b00111010,
+	},{ // b
+		0b00000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01011000,
+		0b01100100,
+		0b01000100,
+		0b01111000,
+	},{ // c
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000000,
+		0b01000100,
+		0b00111000,
+	},{ // d
+		0b00000000,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b00110100,
+		0b01001100,
+		0b01000100,
+		0b00111100,
+	},{ // e
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01111100,
+		0b01000000,
+		0b00111000,
+	},{ // f
+		0b00000000,
+		0b00001000,
+		0b00010100,
+		0b00010000,
+		0b00111100,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // g
+		0b00000000,
+		0b00111010,
+		0b01000100,
+		0b11111000,
+		0b10000000,
+		0b11111000,
+		0b01000100,
+		0b00111000,
+	},{ // h
+		0b00000000,
+		0b01000000,
+		0b01000000,
+		0b01000000,
+		0b01011000,
+		0b01100100,
+		0b01000100,
+		0b01000100,
+	},{ // i
+		0b00000000,
+		0b00010000,
+		0b00010000,
+		0b00000000,
+		0b00110000,
+		0b00010000,
+		0b00010000,
+		0b00011000,
+	},{ // j
+		0b00000000,
+		0b00011000,
+		0b00000000,
+		0b00111000,
+		0b00001000,
+		0b00001000,
+		0b01001000,
+		0b00110000,
+	},{ // k
+		0b00000000,
+		0b01000000,
+		0b01000000,
+		0b01001000,
+		0b01010000,
+		0b01100000,
+		0b01010000,
+		0b01001000,
+	},{ // l
+		0b00000000,
+		0b01100000,
+		0b00100000,
+		0b00100000,
+		0b00100000,
+		0b00100000,
+		0b00100000,
+		0b00111000,
+	},{ // m
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b10101000,
+		0b01010100,
+		0b01010100,
+		0b01010100,
+	},{ // n
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b11011000,
+		0b01100100,
+		0b01000100,
+		0b01000100,
+	},{ // o
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00111000,
+		0b01000100,
+		0b01000100,
+		0b00111000,
+	},{ // p
+		0b00000000,
+		0b00000000,
+		0b01011000,
+		0b01100100,
+		0b01000100,
+		0b01111000,
+		0b01000000,
+		0b01000000,
+	},{ // q
+		0b00000000,
+		0b00110100,
+		0b01001100,
+		0b01001100,
+		0b00110100,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+	},{ // r
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01011000,
+		0b01100000,
+		0b01000000,
+		0b01000000,
+	},{ // s
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01111000,
+		0b10000000,
+		0b01111000,
+		0b00000100,
+		0b01111000,
+	},{ // t
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00100000,
+		0b01111000,
+		0b00100000,
+		0b00100100,
+		0b00011000,
+	},{ // u
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01000100,
+		0b01000100,
+		0b01000100,
+		0b00111010,
+	},{ // v
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01000100,
+		0b01000100,
+		0b00101000,
+		0b00010000,
+	},{ // w
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01000100,
+		0b01010100,
+		0b01010100,
+		0b00101000,
+	},{ // x
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01101100,
+		0b10010000,
+		0b00101001,
+		0b01000110,
+	},{ // y
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01000100,
+		0b01000100,
+		0b00111100,
+		0b00000100,
+		0b01111000,
+	},{ // z
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b01111000,
+		0b00010000,
+		0b00100000,
+		0b01000000,
+		0b01111000,
+	},{ // {
+		0b00000000,
+		0b00000110,
+		0b00001000,
+		0b00001000,
+		0b00010000,
+		0b00001000,
+		0b00001000,
+		0b00000110,
+	},{ // |
+		0b00000000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+		0b00010000,
+	},{ // }
+		0b00000000,
+		0b01100000,
+		0b00010000,
+		0b00010000,
+		0b00001000,
+		0b00010000,
+		0b00010000,
+		0b01100000,
+	},{ // ~
+		0b00000000,
+		0b00101000,
+		0b01010000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},{ // DEL
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+		0b00000000,
+	},
+};
+
+struct Character: FixSizedGenerator{
+	virtual void generate(Image image)const override
+	{
+		Luster(black).generate(image);
+		// write(image, 0, 0, '~', white);
+		write(image, 0, 0, " !\"#$%%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", white);
+	}
+	void write(Image image, png_uint_32 row, png_uint_32 column, char c, const Pixel& pixel)const
+	{
+		for(unsigned char i=0; i<char_height; ++i){
+			for(unsigned char j=0; j<char_width; ++j){
+				if(characters[c][i] & bits[j]){
+					image[row+i][column+j] = pixel;
+				}
+			}
+		}
+	}
+	void write(Image image, png_uint_32 row, png_uint_32 column, const std::string& str, const Pixel& pixel)const
+	{
+		for(std::size_t i=0; i<str.size(); ++i){
+			write(image, row, column+char_width*i, str[i], pixel);
+		}
+	}
+};
+
+// TODO #RRRRGGGGBBBBの形式を受け付けられるようにする。
+// TODO 0x000000000000の形式を受け付けられるようにする。
 struct CSVLoader: Generator{
 	virtual png_uint_32 width()const override{return width_;}
 	virtual png_uint_32 height()const override{return height_;}
@@ -308,15 +1559,27 @@ void generate_16bpc_png(const std::string& prog_name, const std::string& output_
 
 int main(int argc, char* argv[])
 {
-	generate_16bpc_png(argv[0], "colorbar.png", ColorBar());
-	generate_16bpc_png(argv[0], "red.png", FullField(red));
-	generate_16bpc_png(argv[0], "green.png", FullField(green));
-	generate_16bpc_png(argv[0], "blue.png", FullField(blue));
-	generate_16bpc_png(argv[0], "checker.png", Checker());
-	generate_16bpc_png(argv[0], "checker_inverted.png", Checker(true));
-	generate_16bpc_png(argv[0], "stairs.png", Stairs());
-	generate_16bpc_png(argv[0], "lamp.png", Lamp());
-	generate_16bpc_png(argv[0], "crosshatch.png", CrossHatch(192, 108));
-//	generate_16bpc_png(argv[0], "user_defined.png", CSVLoader("input.csv"));
+	generate_16bpc_png(argv[0], "colorbar.png",    ColorBar());
+	generate_16bpc_png(argv[0], "white100.png",    Luster(white));
+	generate_16bpc_png(argv[0], "red100.png",      Luster(red));
+	generate_16bpc_png(argv[0], "green100.png",    Luster(green));
+	generate_16bpc_png(argv[0], "blue100.png",     Luster(blue));
+	generate_16bpc_png(argv[0], "white50.png",     Luster(white/2));
+	generate_16bpc_png(argv[0], "red50.png",       Luster(red  /2));
+	generate_16bpc_png(argv[0], "green50.png",     Luster(green/2));
+	generate_16bpc_png(argv[0], "blue50.png",      Luster(blue /2));
+	generate_16bpc_png(argv[0], "checker1.png",    Checker());
+	generate_16bpc_png(argv[0], "checker2.png",    Checker(true));
+	generate_16bpc_png(argv[0], "stairstepH1.png", StairStepH());
+	generate_16bpc_png(argv[0], "stairstepH2.png", StairStepH(false));
+	generate_16bpc_png(argv[0], "stairstepH3.png", StairStepH(true));
+	generate_16bpc_png(argv[0], "stairstepV1.png", StairStepV());
+	generate_16bpc_png(argv[0], "stairstepV2.png", StairStepV(false));
+	generate_16bpc_png(argv[0], "stairstepV3.png", StairStepV(true));
+	generate_16bpc_png(argv[0], "lamp.png",        Lamp());
+	generate_16bpc_png(argv[0], "crosshatch.png",  CrossHatch(192, 108));
+	generate_16bpc_png(argv[0], "character.png",   Character());
+//	generate_16bpc_png(argv[0], "userdefined.png", CSVLoader("input.csv"));
+	generate_16bpc_png(argv[0], "example.png",     GeneratorExample());
 	return 0;
 }
