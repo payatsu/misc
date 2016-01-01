@@ -1,10 +1,10 @@
 /**
  * @file
- * @brief Program to generate a 16 bpc(bits per component) PNG image.
+ * @brief Program to generate 16 bpc(bits per component) PNG images.
  * @details
  * To compile this program, do as described below.
  * @code
- * $ g++ --std=c++14 generate_png.cpp -lpng
+ * $ g++ --std=c++14 16bpc_png_generator.cpp -lpng
  * @endcode
  * Then, to run this program, do as described below.
  * @code
@@ -55,6 +55,17 @@ constexpr PseudoPixel blue   {0x0000, 0x0000, 0xffff};
 constexpr PseudoPixel cyan   {0x0000, 0xffff, 0xffff};
 constexpr PseudoPixel magenta{0xffff, 0x0000, 0xffff};
 constexpr PseudoPixel yellow {0xffff, 0xffff, 0x0000};
+struct Gradator{
+	PseudoPixel step_;
+	PseudoPixel state_;
+	Gradator(const PseudoPixel& step, const PseudoPixel& initial={}): step_(step), state_(initial){}
+	PseudoPixel operator()()
+	{
+		PseudoPixel tmp = state_;
+		state_ = state_ + step_;
+		return tmp;
+	}
+};
 
 /**
  * @attention Big-Endian
@@ -66,18 +77,22 @@ struct Pixel{
 	png_byte Glsb_;
 	png_byte Bmsb_;
 	png_byte Blsb_;
-	constexpr Pixel(unsigned long long int value): Rmsb_(value>>40&0xff), Rlsb_(value>>32&0xff), Gmsb_(value>>24&0xff), Glsb_(value>>16&0xff), Bmsb_(value>>8&0xff), Blsb_(value&0xff){}
+	constexpr Pixel(unsigned long long int binary): Rmsb_(binary>>40&0xff), Rlsb_(binary>>32&0xff), Gmsb_(binary>>24&0xff), Glsb_(binary>>16&0xff), Bmsb_(binary>>8&0xff), Blsb_(binary&0xff){}
 	constexpr Pixel(const PseudoPixel& pseudo): Rmsb_(pseudo.R_>>8), Rlsb_(pseudo.R_&0xff), Gmsb_(pseudo.G_>>8), Glsb_(pseudo.G_&0xff), Bmsb_(pseudo.B_>>8), Blsb_(pseudo.B_&0xff){}
 };
 
 struct Row{
-	png_bytep row_;
+	const png_bytep row_;
 	Row(png_bytep row): row_(row){}
-	Pixel& operator[](int column)const{return *(Pixel*)(row_ + column*pixelsize);}
+	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
+};
+struct RowBlock{
+	Pixel pixels_[::width];
+	static RowBlock* cast(Pixel* ptr){return reinterpret_cast<RowBlock*>(ptr);}
 };
 
 struct Image{
-	png_bytep block_;
+	const png_bytep block_;
 	const Generator& generator_;
 	Image(png_bytep block, const Generator& generator): block_(block), generator_(generator){}
 	Row operator[](int row)const{return Row(block_ + row*generator_.width()*pixelsize);}
@@ -92,66 +107,64 @@ struct ColorBar: FixSizedGenerator{
 	virtual void generate(Image image)const override
 	{
 		const png_uint_32 x = width()*3/4;
-		std::fill(&image[0][0],               &image[0][width()/8],       white/100*40);
-		std::fill(&image[0][width()/8],       &image[0][width()/8+x/7],   white/100*75);
-		std::fill(&image[0][width()/8+x/7],   &image[0][width()/8+x/7*2], yellow/100*75);
-		std::fill(&image[0][width()/8+x/7*2], &image[0][width()/8+x/7*3], cyan/100*75);
-		std::fill(&image[0][width()/8+x/7*3], &image[0][width()/8+x/7*4], green/100*75);
+		std::fill(&image[0][0],               &image[0][width()/8],       white  /100*40);
+		std::fill(&image[0][width()/8],       &image[0][width()/8+x/7],   white  /100*75);
+		std::fill(&image[0][width()/8+x/7],   &image[0][width()/8+x/7*2], yellow /100*75);
+		std::fill(&image[0][width()/8+x/7*2], &image[0][width()/8+x/7*3], cyan   /100*75);
+		std::fill(&image[0][width()/8+x/7*3], &image[0][width()/8+x/7*4], green  /100*75);
 		std::fill(&image[0][width()/8+x/7*4], &image[0][width()/8+x/7*5], magenta/100*75);
-		std::fill(&image[0][width()/8+x/7*5], &image[0][width()/8+x/7*6], red/100*75);
-		std::fill(&image[0][width()/8+x/7*6], &image[0][width()/8+x],     blue/100*75);
-		std::fill(&image[0][width()/8+x],     &image[0][width()],         white/100*40);
+		std::fill(&image[0][width()/8+x/7*5], &image[0][width()/8+x/7*6], red    /100*75);
+		std::fill(&image[0][width()/8+x/7*6], &image[0][width()/8+x],     blue   /100*75);
+		std::fill(&image[0][width()/8+x],     &image[0][width()],         white  /100*40);
 		const png_uint_32 h1 = height()*7/12;
-		for(png_uint_32 i=1; i<h1; ++i){
-			std::copy(&image[0][0], &image[0][width()], &image[i][0]);
-		}
+		std::fill(RowBlock::cast(&image[1][0]), RowBlock::cast(&image[h1][0]), *RowBlock::cast(&image[0][0]));
+
 		std::fill(&image[h1][0],             &image[h1][width()/8],     cyan);
 		std::fill(&image[h1][width()/8],     &image[h1][width()/8+x/7], white);
 		std::fill(&image[h1][width()/8+x/7], &image[h1][width()/8+x],   white/100*75);
 		std::fill(&image[h1][width()/8+x],   &image[h1][width()],       blue);
 		const png_uint_32 h2 = h1 + height()/12;
-		for(png_uint_32 i=h1+1; i<h2; ++i){
-			std::copy(&image[h1][0], &image[h1][width()], &image[i][0]);
-		}
+		std::fill(RowBlock::cast(&image[h1+1][0]), RowBlock::cast(&image[h2][0]), *RowBlock::cast(&image[h1][0]));
+
 		std::fill(&image[h2][0],           &image[h2][width()/8], yellow);
 		std::fill(&image[h2][width()/8+x], &image[h2][width()],   red);
-		PseudoPixel value{black};
-		std::generate(&image[h2][width()/8], &image[h2][width()/8+x], [&value, x](){value = value + white/x; return value;});
+		std::generate(&image[h2][width()/8], &image[h2][width()/8+x], Gradator(white/x));
 		const png_uint_32 h3 = h2 + height()/12;
-		for(png_uint_32 i=h2+1; i<h3; ++i){
-			std::copy(&image[h2][0], &image[h2][width()], &image[i][0]);
-		}
+		std::fill(RowBlock::cast(&image[h2+1][0]), RowBlock::cast(&image[h3][0]), *RowBlock::cast(&image[h2][0]));
+
 		std::fill(&image[h3][0],                       &image[h3][width()/8],               white/100*15);
 		std::fill(&image[h3][width()/8],               &image[h3][width()/8+x/7*3/2],       black);
 		std::fill(&image[h3][width()/8+x/7*3/2],       &image[h3][width()/8+x/7*3/2+2*x/7], white);
 		std::fill(&image[h3][width()/8+x/7*3/2+2*x/7], &image[h3][width()/8+x],             black);
 		std::fill(&image[h3][width()/8+x],             &image[h3][width()],                 white/100*15);
-		for(png_uint_32 i=h3+1; i<height(); ++i){
-			std::copy(&image[h3][0], &image[h3][width()], &image[i][0]);
-		}
+		std::fill(RowBlock::cast(&image[h3+1][0]), RowBlock::cast(&image[height()][0]), *RowBlock::cast(&image[h3][0]));
 	}
 };
 
 struct FullField: FixSizedGenerator{
-	virtual void generate(Image image)const override{std::fill(&image[0][0], &image[height()][0], value_);}
-	FullField(const PseudoPixel& pseudo): value_(pseudo){}
-	Pixel value_;
+	virtual void generate(Image image)const override{std::fill(&image[0][0], &image[height()][0], pixel_);}
+	FullField(const Pixel& pixel): pixel_(pixel){}
+	Pixel pixel_;
 };
 
 struct Checker: FixSizedGenerator{
 	virtual void generate(Image image)const override
 	{
-		for(png_uint_16 row=0; row<height(); ++row){
-			for(png_uint_16 column=0; column<width(); ++column){
-				image[row][column] = invert_ ^ is_pattern1_region(row, column) ? black : white;
-			}
-		}
-	}
-	bool is_pattern1_region(png_uint_16 row, png_uint_16 column)const
-	{
-		bool column_is_odd = column < width()/4 || (width()/4*2 <= column && column < width()/4*3);
-		bool row_is_odd = row < height()/4 || (height()/4*2 <= row && row < height()/4*3);
-		return column_is_odd ^ row_is_odd;
+		const auto pattern1 = invert_ ? black : white;
+		const auto pattern2 = invert_ ? white : black;
+		std::fill(&image[0][0],           &image[0][width()/4],   pattern1);
+		std::fill(&image[0][width()/4],   &image[0][width()/4*2], pattern2);
+		std::fill(&image[0][width()/4*2], &image[0][width()/4*3], pattern1);
+		std::fill(&image[0][width()/4*3], &image[0][width()],     pattern2);
+		std::fill(RowBlock::cast(&image[1][0]),            RowBlock::cast(&image[height()/4][0]),   *RowBlock::cast(&image[0][0]));
+		std::fill(RowBlock::cast(&image[height()/4*2][0]), RowBlock::cast(&image[height()/4*3][0]), *RowBlock::cast(&image[0][0]));
+
+		std::fill(&image[height()/4][0],           &image[height()/4][width()/4],   pattern2);
+		std::fill(&image[height()/4][width()/4],   &image[height()/4][width()/4*2], pattern1);
+		std::fill(&image[height()/4][width()/4*2], &image[height()/4][width()/4*3], pattern2);
+		std::fill(&image[height()/4][width()/4*3], &image[height()/4][width()],     pattern1);
+		std::fill(RowBlock::cast(&image[height()/4+1][0]), RowBlock::cast(&image[height()/4*2][0]), *RowBlock::cast(&image[height()/4][0]));
+		std::fill(RowBlock::cast(&image[height()/4*3][0]), RowBlock::cast(&image[height()][0]),     *RowBlock::cast(&image[height()/4][0]));
 	}
 	bool invert_;
 	Checker(bool invert = false): invert_(invert){}
@@ -188,44 +201,31 @@ struct Stairs: FixSizedGenerator{
 struct Lamp: FixSizedGenerator{
 	virtual void generate(Image image)const override
 	{
-		for(png_uint_32 row=0; row<height(); ++row){
-			struct Helper{
-				PseudoPixel delta_;
-				PseudoPixel value_;
-				Helper(const PseudoPixel& delta, const PseudoPixel& value=black): delta_(delta), value_(value){}
-				PseudoPixel operator()()
-				{
-					PseudoPixel tmp = value_;
-					value_ = value_ + delta_;
-					return tmp;
-				}
-			};
-			if(row <= height()/12){
-				std::generate(&image[row][0], &image[row][width()], Helper(red/width()));
-			}else if(row <= height()/12*2){
-				std::generate(&image[row][0], &image[row][width()], Helper(green/width()));
-			}else if(row <= height()/12*3){
-				std::generate(&image[row][0], &image[row][width()], Helper(blue/width()));
-			}else if(row <= height()/12*4){
-				std::generate(&image[row][0], &image[row][width()], Helper(cyan/width()));
-			}else if(row <= height()/12*5){
-				std::generate(&image[row][0], &image[row][width()], Helper(magenta/width()));
-			}else if(row <= height()/12*6){
-				std::generate(&image[row][0], &image[row][width()], Helper(yellow/width()));
-			}else if(row <= height()/12*7){
-				std::generate(&image[row][0], &image[row][width()], Helper(cyan/width(), red));
-			}else if(row <= height()/12*8){
-				std::generate(&image[row][0], &image[row][width()], Helper(magenta/width(), green));
-			}else if(row <= height()/12*9){
-				std::generate(&image[row][0], &image[row][width()], Helper(yellow/width(), blue));
-			}else if(row <= height()/12*10){
-				std::generate(&image[row][0], &image[row][width()], Helper(red/width(), cyan));
-			}else if(row <= height()/12*11){
-				std::generate(&image[row][0], &image[row][width()], Helper(green/width(), magenta));
-			}else{
-				std::generate(&image[row][0], &image[row][width()], Helper(blue/width(), yellow));
-			}
-		}
+		std::generate(&image[0][0],              &image[0][width()],              Gradator(red    /width()));
+		std::generate(&image[height()/12][0],    &image[height()/12][width()],    Gradator(green  /width()));
+		std::generate(&image[height()/12*2][0],  &image[height()/12*2][width()],  Gradator(blue   /width()));
+		std::generate(&image[height()/12*3][0],  &image[height()/12*3][width()],  Gradator(cyan   /width()));
+		std::generate(&image[height()/12*4][0],  &image[height()/12*4][width()],  Gradator(magenta/width()));
+		std::generate(&image[height()/12*5][0],  &image[height()/12*5][width()],  Gradator(yellow /width()));
+		std::generate(&image[height()/12*6][0],  &image[height()/12*6][width()],  Gradator(cyan   /width(), red));
+		std::generate(&image[height()/12*7][0],  &image[height()/12*7][width()],  Gradator(magenta/width(), green));
+		std::generate(&image[height()/12*8][0],  &image[height()/12*8][width()],  Gradator(yellow /width(), blue));
+		std::generate(&image[height()/12*9][0],  &image[height()/12*9][width()],  Gradator(red    /width(), cyan));
+		std::generate(&image[height()/12*10][0], &image[height()/12*10][width()], Gradator(green  /width(), magenta));
+		std::generate(&image[height()/12*11][0], &image[height()/12*11][width()], Gradator(blue   /width(), yellow));
+
+		std::fill(RowBlock::cast(&image[1][0]),                RowBlock::cast(&image[height()/12][0]),    *RowBlock::cast(&image[0][0]));
+		std::fill(RowBlock::cast(&image[height()/12+1][0]),    RowBlock::cast(&image[height()/12*2][0]),  *RowBlock::cast(&image[height()/12][0]));
+		std::fill(RowBlock::cast(&image[height()/12*2+1][0]),  RowBlock::cast(&image[height()/12*3][0]),  *RowBlock::cast(&image[height()/12*2][0]));
+		std::fill(RowBlock::cast(&image[height()/12*3+1][0]),  RowBlock::cast(&image[height()/12*4][0]),  *RowBlock::cast(&image[height()/12*3][0]));
+		std::fill(RowBlock::cast(&image[height()/12*4+1][0]),  RowBlock::cast(&image[height()/12*5][0]),  *RowBlock::cast(&image[height()/12*4][0]));
+		std::fill(RowBlock::cast(&image[height()/12*5+1][0]),  RowBlock::cast(&image[height()/12*6][0]),  *RowBlock::cast(&image[height()/12*5][0]));
+		std::fill(RowBlock::cast(&image[height()/12*6+1][0]),  RowBlock::cast(&image[height()/12*7][0]),  *RowBlock::cast(&image[height()/12*6][0]));
+		std::fill(RowBlock::cast(&image[height()/12*7+1][0]),  RowBlock::cast(&image[height()/12*8][0]),  *RowBlock::cast(&image[height()/12*7][0]));
+		std::fill(RowBlock::cast(&image[height()/12*8+1][0]),  RowBlock::cast(&image[height()/12*9][0]),  *RowBlock::cast(&image[height()/12*8][0]));
+		std::fill(RowBlock::cast(&image[height()/12*9+1][0]),  RowBlock::cast(&image[height()/12*10][0]), *RowBlock::cast(&image[height()/12*9][0]));
+		std::fill(RowBlock::cast(&image[height()/12*10+1][0]), RowBlock::cast(&image[height()/12*11][0]), *RowBlock::cast(&image[height()/12*10][0]));
+		std::fill(RowBlock::cast(&image[height()/12*11+1][0]), RowBlock::cast(&image[height()][0]),       *RowBlock::cast(&image[height()/12*11][0]));
 	}
 };
 
@@ -237,6 +237,7 @@ struct CrossHatch: FixSizedGenerator{
 			std::fill(&image[i][0], &image[i][width()], white);
 		}
 		std::fill(&image[height()-1][0], &image[height()][0], white);
+
 		for(png_uint_32 i=0; i<width(); i+=lattice_width_){
 			for(png_uint_32 j=0; j<height(); ++j){
 				image[j][i] = white;
