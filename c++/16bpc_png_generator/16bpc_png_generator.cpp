@@ -99,6 +99,7 @@ struct FrameBuffer{
 	const png_uint_32& width_;
 	constexpr FrameBuffer(png_bytep block, const png_uint_32& width): block_(block), width_(width){}
 	Row operator[](int row)const{return Row(block_ + row*width_*pixelsize);}
+	const FrameBuffer& operator<<(const PatternGenerator& generator)const{generator.generate(*this); return *this;}
 };
 
 struct FixedSize: PatternGenerator{
@@ -254,8 +255,6 @@ struct Lamp: FixedSize{
 struct CrossHatch: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		std::fill(&buffer[0][0], &buffer[height()][0], black);
-
 		for(png_uint_32 i=0; i<height(); i+=lattice_height_){
 			std::fill(&buffer[i][0], &buffer[i][width()], white);
 		}
@@ -1477,7 +1476,6 @@ constexpr unsigned char characters[][8] = {
 struct Character: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		Luster(black).generate(buffer);
 		write(buffer, 0, 0, text_, pixel_, scale_);
 	}
 	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel, int scale)const
@@ -1504,6 +1502,9 @@ struct Character: FixedSize{
 			if(str[i] == '\n'){
 				row += scale*char_height;
 				j = 0;
+				continue;
+			}else if(str[i] == '\t'){
+				j += 4;
 				continue;
 			}
 			write(buffer, row, column+j*scale*char_width, str[i], pixel, scale);
@@ -1541,11 +1542,20 @@ struct CSVLoader: PatternGenerator{
 	}
 };
 
-void generate_16bpc_png(const std::string& prog_name, const std::string& output_filename, const PatternGenerator& generator)
+struct Overlayer: PatternGenerator{
+	virtual const png_uint_32& width()const override{return first_.width();}
+	virtual const png_uint_32& height()const override{return first_.height();}
+	virtual void generate(FrameBuffer buffer)const override{buffer << first_ << second_;}
+	Overlayer(const PatternGenerator& first, const PatternGenerator& second): first_(first), second_(second){}
+	const PatternGenerator& first_;
+	const PatternGenerator& second_;
+};
+
+void generate_16bpc_png(const std::string& output_filename, const PatternGenerator& generator)
 {
 	std::unique_ptr<FILE, decltype(&std::fclose)> fp(std::fopen(output_filename.c_str(), "wb"), std::fclose);
 	if(!fp){
-		std::perror(prog_name.c_str());
+		std::perror("");
 		return;
 	}
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -1570,35 +1580,45 @@ void generate_16bpc_png(const std::string& prog_name, const std::string& output_
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
-int main(int argc, char* argv[])
+int main(void)
 {
-//	generate_16bpc_png(argv[0], "colorbar.png",    ColorBar());
-//	generate_16bpc_png(argv[0], "white100.png",    Luster(white));
-//	generate_16bpc_png(argv[0], "red100.png",      Luster(red));
-//	generate_16bpc_png(argv[0], "green100.png",    Luster(green));
-//	generate_16bpc_png(argv[0], "blue100.png",     Luster(blue));
-//	generate_16bpc_png(argv[0], "white50.png",     Luster(white/2));
-//	generate_16bpc_png(argv[0], "red50.png",       Luster(red  /2));
-//	generate_16bpc_png(argv[0], "green50.png",     Luster(green/2));
-//	generate_16bpc_png(argv[0], "blue50.png",      Luster(blue /2));
-//	generate_16bpc_png(argv[0], "checker1.png",    Checker());
-//	generate_16bpc_png(argv[0], "checker2.png",    Checker(true));
-//	generate_16bpc_png(argv[0], "stairstepH1.png", StairStepH());
-//	generate_16bpc_png(argv[0], "stairstepH2.png", StairStepH(false));
-//	generate_16bpc_png(argv[0], "stairstepH3.png", StairStepH(true));
-//	generate_16bpc_png(argv[0], "stairstepV1.png", StairStepV());
-//	generate_16bpc_png(argv[0], "stairstepV2.png", StairStepV(false));
-//	generate_16bpc_png(argv[0], "stairstepV3.png", StairStepV(true));
-//	generate_16bpc_png(argv[0], "lamp.png",        Lamp());
-//	generate_16bpc_png(argv[0], "crosshatch.png",  CrossHatch(192, 108));
-	generate_16bpc_png(argv[0], "character.png",   Character(
-				" !\"#$%&'()*+,-./\n"
-				"0123456789:;<=>?@\n"
-				"ABCDEFGHIJKLMNO\n"
-				"PQRSTUVWXYZ[\\]^_`\n"
-				"abcdefghijklmno\n"
-				"pqrstuvwxyz{|}~", yellow, 10));
-//	generate_16bpc_png(argv[0], "userdefined.png", CSVLoader("userdefined.csv"));
-//	generate_16bpc_png(argv[0], "example.png",     GeneratorExample());
+//	generate_16bpc_png("colorbar.png",    ColorBar());
+//	generate_16bpc_png("white100.png",    Luster(white));
+//	generate_16bpc_png("red100.png",      Luster(red));
+//	generate_16bpc_png("green100.png",    Luster(green));
+//	generate_16bpc_png("blue100.png",     Luster(blue));
+//	generate_16bpc_png("white50.png",     Luster(white/2));
+//	generate_16bpc_png("red50.png",       Luster(red  /2));
+//	generate_16bpc_png("green50.png",     Luster(green/2));
+//	generate_16bpc_png("blue50.png",      Luster(blue /2));
+//	generate_16bpc_png("checker1.png",    Checker());
+//	generate_16bpc_png("checker2.png",    Checker(true));
+//	generate_16bpc_png("stairstepH1.png", StairStepH());
+//	generate_16bpc_png("stairstepH2.png", StairStepH(false));
+//	generate_16bpc_png("stairstepH3.png", StairStepH(true));
+//	generate_16bpc_png("stairstepV1.png", StairStepV());
+//	generate_16bpc_png("stairstepV2.png", StairStepV(false));
+//	generate_16bpc_png("stairstepV3.png", StairStepV(true));
+//	generate_16bpc_png("lamp.png",        Lamp());
+//	generate_16bpc_png("crosshatch.png",  Overlayer(Luster(black), CrossHatch(192, 108)));
+//	generate_16bpc_png("character.png",   Overlayer(Luster(black), Character(
+//																	" !\"#$%&'()*+,-./\n"
+//																	"0123456789:;<=>?@\n"
+//																	"ABCDEFGHIJKLMNO\n"
+//																	"PQRSTUVWXYZ[\\]^_`\n"
+//																	"abcdefghijklmno\n"
+//																	"pqrstuvwxyz{|}~", yellow, 10)));
+//	generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
+//	generate_16bpc_png("example.png",     GeneratorExample());
+
+	generate_16bpc_png("happy_new_year.png", Overlayer(CSVLoader("happy_new_year.csv"), Character("Happy New Year!!", black, 15)));
+
+//	std::ifstream ifs("16bpc_png_generator.cpp");
+//	std::string line;
+//	std::string source;
+//	while(std::getline(ifs, line)){
+//		source += line + '\n';
+//	}
+//	generate_16bpc_png("source.png", Character(source, white, 1));
 	return 0;
 }
