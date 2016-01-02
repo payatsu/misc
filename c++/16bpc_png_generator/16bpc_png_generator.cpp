@@ -33,8 +33,8 @@ constexpr int pixelsize      = 6;
 struct FrameBuffer;
 
 struct PatternGenerator{
-	virtual png_uint_32 width()const = 0;
-	virtual png_uint_32 height()const = 0;
+	virtual const png_uint_32& width()const = 0;
+	virtual const png_uint_32& height()const = 0;
 	virtual void generate(FrameBuffer buffer)const = 0;
 	virtual ~PatternGenerator() = default;
 };
@@ -96,14 +96,14 @@ struct RowBlock{
 
 struct FrameBuffer{
 	const png_bytep block_;
-	const PatternGenerator& generator_;
-	constexpr FrameBuffer(png_bytep block, const PatternGenerator& generator): block_(block), generator_(generator){}
-	Row operator[](int row)const{return Row(block_ + row*generator_.width()*pixelsize);}
+	const png_uint_32& width_;
+	constexpr FrameBuffer(png_bytep block, const png_uint_32& width): block_(block), width_(width){}
+	Row operator[](int row)const{return Row(block_ + row*width_*pixelsize);}
 };
 
 struct FixedSize: PatternGenerator{
-	virtual png_uint_32 width()const override final{return ::width;}
-	virtual png_uint_32 height()const override final{return ::height;}
+	virtual const png_uint_32& width()const override final{return ::width;}
+	virtual const png_uint_32& height()const override final{return ::height;}
 };
 
 struct ColorBar: FixedSize{
@@ -304,7 +304,6 @@ struct GeneratorExample: FixedSize{
 
 // TODO ColorStep
 // TODO Multi
-// TODO Character
 // TODO Focus
 
 constexpr unsigned char char_width  = 8;
@@ -1479,17 +1478,9 @@ struct Character: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
 		Luster(black).generate(buffer);
-		// write(buffer, 0, 0, '$', red, 80);
-		// write(buffer, 0, 0, "A Happy New Year", white, 10);
-		write(buffer, 0, 0, 
-				" !\"#$%&'()*+,-./\n"
-				"0123456789:;<=>?@\n"
-				"ABCDEFGHIJKLMNO\n"
-				"PQRSTUVWXYZ[\\]^_`\n"
-				"abcdefghijklmno\n"
-				"pqrstuvwxyz{|}~", white, 10);
+		write(buffer, 0, 0, text_, pixel_, scale_);
 	}
-	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel=white, int scale=1)const
+	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel, int scale)const
 	{
 		if('~' < c || height() <= row || width() <= column){
 			std::cerr << "warning: not supported: row: " << row << ", col: " << column << ", ascii: " << int(c) << std::endl;
@@ -1507,7 +1498,7 @@ struct Character: FixedSize{
 			}
 		}
 	}
-	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, const std::string& str, const Pixel& pixel=white, int scale=1, bool vertical=false)const
+	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, const std::string& str, const Pixel& pixel, int scale)const
 	{
 		for(std::size_t i=0, j=0; i<str.size(); ++i){
 			if(str[i] == '\n'){
@@ -1519,13 +1510,15 @@ struct Character: FixedSize{
 			++j;
 		}
 	}
+	const std::string text_;
+	const Pixel pixel_;
+	const int scale_;
+	Character(const std::string& text, const Pixel& pixel=white, int scale=1): text_(text), pixel_(pixel), scale_(scale){}
 };
 
-// TODO #RRRRGGGGBBBBの形式を受け付けられるようにする。
-// TODO 0x000000000000の形式を受け付けられるようにする。
 struct CSVLoader: PatternGenerator{
-	virtual png_uint_32 width()const override{return width_;}
-	virtual png_uint_32 height()const override{return height_;}
+	virtual const png_uint_32& width()const override{return width_;}
+	virtual const png_uint_32& height()const override{return height_;}
 	virtual void generate(FrameBuffer buffer)const override{std::copy(pixels_.begin(), pixels_.end(), &buffer[0][0]);}
 	png_uint_32 width_;
 	png_uint_32 height_;
@@ -1537,10 +1530,10 @@ struct CSVLoader: PatternGenerator{
 		while(std::getline(ifs, line)){
 			std::replace(line.begin(), line.end(), ',', ' ');
 			std::istringstream iss(line);
-			unsigned long long int value;
+			std::string token;
 			width_ = 0;
-			while(iss >> value){
-				pixels_.push_back(value);
+			while(iss >> token){
+				pixels_.push_back(std::stoull(token, nullptr, 0));
 				++width_;
 			}
 			++height_;
@@ -1572,34 +1565,40 @@ void generate_16bpc_png(const std::string& prog_name, const std::string& output_
 		row_ptrs[i] = block.get() + i*generator.width()*pixelsize;
 	}
 	png_set_rows(png_ptr, info_ptr, row_ptrs.get());
-	generator.generate(FrameBuffer(block.get(), generator));
+	generator.generate(FrameBuffer(block.get(), generator.width()));
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
 int main(int argc, char* argv[])
 {
-	generate_16bpc_png(argv[0], "colorbar.png",    ColorBar());
-	generate_16bpc_png(argv[0], "white100.png",    Luster(white));
-	generate_16bpc_png(argv[0], "red100.png",      Luster(red));
-	generate_16bpc_png(argv[0], "green100.png",    Luster(green));
-	generate_16bpc_png(argv[0], "blue100.png",     Luster(blue));
-	generate_16bpc_png(argv[0], "white50.png",     Luster(white/2));
-	generate_16bpc_png(argv[0], "red50.png",       Luster(red  /2));
-	generate_16bpc_png(argv[0], "green50.png",     Luster(green/2));
-	generate_16bpc_png(argv[0], "blue50.png",      Luster(blue /2));
-	generate_16bpc_png(argv[0], "checker1.png",    Checker());
-	generate_16bpc_png(argv[0], "checker2.png",    Checker(true));
-	generate_16bpc_png(argv[0], "stairstepH1.png", StairStepH());
-	generate_16bpc_png(argv[0], "stairstepH2.png", StairStepH(false));
-	generate_16bpc_png(argv[0], "stairstepH3.png", StairStepH(true));
-	generate_16bpc_png(argv[0], "stairstepV1.png", StairStepV());
-	generate_16bpc_png(argv[0], "stairstepV2.png", StairStepV(false));
-	generate_16bpc_png(argv[0], "stairstepV3.png", StairStepV(true));
-	generate_16bpc_png(argv[0], "lamp.png",        Lamp());
-	generate_16bpc_png(argv[0], "crosshatch.png",  CrossHatch(192, 108));
-	generate_16bpc_png(argv[0], "character.png",   Character());
-//	generate_16bpc_png(argv[0], "userdefined.png", CSVLoader("input.csv"));
-	generate_16bpc_png(argv[0], "example.png",     GeneratorExample());
+//	generate_16bpc_png(argv[0], "colorbar.png",    ColorBar());
+//	generate_16bpc_png(argv[0], "white100.png",    Luster(white));
+//	generate_16bpc_png(argv[0], "red100.png",      Luster(red));
+//	generate_16bpc_png(argv[0], "green100.png",    Luster(green));
+//	generate_16bpc_png(argv[0], "blue100.png",     Luster(blue));
+//	generate_16bpc_png(argv[0], "white50.png",     Luster(white/2));
+//	generate_16bpc_png(argv[0], "red50.png",       Luster(red  /2));
+//	generate_16bpc_png(argv[0], "green50.png",     Luster(green/2));
+//	generate_16bpc_png(argv[0], "blue50.png",      Luster(blue /2));
+//	generate_16bpc_png(argv[0], "checker1.png",    Checker());
+//	generate_16bpc_png(argv[0], "checker2.png",    Checker(true));
+//	generate_16bpc_png(argv[0], "stairstepH1.png", StairStepH());
+//	generate_16bpc_png(argv[0], "stairstepH2.png", StairStepH(false));
+//	generate_16bpc_png(argv[0], "stairstepH3.png", StairStepH(true));
+//	generate_16bpc_png(argv[0], "stairstepV1.png", StairStepV());
+//	generate_16bpc_png(argv[0], "stairstepV2.png", StairStepV(false));
+//	generate_16bpc_png(argv[0], "stairstepV3.png", StairStepV(true));
+//	generate_16bpc_png(argv[0], "lamp.png",        Lamp());
+//	generate_16bpc_png(argv[0], "crosshatch.png",  CrossHatch(192, 108));
+	generate_16bpc_png(argv[0], "character.png",   Character(
+				" !\"#$%&'()*+,-./\n"
+				"0123456789:;<=>?@\n"
+				"ABCDEFGHIJKLMNO\n"
+				"PQRSTUVWXYZ[\\]^_`\n"
+				"abcdefghijklmno\n"
+				"pqrstuvwxyz{|}~", yellow, 10));
+//	generate_16bpc_png(argv[0], "userdefined.png", CSVLoader("userdefined.csv"));
+//	generate_16bpc_png(argv[0], "example.png",     GeneratorExample());
 	return 0;
 }
