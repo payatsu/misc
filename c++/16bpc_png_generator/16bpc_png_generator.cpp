@@ -25,7 +25,7 @@
 #include <png.h>
 
 constexpr png_uint_32 width  = 1920;
-constexpr png_uint_32 height = 1080;
+constexpr png_uint_32 height = 1200;
 constexpr int bitdepth       = 16;
 constexpr int colortype      = PNG_COLOR_TYPE_RGB;
 constexpr int pixelsize      = 6;
@@ -57,12 +57,22 @@ constexpr PseudoPixel blue   {0x0000, 0x0000, 0xffff};
 constexpr PseudoPixel cyan   {0x0000, 0xffff, 0xffff};
 constexpr PseudoPixel magenta{0xffff, 0x0000, 0xffff};
 constexpr PseudoPixel yellow {0xffff, 0xffff, 0x0000};
-struct Gradator{
+
+struct Painter{
+	virtual PseudoPixel operator()() = 0;
+	virtual ~Painter() = default;
+};
+struct UniColor: Painter{
+	virtual PseudoPixel operator()()override{return pixel_;}
+	constexpr UniColor(const PseudoPixel& pixel): pixel_(pixel){}
+	const PseudoPixel pixel_;
+};
+struct Gradator: Painter{
 	const PseudoPixel step_;
 	PseudoPixel state_;
 	const bool invert_;
 	constexpr Gradator(const PseudoPixel& step, const PseudoPixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
-	PseudoPixel operator()()
+	PseudoPixel operator()()override
 	{
 		PseudoPixel tmp = state_;
 		state_ = invert_ ? state_ - step_ : state_ + step_;
@@ -1582,36 +1592,37 @@ void generate_16bpc_png(const std::string& output_filename, const PatternGenerat
 
 int main(void)
 {
-//	generate_16bpc_png("colorbar.png",    ColorBar());
-//	generate_16bpc_png("white100.png",    Luster(white));
-//	generate_16bpc_png("red100.png",      Luster(red));
-//	generate_16bpc_png("green100.png",    Luster(green));
-//	generate_16bpc_png("blue100.png",     Luster(blue));
-//	generate_16bpc_png("white50.png",     Luster(white/2));
-//	generate_16bpc_png("red50.png",       Luster(red  /2));
-//	generate_16bpc_png("green50.png",     Luster(green/2));
-//	generate_16bpc_png("blue50.png",      Luster(blue /2));
-//	generate_16bpc_png("checker1.png",    Checker());
-//	generate_16bpc_png("checker2.png",    Checker(true));
-//	generate_16bpc_png("stairstepH1.png", StairStepH());
-//	generate_16bpc_png("stairstepH2.png", StairStepH(false));
-//	generate_16bpc_png("stairstepH3.png", StairStepH(true));
-//	generate_16bpc_png("stairstepV1.png", StairStepV());
-//	generate_16bpc_png("stairstepV2.png", StairStepV(false));
-//	generate_16bpc_png("stairstepV3.png", StairStepV(true));
-//	generate_16bpc_png("lamp.png",        Lamp());
-//	generate_16bpc_png("crosshatch.png",  Overlayer(Luster(black), CrossHatch(192, 108)));
-//	generate_16bpc_png("character.png",   Overlayer(Luster(black), Character(
-//																	" !\"#$%&'()*+,-./\n"
-//																	"0123456789:;<=>?@\n"
-//																	"ABCDEFGHIJKLMNO\n"
-//																	"PQRSTUVWXYZ[\\]^_`\n"
-//																	"abcdefghijklmno\n"
-//																	"pqrstuvwxyz{|}~", yellow, 10)));
+	generate_16bpc_png("colorbar.png",    ColorBar());
+	generate_16bpc_png("white100.png",    Luster(white));
+	generate_16bpc_png("red100.png",      Luster(red));
+	generate_16bpc_png("green100.png",    Luster(green));
+	generate_16bpc_png("blue100.png",     Luster(blue));
+	generate_16bpc_png("white50.png",     Luster(white/2));
+	generate_16bpc_png("red50.png",       Luster(red  /2));
+	generate_16bpc_png("green50.png",     Luster(green/2));
+	generate_16bpc_png("blue50.png",      Luster(blue /2));
+	generate_16bpc_png("checker1.png",    Checker());
+	generate_16bpc_png("checker2.png",    Checker(true));
+	generate_16bpc_png("stairstepH1.png", StairStepH());
+	generate_16bpc_png("stairstepH2.png", StairStepH(false));
+	generate_16bpc_png("stairstepH3.png", StairStepH(true));
+	generate_16bpc_png("stairstepV1.png", StairStepV());
+	generate_16bpc_png("stairstepV2.png", StairStepV(false));
+	generate_16bpc_png("stairstepV3.png", StairStepV(true));
+	generate_16bpc_png("lamp.png",        Lamp());
+	generate_16bpc_png("crosshatch.png",  Overlayer(Luster(black), CrossHatch(192, 108)));
+	generate_16bpc_png("character.png",   Overlayer(Luster(black), Character(
+																	" !\"#$%&'()*+,-./\n"
+																	"0123456789:;<=>?@\n"
+																	"ABCDEFGHIJKLMNO\n"
+																	"PQRSTUVWXYZ[\\]^_`\n"
+																	"abcdefghijklmno\n"
+																	"pqrstuvwxyz{|}~", yellow, 10)));
+
 //	generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
 //	generate_16bpc_png("example.png",     GeneratorExample());
 
-	generate_16bpc_png("happy_new_year.png", Overlayer(CSVLoader("happy_new_year.csv"), Character("Happy New Year!!", black, 15)));
+//	generate_16bpc_png("happy_new_year.png", Overlayer(CSVLoader("happy_new_year.csv"), Character("Happy New Year!!", black, 15)));
 
 //	std::ifstream ifs("16bpc_png_generator.cpp");
 //	std::string line;
