@@ -100,14 +100,17 @@ struct Row{
 	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
 };
 struct RowBlock{
-	Pixel pixels_[::width];
+	Pixel pixels_[::width]; // XXX
 	static RowBlock* cast(Pixel* ptr){return reinterpret_cast<RowBlock*>(ptr);}
 };
 
 struct FrameBuffer{
 	const png_bytep block_;
 	const png_uint_32& width_;
-	constexpr FrameBuffer(png_bytep block, const png_uint_32& width): block_(block), width_(width){}
+	const png_uint_32& height_;
+	const png_uint_32& width()const{return width_;}
+	const png_uint_32& height()const{return height_;}
+	constexpr FrameBuffer(png_bytep block, const png_uint_32& width, const png_uint_32& height): block_(block), width_(width), height_(height){}
 	Row operator[](int row)const{return Row(block_ + row*width_*pixelsize);}
 	const FrameBuffer& operator<<(const PatternGenerator& generator)const{generator.generate(*this); return *this;}
 };
@@ -120,43 +123,45 @@ struct FixedSize: PatternGenerator{
 struct ColorBar: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		const png_uint_32 x = width()*3/4;
-		std::fill(&buffer[0][0],               &buffer[0][width()/8],       white  /100*40);
-		std::fill(&buffer[0][width()/8],       &buffer[0][width()/8+x/7],   white  /100*75);
-		std::fill(&buffer[0][width()/8+x/7],   &buffer[0][width()/8+x/7*2], yellow /100*75);
-		std::fill(&buffer[0][width()/8+x/7*2], &buffer[0][width()/8+x/7*3], cyan   /100*75);
-		std::fill(&buffer[0][width()/8+x/7*3], &buffer[0][width()/8+x/7*4], green  /100*75);
-		std::fill(&buffer[0][width()/8+x/7*4], &buffer[0][width()/8+x/7*5], magenta/100*75);
-		std::fill(&buffer[0][width()/8+x/7*5], &buffer[0][width()/8+x/7*6], red    /100*75);
-		std::fill(&buffer[0][width()/8+x/7*6], &buffer[0][width()/8+x],     blue   /100*75);
-		std::fill(&buffer[0][width()/8+x],     &buffer[0][width()],         white  /100*40);
-		const png_uint_32 h1 = height()*7/12;
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		const png_uint_32 x = width*3/4;
+		std::fill(&buffer[0][0],             &buffer[0][width/8],       white  /100*40);
+		std::fill(&buffer[0][width/8],       &buffer[0][width/8+x/7],   white  /100*75);
+		std::fill(&buffer[0][width/8+x/7],   &buffer[0][width/8+x/7*2], yellow /100*75);
+		std::fill(&buffer[0][width/8+x/7*2], &buffer[0][width/8+x/7*3], cyan   /100*75);
+		std::fill(&buffer[0][width/8+x/7*3], &buffer[0][width/8+x/7*4], green  /100*75);
+		std::fill(&buffer[0][width/8+x/7*4], &buffer[0][width/8+x/7*5], magenta/100*75);
+		std::fill(&buffer[0][width/8+x/7*5], &buffer[0][width/8+x/7*6], red    /100*75);
+		std::fill(&buffer[0][width/8+x/7*6], &buffer[0][width/8+x],     blue   /100*75);
+		std::fill(&buffer[0][width/8+x],     &buffer[0][width],         white  /100*40);
+		const png_uint_32 h1 = height*7/12;
 		std::fill(RowBlock::cast(&buffer[1][0]), RowBlock::cast(&buffer[h1][0]), *RowBlock::cast(&buffer[0][0]));
 
-		std::fill(&buffer[h1][0],             &buffer[h1][width()/8],     cyan);
-		std::fill(&buffer[h1][width()/8],     &buffer[h1][width()/8+x/7], white);
-		std::fill(&buffer[h1][width()/8+x/7], &buffer[h1][width()/8+x],   white/100*75);
-		std::fill(&buffer[h1][width()/8+x],   &buffer[h1][width()],       blue);
-		const png_uint_32 h2 = h1 + height()/12;
+		std::fill(&buffer[h1][0],           &buffer[h1][width/8],     cyan);
+		std::fill(&buffer[h1][width/8],     &buffer[h1][width/8+x/7], white);
+		std::fill(&buffer[h1][width/8+x/7], &buffer[h1][width/8+x],   white/100*75);
+		std::fill(&buffer[h1][width/8+x],   &buffer[h1][width],       blue);
+		const png_uint_32 h2 = h1 + height/12;
 		std::fill(RowBlock::cast(&buffer[h1+1][0]), RowBlock::cast(&buffer[h2][0]), *RowBlock::cast(&buffer[h1][0]));
 
-		std::fill(&buffer[h2][0],           &buffer[h2][width()/8], yellow);
-		std::fill(&buffer[h2][width()/8+x], &buffer[h2][width()],   red);
-		std::generate(&buffer[h2][width()/8], &buffer[h2][width()/8+x], Gradator(white/x));
-		const png_uint_32 h3 = h2 + height()/12;
+		std::fill(&buffer[h2][0],           &buffer[h2][width/8],   yellow);
+		std::fill(&buffer[h2][width/8+x],   &buffer[h2][width],     red);
+		std::generate(&buffer[h2][width/8], &buffer[h2][width/8+x], Gradator(white/x));
+		const png_uint_32 h3 = h2 + height/12;
 		std::fill(RowBlock::cast(&buffer[h2+1][0]), RowBlock::cast(&buffer[h3][0]), *RowBlock::cast(&buffer[h2][0]));
 
-		std::fill(&buffer[h3][0],                       &buffer[h3][width()/8],               white/100*15);
-		std::fill(&buffer[h3][width()/8],               &buffer[h3][width()/8+x/7*3/2],       black);
-		std::fill(&buffer[h3][width()/8+x/7*3/2],       &buffer[h3][width()/8+x/7*3/2+2*x/7], white);
-		std::fill(&buffer[h3][width()/8+x/7*3/2+2*x/7], &buffer[h3][width()/8+x],             black);
-		std::fill(&buffer[h3][width()/8+x],             &buffer[h3][width()],                 white/100*15);
-		std::fill(RowBlock::cast(&buffer[h3+1][0]), RowBlock::cast(&buffer[height()][0]), *RowBlock::cast(&buffer[h3][0]));
+		std::fill(&buffer[h3][0],                     &buffer[h3][width/8],               white/100*15);
+		std::fill(&buffer[h3][width/8],               &buffer[h3][width/8+x/7*3/2],       black);
+		std::fill(&buffer[h3][width/8+x/7*3/2],       &buffer[h3][width/8+x/7*3/2+2*x/7], white);
+		std::fill(&buffer[h3][width/8+x/7*3/2+2*x/7], &buffer[h3][width/8+x],             black);
+		std::fill(&buffer[h3][width/8+x],             &buffer[h3][width],                 white/100*15);
+		std::fill(RowBlock::cast(&buffer[h3+1][0]), RowBlock::cast(&buffer[height][0]), *RowBlock::cast(&buffer[h3][0]));
 	}
 };
 
 struct Luster: FixedSize{
-	virtual void generate(FrameBuffer buffer)const override{std::fill(&buffer[0][0], &buffer[height()][0], pixel_);}
+	virtual void generate(FrameBuffer buffer)const override{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_);}
 	constexpr Luster(const Pixel& pixel): pixel_(pixel){}
 	const Pixel pixel_;
 };
@@ -166,19 +171,21 @@ struct Checker: FixedSize{
 	{
 		const auto pattern1 = invert_ ? black : white;
 		const auto pattern2 = invert_ ? white : black;
-		std::fill(&buffer[0][0],           &buffer[0][width()/4],   pattern1);
-		std::fill(&buffer[0][width()/4],   &buffer[0][width()/4*2], pattern2);
-		std::fill(&buffer[0][width()/4*2], &buffer[0][width()/4*3], pattern1);
-		std::fill(&buffer[0][width()/4*3], &buffer[0][width()],     pattern2);
-		std::fill(RowBlock::cast(&buffer[1][0]),            RowBlock::cast(&buffer[height()/4][0]),   *RowBlock::cast(&buffer[0][0]));
-		std::fill(RowBlock::cast(&buffer[height()/4*2][0]), RowBlock::cast(&buffer[height()/4*3][0]), *RowBlock::cast(&buffer[0][0]));
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		std::fill(&buffer[0][0],         &buffer[0][width/4],   pattern1);
+		std::fill(&buffer[0][width/4],   &buffer[0][width/4*2], pattern2);
+		std::fill(&buffer[0][width/4*2], &buffer[0][width/4*3], pattern1);
+		std::fill(&buffer[0][width/4*3], &buffer[0][width],     pattern2);
+		std::fill(RowBlock::cast(&buffer[1][0]),          RowBlock::cast(&buffer[height/4][0]),   *RowBlock::cast(&buffer[0][0]));
+		std::fill(RowBlock::cast(&buffer[height/4*2][0]), RowBlock::cast(&buffer[height/4*3][0]), *RowBlock::cast(&buffer[0][0]));
 
-		std::fill(&buffer[height()/4][0],           &buffer[height()/4][width()/4],   pattern2);
-		std::fill(&buffer[height()/4][width()/4],   &buffer[height()/4][width()/4*2], pattern1);
-		std::fill(&buffer[height()/4][width()/4*2], &buffer[height()/4][width()/4*3], pattern2);
-		std::fill(&buffer[height()/4][width()/4*3], &buffer[height()/4][width()],     pattern1);
-		std::fill(RowBlock::cast(&buffer[height()/4+1][0]), RowBlock::cast(&buffer[height()/4*2][0]), *RowBlock::cast(&buffer[height()/4][0]));
-		std::fill(RowBlock::cast(&buffer[height()/4*3][0]), RowBlock::cast(&buffer[height()][0]),     *RowBlock::cast(&buffer[height()/4][0]));
+		std::fill(&buffer[height/4][0],         &buffer[height/4][width/4],   pattern2);
+		std::fill(&buffer[height/4][width/4],   &buffer[height/4][width/4*2], pattern1);
+		std::fill(&buffer[height/4][width/4*2], &buffer[height/4][width/4*3], pattern2);
+		std::fill(&buffer[height/4][width/4*3], &buffer[height/4][width],     pattern1);
+		std::fill(RowBlock::cast(&buffer[height/4+1][0]), RowBlock::cast(&buffer[height/4*2][0]), *RowBlock::cast(&buffer[height/4][0]));
+		std::fill(RowBlock::cast(&buffer[height/4*3][0]), RowBlock::cast(&buffer[height][0]),     *RowBlock::cast(&buffer[height/4][0]));
 	}
 	const bool invert_;
 	constexpr Checker(bool invert = false): invert_(invert){}
@@ -187,15 +194,17 @@ struct Checker: FixedSize{
 struct StairStepH: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		const png_uint_32 stair_height = height()/stairs_;
-		const png_uint_32 step_width = width()/steps_ + (width()%steps_ ? 1 : 0);
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		const png_uint_32 stair_height = height/stairs_;
+		const png_uint_32 step_width = width/steps_ + (width%steps_ ? 1 : 0);
 		bool invert = invert_;
-		for(png_uint_32 row=0; row<height(); row+=stair_height){
+		for(png_uint_32 row=0; row<height; row+=stair_height){
 			Gradator gradator{white/steps_, invert ? white : black, invert};
-			for(png_uint_32 column=0; column<width(); column+=step_width){
-				std::fill(&buffer[row][column], &buffer[row][std::min(width(), column+step_width)], gradator());
+			for(png_uint_32 column=0; column<width; column+=step_width){
+				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+step_width)], gradator());
 			}
-			std::fill(RowBlock::cast(&buffer[row+1][0]), RowBlock::cast(&buffer[std::min(height(), row+stair_height)][0]), *RowBlock::cast(&buffer[row][0]));
+			std::fill(RowBlock::cast(&buffer[row+1][0]), RowBlock::cast(&buffer[std::min(height, row+stair_height)][0]), *RowBlock::cast(&buffer[row][0]));
 			invert = !invert;
 		}
 	}
@@ -209,19 +218,21 @@ struct StairStepH: FixedSize{
 struct StairStepV: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		const png_uint_32 stair_width = width()/stairs_;
-		const png_uint_32 step_height = height()/steps_ + (height()%steps_ ? 1 : 0);
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		const png_uint_32 stair_width = width/stairs_;
+		const png_uint_32 step_height = height/steps_ + (height%steps_ ? 1 : 0);
 		bool invert = invert_;
 		std::vector<Gradator> gradators;
 		for(int i=0; i<stairs_; ++i){
 			gradators.push_back({white/steps_, invert ? white : black, invert});
 			invert = !invert;
 		}
-		for(png_uint_32 row=0; row<height(); row+=step_height){
-			for(png_uint_32 column=0; column<width(); column+=stair_width){
-				std::fill(&buffer[row][column], &buffer[row][std::min(width(), column+stair_width)], gradators.at(column/stair_width)());
+		for(png_uint_32 row=0; row<height; row+=step_height){
+			for(png_uint_32 column=0; column<width; column+=stair_width){
+				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+stair_width)], gradators.at(column/stair_width)());
 			}
-			std::fill(RowBlock::cast(&buffer[row+1][0]), RowBlock::cast(&buffer[std::min(height(), row+step_height)][0]), *RowBlock::cast(&buffer[row][0]));
+			std::fill(RowBlock::cast(&buffer[row+1][0]), RowBlock::cast(&buffer[std::min(height, row+step_height)][0]), *RowBlock::cast(&buffer[row][0]));
 		}
 	}
 	const int stairs_;
@@ -234,66 +245,69 @@ struct StairStepV: FixedSize{
 struct Lamp: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		std::generate(&buffer[0][0],              &buffer[0][width()],              Gradator(red    /width()));
-		std::generate(&buffer[height()/12][0],    &buffer[height()/12][width()],    Gradator(green  /width()));
-		std::generate(&buffer[height()/12*2][0],  &buffer[height()/12*2][width()],  Gradator(blue   /width()));
-		std::generate(&buffer[height()/12*3][0],  &buffer[height()/12*3][width()],  Gradator(cyan   /width()));
-		std::generate(&buffer[height()/12*4][0],  &buffer[height()/12*4][width()],  Gradator(magenta/width()));
-		std::generate(&buffer[height()/12*5][0],  &buffer[height()/12*5][width()],  Gradator(yellow /width()));
-		std::generate(&buffer[height()/12*6][0],  &buffer[height()/12*6][width()],  Gradator(cyan   /width(), red));
-		std::generate(&buffer[height()/12*7][0],  &buffer[height()/12*7][width()],  Gradator(magenta/width(), green));
-		std::generate(&buffer[height()/12*8][0],  &buffer[height()/12*8][width()],  Gradator(yellow /width(), blue));
-		std::generate(&buffer[height()/12*9][0],  &buffer[height()/12*9][width()],  Gradator(red    /width(), cyan));
-		std::generate(&buffer[height()/12*10][0], &buffer[height()/12*10][width()], Gradator(green  /width(), magenta));
-		std::generate(&buffer[height()/12*11][0], &buffer[height()/12*11][width()], Gradator(blue   /width(), yellow));
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		std::generate(&buffer[0][0],            &buffer[0][width],            Gradator(red    /width));
+		std::generate(&buffer[height/12][0],    &buffer[height/12][width],    Gradator(green  /width));
+		std::generate(&buffer[height/12*2][0],  &buffer[height/12*2][width],  Gradator(blue   /width));
+		std::generate(&buffer[height/12*3][0],  &buffer[height/12*3][width],  Gradator(cyan   /width));
+		std::generate(&buffer[height/12*4][0],  &buffer[height/12*4][width],  Gradator(magenta/width));
+		std::generate(&buffer[height/12*5][0],  &buffer[height/12*5][width],  Gradator(yellow /width));
+		std::generate(&buffer[height/12*6][0],  &buffer[height/12*6][width],  Gradator(cyan   /width, red));
+		std::generate(&buffer[height/12*7][0],  &buffer[height/12*7][width],  Gradator(magenta/width, green));
+		std::generate(&buffer[height/12*8][0],  &buffer[height/12*8][width],  Gradator(yellow /width, blue));
+		std::generate(&buffer[height/12*9][0],  &buffer[height/12*9][width],  Gradator(red    /width, cyan));
+		std::generate(&buffer[height/12*10][0], &buffer[height/12*10][width], Gradator(green  /width, magenta));
+		std::generate(&buffer[height/12*11][0], &buffer[height/12*11][width], Gradator(blue   /width, yellow));
 
-		std::fill(RowBlock::cast(&buffer[1][0]),                RowBlock::cast(&buffer[height()/12][0]),    *RowBlock::cast(&buffer[0][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12+1][0]),    RowBlock::cast(&buffer[height()/12*2][0]),  *RowBlock::cast(&buffer[height()/12][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*2+1][0]),  RowBlock::cast(&buffer[height()/12*3][0]),  *RowBlock::cast(&buffer[height()/12*2][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*3+1][0]),  RowBlock::cast(&buffer[height()/12*4][0]),  *RowBlock::cast(&buffer[height()/12*3][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*4+1][0]),  RowBlock::cast(&buffer[height()/12*5][0]),  *RowBlock::cast(&buffer[height()/12*4][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*5+1][0]),  RowBlock::cast(&buffer[height()/12*6][0]),  *RowBlock::cast(&buffer[height()/12*5][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*6+1][0]),  RowBlock::cast(&buffer[height()/12*7][0]),  *RowBlock::cast(&buffer[height()/12*6][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*7+1][0]),  RowBlock::cast(&buffer[height()/12*8][0]),  *RowBlock::cast(&buffer[height()/12*7][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*8+1][0]),  RowBlock::cast(&buffer[height()/12*9][0]),  *RowBlock::cast(&buffer[height()/12*8][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*9+1][0]),  RowBlock::cast(&buffer[height()/12*10][0]), *RowBlock::cast(&buffer[height()/12*9][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*10+1][0]), RowBlock::cast(&buffer[height()/12*11][0]), *RowBlock::cast(&buffer[height()/12*10][0]));
-		std::fill(RowBlock::cast(&buffer[height()/12*11+1][0]), RowBlock::cast(&buffer[height()][0]),       *RowBlock::cast(&buffer[height()/12*11][0]));
+		std::fill(RowBlock::cast(&buffer[1][0]),              RowBlock::cast(&buffer[height/12][0]),    *RowBlock::cast(&buffer[0][0]));
+		std::fill(RowBlock::cast(&buffer[height/12+1][0]),    RowBlock::cast(&buffer[height/12*2][0]),  *RowBlock::cast(&buffer[height/12][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*2+1][0]),  RowBlock::cast(&buffer[height/12*3][0]),  *RowBlock::cast(&buffer[height/12*2][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*3+1][0]),  RowBlock::cast(&buffer[height/12*4][0]),  *RowBlock::cast(&buffer[height/12*3][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*4+1][0]),  RowBlock::cast(&buffer[height/12*5][0]),  *RowBlock::cast(&buffer[height/12*4][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*5+1][0]),  RowBlock::cast(&buffer[height/12*6][0]),  *RowBlock::cast(&buffer[height/12*5][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*6+1][0]),  RowBlock::cast(&buffer[height/12*7][0]),  *RowBlock::cast(&buffer[height/12*6][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*7+1][0]),  RowBlock::cast(&buffer[height/12*8][0]),  *RowBlock::cast(&buffer[height/12*7][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*8+1][0]),  RowBlock::cast(&buffer[height/12*9][0]),  *RowBlock::cast(&buffer[height/12*8][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*9+1][0]),  RowBlock::cast(&buffer[height/12*10][0]), *RowBlock::cast(&buffer[height/12*9][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*10+1][0]), RowBlock::cast(&buffer[height/12*11][0]), *RowBlock::cast(&buffer[height/12*10][0]));
+		std::fill(RowBlock::cast(&buffer[height/12*11+1][0]), RowBlock::cast(&buffer[height][0]),       *RowBlock::cast(&buffer[height/12*11][0]));
 	}
 };
 
 struct CrossHatch: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		for(png_uint_32 i=0; i<height(); i+=lattice_height_){
-			std::fill(&buffer[i][0], &buffer[i][width()], white);
+		const png_uint_32 width = buffer.width();
+		const png_uint_32 height = buffer.height();
+		for(png_uint_32 i=0; i<height; i+=lattice_height_){
+			std::fill(&buffer[i][0], &buffer[i][width], white);
 		}
-		std::fill(&buffer[height()-1][0], &buffer[height()][0], white);
+		std::fill(&buffer[height-1][0], &buffer[height][0], white);
 
-		for(png_uint_32 i=0; i<width(); i+=lattice_width_){
-			for(png_uint_32 j=0; j<height(); ++j){
+		for(png_uint_32 i=0; i<width; i+=lattice_width_){
+			for(png_uint_32 j=0; j<height; ++j){
 				buffer[j][i] = white;
 			}
 		}
-		for(png_uint_32 i=0; i<height(); ++i){
-			buffer[i][width()-1] = white;
+		for(png_uint_32 i=0; i<height; ++i){
+			buffer[i][width-1] = white;
 		}
 
-		const double slope = static_cast<double>(height())/width();
-		for(png_uint_32 i=0; i<width(); ++i){
+		const double slope = static_cast<double>(height)/width;
+		for(png_uint_32 i=0; i<width; ++i){
 			buffer[slope*i][i] = white;
-			buffer[height()-slope*i][i] = white;
+			buffer[height-slope*i][i] = white;
 		}
 
-		const png_uint_32 radius = height()/2;
-		const png_uint_32 shift_v = height()/2;
-		const png_uint_32 shift_h = width()/2;
+		const png_uint_32 radius = height/2;
+		const png_uint_32 shift_v = height/2;
+		const png_uint_32 shift_h = width/2;
 		for(double theta=0; theta<2*M_PI; theta+=2.0*M_PI/5000.0){
-			png_uint_32 row    = std::min(height() - 1, static_cast<png_uint_32>(shift_v + radius*std::sin(theta)));
-			png_uint_32 column = std::min(width()  - 1, static_cast<png_uint_32>(shift_h + radius*std::cos(theta)));
+			png_uint_32 row    = std::min(height - 1, static_cast<png_uint_32>(shift_v + radius*std::sin(theta)));
+			png_uint_32 column = std::min(width  - 1, static_cast<png_uint_32>(shift_h + radius*std::cos(theta)));
 			buffer[row][column] = white;
 		}
-
 	}
 	const png_uint_32 lattice_width_;
 	const png_uint_32 lattice_height_;
@@ -303,8 +317,8 @@ struct CrossHatch: FixedSize{
 struct GeneratorExample: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		for(png_uint_32 row=0; row<height(); ++row){
-			for(png_uint_32 column=0; column<width(); ++column){
+		for(png_uint_32 row=0; row<buffer.height(); ++row){
+			for(png_uint_32 column=0; column<buffer.width(); ++column){
 				buffer[row][column] = black;
 			}
 		}
@@ -315,8 +329,9 @@ struct GeneratorExample: FixedSize{
 // TODO Multi
 // TODO Focus
 
-constexpr unsigned char char_width  = 8;
-constexpr unsigned char char_height = 8;
+constexpr unsigned char char_width  = 8; // dots
+constexpr unsigned char char_height = 8; // dots
+constexpr unsigned char char_tab_width = 4; // chars
 constexpr unsigned char char_bitmask[8] = {
 	0b10000000,
 	0b01000000,
@@ -1490,8 +1505,8 @@ struct Character: FixedSize{
 	}
 	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel, int scale)const
 	{
-		if('~' < c || height() <= row || width() <= column){
-			std::cerr << "warning: not supported: row: " << row << ", col: " << column << ", ascii: " << int(c) << std::endl;
+		if('~' < c || buffer.height() <= row || buffer.width() <= column){
+			std::cerr << "warning: not supported: row: " << row << ", col: " << column << ", ascii: " << c << '(' << int(c) << ')' << std::endl;
 			return;
 		}
 		for(unsigned char i=0; i<char_height; ++i){
@@ -1508,13 +1523,13 @@ struct Character: FixedSize{
 	}
 	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, const std::string& str, const Pixel& pixel, int scale)const
 	{
-		for(std::size_t i=0, j=0; i<str.size(); ++i){
+		for(std::string::size_type i=0, j=0; i<str.size(); ++i){
 			if(str[i] == '\n'){
 				row += scale*char_height;
 				j = 0;
 				continue;
 			}else if(str[i] == '\t'){
-				j += 4;
+				j += char_tab_width;
 				continue;
 			}
 			write(buffer, row, column+j*scale*char_width, str[i], pixel, scale);
@@ -1525,6 +1540,30 @@ struct Character: FixedSize{
 	const Pixel pixel_;
 	const int scale_;
 	Character(const std::string& text, const Pixel& pixel=white, int scale=1): text_(text), pixel_(pixel), scale_(scale){}
+};
+
+struct TypeWriter: PatternGenerator{
+	virtual const png_uint_32& width()const override{return width_;}
+	virtual const png_uint_32& height()const override{return height_;}
+	virtual void generate(FrameBuffer buffer)const override
+	{
+		buffer << Character(text_, white);
+	}
+	png_uint_32 width_;
+	png_uint_32 height_;
+	std::string text_;
+	TypeWriter(const std::string& textfilename): width_(), height_(), text_()
+	{
+		std::ifstream ifs(textfilename);
+		std::string line;
+		while(std::getline(ifs, line)){
+			width_ = std::max(width_, static_cast<png_uint_32>(line.size() + (char_tab_width-1)*std::count_if(line.begin(), line.end(), [](char c){return c == '\t';})));
+			text_ += line + '\n';
+			++height_;
+		}
+		width_ *= char_width;
+		height_ *= char_height;
+	}
 };
 
 struct CSVLoader: PatternGenerator{
@@ -1552,6 +1591,7 @@ struct CSVLoader: PatternGenerator{
 	}
 };
 
+/// @deprecated
 struct Overlayer: PatternGenerator{
 	virtual const png_uint_32& width()const override{return first_.width();}
 	virtual const png_uint_32& height()const override{return first_.height();}
@@ -1559,6 +1599,15 @@ struct Overlayer: PatternGenerator{
 	Overlayer(const PatternGenerator& first, const PatternGenerator& second): first_(first), second_(second){}
 	const PatternGenerator& first_;
 	const PatternGenerator& second_;
+};
+
+struct Overwriter: PatternGenerator{
+	virtual const png_uint_32& width()const override{return generators_.at(0)->width();}
+	virtual const png_uint_32& height()const override{return generators_.at(0)->height();}
+	virtual void generate(FrameBuffer buffer)const override{for(const auto& g: generators_){buffer << *g;}}
+
+	Overwriter(const std::vector<std::shared_ptr<const PatternGenerator>>& generators):generators_(generators){}
+	const std::vector<std::shared_ptr<const PatternGenerator>>& generators_;
 };
 
 void generate_16bpc_png(const std::string& output_filename, const PatternGenerator& generator)
@@ -1585,51 +1634,45 @@ void generate_16bpc_png(const std::string& output_filename, const PatternGenerat
 		row_ptrs[i] = block.get() + i*generator.width()*pixelsize;
 	}
 	png_set_rows(png_ptr, info_ptr, row_ptrs.get());
-	generator.generate(FrameBuffer(block.get(), generator.width()));
+	generator.generate(FrameBuffer(block.get(), generator.width(), generator.height()));
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
 int main(void)
 {
-	generate_16bpc_png("colorbar.png",    ColorBar());
-	generate_16bpc_png("white100.png",    Luster(white));
-	generate_16bpc_png("red100.png",      Luster(red));
-	generate_16bpc_png("green100.png",    Luster(green));
-	generate_16bpc_png("blue100.png",     Luster(blue));
-	generate_16bpc_png("white50.png",     Luster(white/2));
-	generate_16bpc_png("red50.png",       Luster(red  /2));
-	generate_16bpc_png("green50.png",     Luster(green/2));
-	generate_16bpc_png("blue50.png",      Luster(blue /2));
-	generate_16bpc_png("checker1.png",    Checker());
-	generate_16bpc_png("checker2.png",    Checker(true));
-	generate_16bpc_png("stairstepH1.png", StairStepH());
-	generate_16bpc_png("stairstepH2.png", StairStepH(false));
-	generate_16bpc_png("stairstepH3.png", StairStepH(true));
-	generate_16bpc_png("stairstepV1.png", StairStepV());
-	generate_16bpc_png("stairstepV2.png", StairStepV(false));
-	generate_16bpc_png("stairstepV3.png", StairStepV(true));
-	generate_16bpc_png("lamp.png",        Lamp());
-	generate_16bpc_png("crosshatch.png",  Overlayer(Luster(black), CrossHatch(192, 108)));
-	generate_16bpc_png("character.png",   Overlayer(Luster(black), Character(
+//	generate_16bpc_png("colorbar.png",    ColorBar());
+//	generate_16bpc_png("white100.png",    Luster(white));
+//	generate_16bpc_png("red100.png",      Luster(red));
+//	generate_16bpc_png("green100.png",    Luster(green));
+//	generate_16bpc_png("blue100.png",     Luster(blue));
+//	generate_16bpc_png("white50.png",     Luster(white/2));
+//	generate_16bpc_png("red50.png",       Luster(red  /2));
+//	generate_16bpc_png("green50.png",     Luster(green/2));
+//	generate_16bpc_png("blue50.png",      Luster(blue /2));
+//	generate_16bpc_png("checker1.png",    Checker());
+//	generate_16bpc_png("checker2.png",    Checker(true));
+//	generate_16bpc_png("stairstepH1.png", StairStepH());
+//	generate_16bpc_png("stairstepH2.png", StairStepH(false));
+//	generate_16bpc_png("stairstepH3.png", StairStepH(true));
+//	generate_16bpc_png("stairstepV1.png", StairStepV());
+//	generate_16bpc_png("stairstepV2.png", StairStepV(false));
+//	generate_16bpc_png("stairstepV3.png", StairStepV(true));
+//	generate_16bpc_png("lamp.png",        Lamp());
+	generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
+	generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(
 																	" !\"#$%&'()*+,-./\n"
 																	"0123456789:;<=>?@\n"
 																	"ABCDEFGHIJKLMNO\n"
 																	"PQRSTUVWXYZ[\\]^_`\n"
 																	"abcdefghijklmno\n"
-																	"pqrstuvwxyz{|}~", yellow, 10)));
+																	"pqrstuvwxyz{|}~", red, 10)}));
+	generate_16bpc_png("source.png",      TypeWriter("16bpc_png_generator.cpp"));
+
+	// TODO Generators should not have width and/or height params.
 
 //	generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
+//	generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv"), std::make_shared<Character>("Happy New Year!!", black, 15)}));
 //	generate_16bpc_png("example.png",     GeneratorExample());
-
-//	generate_16bpc_png("happy_new_year.png", Overlayer(CSVLoader("happy_new_year.csv"), Character("Happy New Year!!", black, 15)));
-
-//	std::ifstream ifs("16bpc_png_generator.cpp");
-//	std::string line;
-//	std::string source;
-//	while(std::getline(ifs, line)){
-//		source += line + '\n';
-//	}
-//	generate_16bpc_png("source.png", Character(source, white, 1));
 	return 0;
 }
