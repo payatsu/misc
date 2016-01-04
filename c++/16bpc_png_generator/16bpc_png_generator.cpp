@@ -1511,7 +1511,7 @@ constexpr unsigned char characters[][8] = {
 struct Character: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
-		write(buffer, 0, 0, text_, pixel_, scale_);
+		write(buffer, row_, column_, text_, pixel_, scale_);
 	}
 	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel, int scale)const
 	{
@@ -1549,7 +1549,9 @@ struct Character: FixedSize{
 	const std::string text_;
 	const Pixel pixel_;
 	const int scale_;
-	Character(const std::string& text, const Pixel& pixel=white, int scale=1): text_(text), pixel_(pixel), scale_(scale){}
+	const png_uint_32 row_;
+	const png_uint_32 column_;
+	Character(const std::string& text, const Pixel& pixel=white, int scale=1, png_uint_32 row=0, png_uint_32 column=0): text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 };
 
 struct TypeWriter: PatternGenerator{
@@ -1702,7 +1704,7 @@ int main(int argc, char* argv[])
 		generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv.gz"));
 	}
 	if(std::ifstream("happy_new_year.csv.gz")){
-		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15)}));
+		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, height/2 - char_height*15/2, 0)}));
 	}
 	return 0;
 }
