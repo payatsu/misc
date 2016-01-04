@@ -4,7 +4,7 @@
  * @details
  * To compile this program, do as described below.
  * @code
- * $ g++ --std=c++14 16bpc_png_generator.cpp -lpng
+ * $ g++ --std=c++14 16bpc_png_generator.cpp -lpng -lz
  * @endcode
  * Then, to run this program, do as described below.
  * @code
@@ -20,9 +20,11 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <vector>
 #include <png.h>
+#include <zlib.h>
 
 constexpr png_uint_32 width  = 1920;
 constexpr png_uint_32 height = 1200;
@@ -66,6 +68,12 @@ struct UniColor: Painter{
 	virtual PseudoPixel operator()()override{return pixel_;}
 	constexpr UniColor(const PseudoPixel& pixel): pixel_(pixel){}
 	const PseudoPixel pixel_;
+};
+struct RandomColor: Painter{
+	virtual PseudoPixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
+	std::mt19937 engine_;
+	std::uniform_int_distribution<png_uint_16> distribution_;
 };
 struct Gradator: Painter{
 	const PseudoPixel step_;
@@ -314,12 +322,13 @@ struct CrossHatch: FixedSize{
 	constexpr CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
 };
 
-struct GeneratorExample: FixedSize{
+struct WhiteNoise: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
+		RandomColor random_color;
 		for(png_uint_32 row=0; row<buffer.height(); ++row){
 			for(png_uint_32 column=0; column<buffer.width(); ++column){
-				buffer[row][column] = black;
+				buffer[row][column] = random_color();
 			}
 		}
 	}
@@ -328,6 +337,7 @@ struct GeneratorExample: FixedSize{
 // TODO ColorStep
 // TODO Multi
 // TODO Focus
+// TODO Generators should not have width and/or height params.
 
 constexpr unsigned char char_width  = 8; // dots
 constexpr unsigned char char_height = 8; // dots
@@ -1573,11 +1583,11 @@ struct CSVLoader: PatternGenerator{
 	png_uint_32 width_;
 	png_uint_32 height_;
 	std::vector<Pixel> pixels_;
-	CSVLoader(const std::string& csvfilename): width_(), height_(), pixels_()
+	CSVLoader(const std::string& filename): CSVLoader(std::istringstream(read(filename))){}
+	CSVLoader(std::istream&& is): width_(), height_(), pixels_()
 	{
-		std::ifstream ifs(csvfilename);
 		std::string line;
-		while(std::getline(ifs, line)){
+		while(std::getline(is, line)){
 			std::replace(line.begin(), line.end(), ',', ' ');
 			std::istringstream iss(line);
 			std::string token;
@@ -1588,6 +1598,27 @@ struct CSVLoader: PatternGenerator{
 			}
 			++height_;
 		}
+	}
+	std::string read(const std::string& filename)
+	{
+		gzFile_s* fp = gzopen(filename.c_str(), "rb");
+		if(!fp){
+			std::perror("");
+			return "";
+		}
+		constexpr unsigned int buffer_size = 1024 * 256;
+		if(gzbuffer(fp, buffer_size)){
+			std::perror("");
+			return "";
+		}
+		char buffer[buffer_size];
+		unsigned int len = 0;
+		std::string str;
+		while((len = gzread(fp, buffer, buffer_size)) > 0){
+			str.append(buffer, len);
+		}
+		gzclose(fp);
+		return str;
 	}
 };
 
@@ -1639,40 +1670,39 @@ void generate_16bpc_png(const std::string& output_filename, const PatternGenerat
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
-int main(void)
+int main(int argc, char* argv[])
 {
-//	generate_16bpc_png("colorbar.png",    ColorBar());
-//	generate_16bpc_png("white100.png",    Luster(white));
-//	generate_16bpc_png("red100.png",      Luster(red));
-//	generate_16bpc_png("green100.png",    Luster(green));
-//	generate_16bpc_png("blue100.png",     Luster(blue));
-//	generate_16bpc_png("white50.png",     Luster(white/2));
-//	generate_16bpc_png("red50.png",       Luster(red  /2));
-//	generate_16bpc_png("green50.png",     Luster(green/2));
-//	generate_16bpc_png("blue50.png",      Luster(blue /2));
-//	generate_16bpc_png("checker1.png",    Checker());
-//	generate_16bpc_png("checker2.png",    Checker(true));
-//	generate_16bpc_png("stairstepH1.png", StairStepH());
-//	generate_16bpc_png("stairstepH2.png", StairStepH(false));
-//	generate_16bpc_png("stairstepH3.png", StairStepH(true));
-//	generate_16bpc_png("stairstepV1.png", StairStepV());
-//	generate_16bpc_png("stairstepV2.png", StairStepV(false));
-//	generate_16bpc_png("stairstepV3.png", StairStepV(true));
-//	generate_16bpc_png("lamp.png",        Lamp());
-	generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
-	generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(
-																	" !\"#$%&'()*+,-./\n"
-																	"0123456789:;<=>?@\n"
-																	"ABCDEFGHIJKLMNO\n"
-																	"PQRSTUVWXYZ[\\]^_`\n"
-																	"abcdefghijklmno\n"
-																	"pqrstuvwxyz{|}~", red, 10)}));
-	generate_16bpc_png("source.png",      TypeWriter("16bpc_png_generator.cpp"));
-
-	// TODO Generators should not have width and/or height params.
-
-//	generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
-//	generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv"), std::make_shared<Character>("Happy New Year!!", black, 15)}));
-//	generate_16bpc_png("example.png",     GeneratorExample());
+	if(1<argc && std::string("builtins") == argv[1]){
+		generate_16bpc_png("colorbar.png",    ColorBar());
+		generate_16bpc_png("white100.png",    Luster(white));
+		generate_16bpc_png("red100.png",      Luster(red));
+		generate_16bpc_png("green100.png",    Luster(green));
+		generate_16bpc_png("blue100.png",     Luster(blue));
+		generate_16bpc_png("white50.png",     Luster(white/2));
+		generate_16bpc_png("red50.png",       Luster(red  /2));
+		generate_16bpc_png("green50.png",     Luster(green/2));
+		generate_16bpc_png("blue50.png",      Luster(blue /2));
+		generate_16bpc_png("checker1.png",    Checker());
+		generate_16bpc_png("checker2.png",    Checker(true));
+		generate_16bpc_png("stairstepH1.png", StairStepH());
+		generate_16bpc_png("stairstepH2.png", StairStepH(false));
+		generate_16bpc_png("stairstepH3.png", StairStepH(true));
+		generate_16bpc_png("stairstepV1.png", StairStepV());
+		generate_16bpc_png("stairstepV2.png", StairStepV(false));
+		generate_16bpc_png("stairstepV3.png", StairStepV(true));
+		generate_16bpc_png("lamp.png",        Lamp());
+		generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
+		generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
+		generate_16bpc_png("sourcecode.png",  TypeWriter("16bpc_png_generator.cpp"));
+		generate_16bpc_png("whitenoise.png",     WhiteNoise());
+	}
+	if(std::ifstream("userdefined.csv")){
+		generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
+	}else if(std::ifstream("userdefined.csv.gz")){
+		generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv.gz"));
+	}
+	if(std::ifstream("happy_new_year.csv.gz")){
+		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15)}));
+	}
 	return 0;
 }
