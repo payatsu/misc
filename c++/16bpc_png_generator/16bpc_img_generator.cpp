@@ -1,10 +1,10 @@
 /**
  * @file
- * @brief Program to generate 16 bpc(bits per component) PNG images.
+ * @brief Program to generate 16 bpc(bits per component) PNG/TIFF images.
  * @details
  * To compile this program, do as described below.
  * @code
- * $ g++ --std=c++14 16bpc_png_generator.cpp -lpng -lz
+ * $ g++ --std=c++14 16bpc_img_generator.cpp -lpng -ltiff -lz
  * @endcode
  * Then, to run this program, do as described below.
  * @code
@@ -24,6 +24,7 @@
 #include <sstream>
 #include <vector>
 #include <png.h>
+#include <tiffio.h>
 #include <zlib.h>
 
 constexpr png_uint_32 width  = 1920;
@@ -1672,8 +1673,38 @@ void generate_16bpc_png(const std::string& output_filename, const PatternGenerat
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
 
+void generate_16bpc_tif(const std::string& output_filename, const PatternGenerator& generator)
+{
+	std::unique_ptr<unsigned char[]> block(new unsigned char[generator.height()*generator.width()*pixelsize]);
+	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
+	if(!image){
+		perror("");
+		return;
+	}
+	TIFFSetField(image, TIFFTAG_IMAGEWIDTH, generator.width());
+	TIFFSetField(image, TIFFTAG_IMAGELENGTH, generator.height());
+	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, bitdepth);
+	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 3);
+	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, height);
+	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
+	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
+	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
+	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
+
+	generator.generate(FrameBuffer(block.get(), generator.width(), generator.height()));
+	std::transform(reinterpret_cast<uint16_t*>(block.get()), reinterpret_cast<uint16_t*>(block.get() + generator.height()*generator.width()*pixelsize), reinterpret_cast<uint16_t*>(block.get()), [](uint16_t i){return i>>8 | i<<8;});
+
+	TIFFWriteEncodedStrip(image, 0, block.get(), generator.height()*generator.width()*pixelsize);
+
+	TIFFClose(image);
+}
+
 int main(int argc, char* argv[])
 {
+
 	if(1<argc && std::string("builtins") == argv[1]){
 		generate_16bpc_png("colorbar.png",    ColorBar());
 		generate_16bpc_png("white100.png",    Luster(white));
@@ -1695,16 +1726,42 @@ int main(int argc, char* argv[])
 		generate_16bpc_png("lamp.png",        Lamp());
 		generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
 		generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
-		generate_16bpc_png("sourcecode.png",  TypeWriter("16bpc_png_generator.cpp"));
-		generate_16bpc_png("whitenoise.png",     WhiteNoise());
+		generate_16bpc_png("sourcecode.png",  TypeWriter("16bpc_img_generator.cpp"));
+		generate_16bpc_png("whitenoise.png",  WhiteNoise());
+
+		generate_16bpc_tif("colorbar.tif",    ColorBar());
+		generate_16bpc_tif("white100.tif",    Luster(white));
+		generate_16bpc_tif("red100.tif",      Luster(red));
+		generate_16bpc_tif("green100.tif",    Luster(green));
+		generate_16bpc_tif("blue100.tif",     Luster(blue));
+		generate_16bpc_tif("white50.tif",     Luster(white/2));
+		generate_16bpc_tif("red50.tif",       Luster(red  /2));
+		generate_16bpc_tif("green50.tif",     Luster(green/2));
+		generate_16bpc_tif("blue50.tif",      Luster(blue /2));
+		generate_16bpc_tif("checker1.tif",    Checker());
+		generate_16bpc_tif("checker2.tif",    Checker(true));
+		generate_16bpc_tif("stairstepH1.tif", StairStepH());
+		generate_16bpc_tif("stairstepH2.tif", StairStepH(false));
+		generate_16bpc_tif("stairstepH3.tif", StairStepH(true));
+		generate_16bpc_tif("stairstepV1.tif", StairStepV());
+		generate_16bpc_tif("stairstepV2.tif", StairStepV(false));
+		generate_16bpc_tif("stairstepV3.tif", StairStepV(true));
+		generate_16bpc_tif("lamp.tif",        Lamp());
+		generate_16bpc_tif("crosshatch.tif",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
+		generate_16bpc_tif("character.tif",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
+		generate_16bpc_tif("sourcecode.tif",  TypeWriter("16bpc_img_generator.cpp"));
+		generate_16bpc_tif("whitenoise.tif",  WhiteNoise());
 	}
 	if(std::ifstream("userdefined.csv")){
 		generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv"));
+		generate_16bpc_tif("userdefined.tif", CSVLoader("userdefined.csv"));
 	}else if(std::ifstream("userdefined.csv.gz")){
 		generate_16bpc_png("userdefined.png", CSVLoader("userdefined.csv.gz"));
+		generate_16bpc_tif("userdefined.tif", CSVLoader("userdefined.csv.gz"));
 	}
 	if(std::ifstream("happy_new_year.csv.gz")){
 		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, height/2 - char_height*15/2, 0)}));
+		generate_16bpc_tif("happy_new_year.tif", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, height/2 - char_height*15/2, 0)}));
 	}
 	return 0;
 }
