@@ -42,65 +42,52 @@ struct PatternGenerator{
 	virtual ~PatternGenerator() = default;
 };
 
-struct PseudoPixel{
+struct Pixel{
 	png_uint_16 R_;
 	png_uint_16 G_;
 	png_uint_16 B_;
-	constexpr PseudoPixel(png_uint_16 R=0x0000, png_uint_16 G=0x0000, png_uint_16 B=0x0000):R_(R), G_(G), B_(B){}
-	constexpr PseudoPixel operator+(const PseudoPixel& rhs)const{return {static_cast<png_uint_16>(R_+rhs.R_), static_cast<png_uint_16>(G_+rhs.G_), static_cast<png_uint_16>(B_+rhs.B_)};}
-	constexpr PseudoPixel operator-(const PseudoPixel& rhs)const{return {static_cast<png_uint_16>(R_-rhs.R_), static_cast<png_uint_16>(G_-rhs.G_), static_cast<png_uint_16>(B_-rhs.B_)};}
-	constexpr PseudoPixel operator*(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_*rhs), static_cast<png_uint_16>(G_*rhs), static_cast<png_uint_16>(B_*rhs)};}
-	constexpr PseudoPixel operator/(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_/rhs), static_cast<png_uint_16>(G_/rhs), static_cast<png_uint_16>(B_/rhs)};}
+	constexpr Pixel(png_uint_16 R=0x0000, png_uint_16 G=0x0000, png_uint_16 B=0x0000):R_(R), G_(G), B_(B){}
+	constexpr Pixel(unsigned long long int binary):R_(binary>>32&0xffff), G_(binary>>16&0xffff), B_(binary&0xffff) {}
+	constexpr Pixel operator+(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_+rhs.R_), static_cast<png_uint_16>(G_+rhs.G_), static_cast<png_uint_16>(B_+rhs.B_)};}
+	constexpr Pixel operator-(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_-rhs.R_), static_cast<png_uint_16>(G_-rhs.G_), static_cast<png_uint_16>(B_-rhs.B_)};}
+	constexpr Pixel operator*(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_*rhs), static_cast<png_uint_16>(G_*rhs), static_cast<png_uint_16>(B_*rhs)};}
+	constexpr Pixel operator/(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_/rhs), static_cast<png_uint_16>(G_/rhs), static_cast<png_uint_16>(B_/rhs)};}
 };
-constexpr PseudoPixel black  {0x0000, 0x0000, 0x0000};
-constexpr PseudoPixel white  {0xffff, 0xffff, 0xffff};
-constexpr PseudoPixel red    {0xffff, 0x0000, 0x0000};
-constexpr PseudoPixel green  {0x0000, 0xffff, 0x0000};
-constexpr PseudoPixel blue   {0x0000, 0x0000, 0xffff};
-constexpr PseudoPixel cyan   {0x0000, 0xffff, 0xffff};
-constexpr PseudoPixel magenta{0xffff, 0x0000, 0xffff};
-constexpr PseudoPixel yellow {0xffff, 0xffff, 0x0000};
+constexpr Pixel black  {0x0000, 0x0000, 0x0000};
+constexpr Pixel white  {0xffff, 0xffff, 0xffff};
+constexpr Pixel red    {0xffff, 0x0000, 0x0000};
+constexpr Pixel green  {0x0000, 0xffff, 0x0000};
+constexpr Pixel blue   {0x0000, 0x0000, 0xffff};
+constexpr Pixel cyan   {0x0000, 0xffff, 0xffff};
+constexpr Pixel magenta{0xffff, 0x0000, 0xffff};
+constexpr Pixel yellow {0xffff, 0xffff, 0x0000};
 
 struct Painter{
-	virtual PseudoPixel operator()() = 0;
+	virtual Pixel operator()() = 0;
 	virtual ~Painter() = default;
 };
 struct UniColor: Painter{
-	virtual PseudoPixel operator()()override{return pixel_;}
-	constexpr UniColor(const PseudoPixel& pixel): pixel_(pixel){}
-	const PseudoPixel pixel_;
+	virtual Pixel operator()()override{return pixel_;}
+	constexpr UniColor(const Pixel& pixel): pixel_(pixel){}
+	const Pixel pixel_;
 };
 struct RandomColor: Painter{
-	virtual PseudoPixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
 	std::mt19937 engine_;
 	std::uniform_int_distribution<png_uint_16> distribution_;
 };
 struct Gradator: Painter{
-	const PseudoPixel step_;
-	PseudoPixel state_;
+	const Pixel step_;
+	Pixel state_;
 	const bool invert_;
-	constexpr Gradator(const PseudoPixel& step, const PseudoPixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
-	PseudoPixel operator()()override
+	constexpr Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
+	Pixel operator()()override
 	{
-		PseudoPixel tmp = state_;
+		Pixel tmp = state_;
 		state_ = invert_ ? state_ - step_ : state_ + step_;
 		return tmp;
 	}
-};
-
-/**
- * @attention Big-Endian
- */
-struct Pixel{
-	png_byte Rmsb_;
-	png_byte Rlsb_;
-	png_byte Gmsb_;
-	png_byte Glsb_;
-	png_byte Bmsb_;
-	png_byte Blsb_;
-	constexpr Pixel(unsigned long long int binary): Rmsb_(binary>>40&0xff), Rlsb_(binary>>32&0xff), Gmsb_(binary>>24&0xff), Glsb_(binary>>16&0xff), Bmsb_(binary>>8&0xff), Blsb_(binary&0xff){}
-	constexpr Pixel(const PseudoPixel& pseudo): Rmsb_(pseudo.R_>>8), Rlsb_(pseudo.R_&0xff), Gmsb_(pseudo.G_>>8), Glsb_(pseudo.G_&0xff), Bmsb_(pseudo.B_>>8), Blsb_(pseudo.B_&0xff){}
 };
 
 struct Row{
@@ -1669,6 +1656,7 @@ void generate_16bpc_png(const std::string& output_filename, const PatternGenerat
 	}
 	png_set_rows(png_ptr, info_ptr, row_ptrs.get());
 	generator.generate(FrameBuffer(block.get(), generator.width(), generator.height()));
+	std::transform(reinterpret_cast<uint16_t*>(block.get()), reinterpret_cast<uint16_t*>(block.get() + generator.height()*generator.width()*pixelsize), reinterpret_cast<uint16_t*>(block.get()), [](uint16_t i){return i>>8 | i<<8;});
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 }
@@ -1693,12 +1681,8 @@ void generate_16bpc_tif(const std::string& output_filename, const PatternGenerat
 	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-
 	generator.generate(FrameBuffer(block.get(), generator.width(), generator.height()));
-	std::transform(reinterpret_cast<uint16_t*>(block.get()), reinterpret_cast<uint16_t*>(block.get() + generator.height()*generator.width()*pixelsize), reinterpret_cast<uint16_t*>(block.get()), [](uint16_t i){return i>>8 | i<<8;});
-
 	TIFFWriteEncodedStrip(image, 0, block.get(), generator.height()*generator.width()*pixelsize);
-
 	TIFFClose(image);
 }
 
