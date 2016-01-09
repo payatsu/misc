@@ -238,7 +238,7 @@ struct StairStepV: FixedSize{
 	constexpr StairStepV(bool invert): stairs_(1), steps_(20), invert_(invert){}
 };
 
-struct Lamp: FixedSize{
+struct Ramp: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override
 	{
 		const png_uint_32 width = buffer.width();
@@ -1707,7 +1707,7 @@ int main(int argc, char* argv[])
 		generate_16bpc_png("stairstepV1.png", StairStepV());
 		generate_16bpc_png("stairstepV2.png", StairStepV(false));
 		generate_16bpc_png("stairstepV3.png", StairStepV(true));
-		generate_16bpc_png("lamp.png",        Lamp());
+		generate_16bpc_png("lamp.png",        Ramp());
 		generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
 		generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
 		generate_16bpc_png("sourcecode.png",  TypeWriter("16bpc_img_generator.cpp"));
@@ -1730,7 +1730,7 @@ int main(int argc, char* argv[])
 		generate_16bpc_tif("stairstepV1.tif", StairStepV());
 		generate_16bpc_tif("stairstepV2.tif", StairStepV(false));
 		generate_16bpc_tif("stairstepV3.tif", StairStepV(true));
-		generate_16bpc_tif("lamp.tif",        Lamp());
+		generate_16bpc_tif("lamp.tif",        Ramp());
 		generate_16bpc_tif("crosshatch.tif",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
 		generate_16bpc_tif("character.tif",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
 		generate_16bpc_tif("sourcecode.tif",  TypeWriter("16bpc_img_generator.cpp"));
