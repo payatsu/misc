@@ -1707,7 +1707,7 @@ int main(int argc, char* argv[])
 		generate_16bpc_png("stairstepV1.png", StairStepV());
 		generate_16bpc_png("stairstepV2.png", StairStepV(false));
 		generate_16bpc_png("stairstepV3.png", StairStepV(true));
-		generate_16bpc_png("lamp.png",        Ramp());
+		generate_16bpc_png("ramp.png",        Ramp());
 		generate_16bpc_png("crosshatch.png",  Overwriter({std::make_shared<Luster>(black), std::make_shared<CrossHatch>(192, 108)}));
 		generate_16bpc_png("character.png",   Overwriter({std::make_shared<Luster>(black), std::make_shared<Character>(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10)}));
 		generate_16bpc_png("sourcecode.png",  TypeWriter("16bpc_img_generator.cpp"));
