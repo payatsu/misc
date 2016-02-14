@@ -27,11 +27,11 @@
 #include <tiffio.h>
 #include <zlib.h>
 
-constexpr png_uint_32 width  = 1920;
-constexpr png_uint_32 height = 1200;
-constexpr int bitdepth       = 16;
-constexpr int colortype      = PNG_COLOR_TYPE_RGB;
-constexpr int pixelsize      = 6;
+constexpr png_uint_32 fixed_width  = 1920;
+constexpr png_uint_32 fixed_height = 1200;
+constexpr int bitdepth             = 16;
+constexpr int colortype            = PNG_COLOR_TYPE_RGB;
+constexpr int pixelsize            = 6;
 
 struct FrameBuffer;
 
@@ -68,7 +68,7 @@ struct Painter{
 };
 struct UniColor: Painter{
 	virtual Pixel operator()()override{return pixel_;}
-	constexpr UniColor(const Pixel& pixel): pixel_(pixel){}
+	UniColor(const Pixel& pixel): pixel_(pixel){}
 	const Pixel pixel_;
 };
 struct RandomColor: Painter{
@@ -81,7 +81,7 @@ struct Gradator: Painter{
 	const Pixel step_;
 	Pixel state_;
 	const bool invert_;
-	constexpr Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
+	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
 	Pixel operator()()override
 	{
 		Pixel tmp = state_;
@@ -96,7 +96,7 @@ struct Row{
 	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
 };
 struct RowBlock{
-	Pixel pixels_[::width]; // XXX
+	Pixel pixels_[fixed_width]; // XXX
 	static RowBlock* cast(Pixel* ptr){return reinterpret_cast<RowBlock*>(ptr);}
 };
 
@@ -112,8 +112,8 @@ struct FrameBuffer{
 };
 
 struct FixedSize: PatternGenerator{
-	virtual const png_uint_32& width()const override final{return ::width;}
-	virtual const png_uint_32& height()const override final{return ::height;}
+	virtual const png_uint_32& width()const override final{return fixed_width;}
+	virtual const png_uint_32& height()const override final{return fixed_height;}
 };
 
 struct ColorBar: FixedSize{
@@ -158,7 +158,7 @@ struct ColorBar: FixedSize{
 
 struct Luster: FixedSize{
 	virtual void generate(FrameBuffer buffer)const override{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_);}
-	constexpr Luster(const Pixel& pixel): pixel_(pixel){}
+	Luster(const Pixel& pixel): pixel_(pixel){}
 	const Pixel pixel_;
 };
 
@@ -184,7 +184,7 @@ struct Checker: FixedSize{
 		std::fill(RowBlock::cast(&buffer[height/4*3][0]), RowBlock::cast(&buffer[height][0]),     *RowBlock::cast(&buffer[height/4][0]));
 	}
 	const bool invert_;
-	constexpr Checker(bool invert = false): invert_(invert){}
+	Checker(bool invert = false): invert_(invert){}
 };
 
 struct StairStepH: FixedSize{
@@ -207,8 +207,8 @@ struct StairStepH: FixedSize{
 	const int stairs_;
 	const int steps_;
 	const bool invert_;
-	constexpr StairStepH(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
-	constexpr StairStepH(bool invert): stairs_(1), steps_(20), invert_(invert){}
+	StairStepH(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
+	StairStepH(bool invert): stairs_(1), steps_(20), invert_(invert){}
 };
 
 struct StairStepV: FixedSize{
@@ -234,8 +234,8 @@ struct StairStepV: FixedSize{
 	const int stairs_;
 	const int steps_;
 	const bool invert_;
-	constexpr StairStepV(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
-	constexpr StairStepV(bool invert): stairs_(1), steps_(20), invert_(invert){}
+	StairStepV(int stairs=2, int steps=20): stairs_(stairs), steps_(steps), invert_(false){}
+	StairStepV(bool invert): stairs_(1), steps_(20), invert_(invert){}
 };
 
 struct Ramp: FixedSize{
@@ -307,7 +307,7 @@ struct CrossHatch: FixedSize{
 	}
 	const png_uint_32 lattice_width_;
 	const png_uint_32 lattice_height_;
-	constexpr CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
+	CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
 };
 
 struct WhiteNoise: FixedSize{
@@ -1673,7 +1673,7 @@ void generate_16bpc_tif(const std::string& output_filename, const PatternGenerat
 	TIFFSetField(image, TIFFTAG_IMAGELENGTH, generator.height());
 	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, bitdepth);
 	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 3);
-	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, height);
+	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, fixed_height);
 	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
 	TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
 	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
@@ -1744,8 +1744,8 @@ int main(int argc, char* argv[])
 		generate_16bpc_tif("userdefined.tif", CSVLoader("userdefined.csv.gz"));
 	}
 	if(std::ifstream("happy_new_year.csv.gz")){
-		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, height/2 - char_height*15/2, 0)}));
-		generate_16bpc_tif("happy_new_year.tif", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, height/2 - char_height*15/2, 0)}));
+		generate_16bpc_png("happy_new_year.png", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, fixed_height/2 - char_height*15/2, 0)}));
+		generate_16bpc_tif("happy_new_year.tif", Overwriter({std::make_shared<CSVLoader>("happy_new_year.csv.gz"), std::make_shared<Character>("Happy New Year!!", black, 15, fixed_height/2 - char_height*15/2, 0)}));
 	}
 	return 0;
 }
