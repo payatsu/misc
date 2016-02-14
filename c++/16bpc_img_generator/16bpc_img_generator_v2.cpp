@@ -6,17 +6,12 @@
  * @code
  * $ g++ --std=c++14 16bpc_img_generator.cpp -lpng -ltiff -lz
  * @endcode
- * Then, to run this program, do as described below.
- * @code
- * $ ./a.out
- * @endcode
  */
 
 #define PNG_NO_SETJMP
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -27,31 +22,30 @@
 #include <tiffio.h>
 #include <zlib.h>
 
-constexpr png_uint_32 fixed_width  = 1920;
-constexpr png_uint_32 fixed_height = 1200;
-constexpr int bitdepth             = 16;
-constexpr int colortype            = PNG_COLOR_TYPE_RGB;
-constexpr int pixelsize            = 6;
+constexpr int bitdepth  = 16;
+constexpr int colortype = PNG_COLOR_TYPE_RGB;
+constexpr int pixelsize = 6;
 
-struct FrameBuffer;
+class FrameBuffer;
 
-struct PatternGenerator{
-	virtual const png_uint_32& width()const = 0;
-	virtual const png_uint_32& height()const = 0;
-	virtual void generate(FrameBuffer buffer)const = 0;
+class PatternGenerator{
+public:
 	virtual ~PatternGenerator() = default;
+	virtual void generate(FrameBuffer buffer)const = 0;
 };
 
-struct Pixel{
+class Pixel{
+public:
+	constexpr Pixel(png_uint_16 R = 0x0000, png_uint_16 G = 0x0000, png_uint_16 B = 0x0000): R_(R), G_(G), B_(B){}
+	constexpr Pixel(unsigned long long int binary): R_(binary>>32&0xffff), G_(binary>>16&0xffff), B_(binary&0xffff){}
+	constexpr Pixel operator+(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_ + rhs.R_), static_cast<png_uint_16>(G_ + rhs.G_), static_cast<png_uint_16>(B_ + rhs.B_)};}
+	constexpr Pixel operator-(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_ - rhs.R_), static_cast<png_uint_16>(G_ - rhs.G_), static_cast<png_uint_16>(B_ - rhs.B_)};}
+	constexpr Pixel operator*(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_*rhs), static_cast<png_uint_16>(G_*rhs), static_cast<png_uint_16>(B_*rhs)};}
+	constexpr Pixel operator/(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_/rhs), static_cast<png_uint_16>(G_/rhs), static_cast<png_uint_16>(B_/rhs)};}
+private:
 	png_uint_16 R_;
 	png_uint_16 G_;
 	png_uint_16 B_;
-	constexpr Pixel(png_uint_16 R=0x0000, png_uint_16 G=0x0000, png_uint_16 B=0x0000):R_(R), G_(G), B_(B){}
-	constexpr Pixel(unsigned long long int binary):R_(binary>>32&0xffff), G_(binary>>16&0xffff), B_(binary&0xffff) {}
-	constexpr Pixel operator+(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_+rhs.R_), static_cast<png_uint_16>(G_+rhs.G_), static_cast<png_uint_16>(B_+rhs.B_)};}
-	constexpr Pixel operator-(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_-rhs.R_), static_cast<png_uint_16>(G_-rhs.G_), static_cast<png_uint_16>(B_-rhs.B_)};}
-	constexpr Pixel operator*(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_*rhs), static_cast<png_uint_16>(G_*rhs), static_cast<png_uint_16>(B_*rhs)};}
-	constexpr Pixel operator/(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_/rhs), static_cast<png_uint_16>(G_/rhs), static_cast<png_uint_16>(B_/rhs)};}
 };
 constexpr Pixel black  {0x0000, 0x0000, 0x0000};
 constexpr Pixel white  {0xffff, 0xffff, 0xffff};
@@ -62,25 +56,63 @@ constexpr Pixel cyan   {0x0000, 0xffff, 0xffff};
 constexpr Pixel magenta{0xffff, 0x0000, 0xffff};
 constexpr Pixel yellow {0xffff, 0xffff, 0x0000};
 
-struct Painter{
-	virtual Pixel operator()() = 0;
-	virtual ~Painter() = default;
+class Row{
+public:
+	constexpr Row(png_bytep row, const png_uint_32& width): row_(row), width_(width){}
+	const png_uint_32& width()const{return width_;}
+	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
+	Row& operator++(){row_ += width_*pixelsize; return *this;}
+	bool operator!=(const Row& rhs)const{return *this != rhs;}
+	static void fill(Row first, Row last, const Row& row)
+	{
+		while(first != last){
+			std::copy(&row[0], &row[row.width()], &first[0]);
+			++first;
+		}
+	}
+private:
+	png_bytep row_;
+	const png_uint_32& width_;
 };
-struct UniColor: Painter{
-	virtual Pixel operator()()override{return pixel_;}
+
+class FrameBuffer{
+public:
+	constexpr FrameBuffer(png_bytep block, const png_uint_32& width, const png_uint_32& height): block_(block), width_(width), height_(height){}
+	const png_uint_32& width()const{return width_;}
+	const png_uint_32& height()const{return height_;}
+	Row operator[](int row)const{return Row(block_ + row*width()*pixelsize, width());}
+	const FrameBuffer& operator<<(const PatternGenerator& generator)const{generator.generate(*this); return *this;}
+private:
+	const png_bytep block_;
+	const png_uint_32& width_;
+	const png_uint_32& height_;
+};
+
+class Painter{
+public:
+	virtual ~Painter() = default;
+	virtual Pixel operator()() = 0;
+};
+
+class UniColor: Painter{
+public:
 	UniColor(const Pixel& pixel): pixel_(pixel){}
+	virtual Pixel operator()()override{return pixel_;}
+public:
 	const Pixel pixel_;
 };
-struct RandomColor: Painter{
-	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+
+class RandomColor: Painter{
+public:
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
+	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+private:
 	std::mt19937 engine_;
 	std::uniform_int_distribution<png_uint_16> distribution_;
 };
-struct Gradator: Painter{
-	const Pixel step_;
-	Pixel state_;
-	const bool invert_;
+
+class Gradator: Painter{
+public:
 	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
 	Pixel operator()()override
 	{
@@ -88,49 +120,31 @@ struct Gradator: Painter{
 		state_ = invert_ ? state_ - step_ : state_ + step_;
 		return tmp;
 	}
+private:
+	const Pixel step_;
+	Pixel state_;
+	const bool invert_;
 };
 
-struct Row{
-	const png_bytep row_;
-	constexpr Row(png_bytep row): row_(row){}
-	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
-};
-struct RowBlock{
-	Pixel pixels_[fixed_width]; // XXX
-	static RowBlock* cast(Pixel* ptr){return reinterpret_cast<RowBlock*>(ptr);}
-};
+/* ここまでリファインした。 ********************************************************************************/
+/* 次は、ColorBarのRowBlock::castをRow::fillで置き換えることから再開する。 */
 
-struct FrameBuffer{
-	const png_bytep block_;
-	const png_uint_32& width_;
-	const png_uint_32& height_;
-	const png_uint_32& width()const{return width_;}
-	const png_uint_32& height()const{return height_;}
-	constexpr FrameBuffer(png_bytep block, const png_uint_32& width, const png_uint_32& height): block_(block), width_(width), height_(height){}
-	Row operator[](int row)const{return Row(block_ + row*width_*pixelsize);}
-	const FrameBuffer& operator<<(const PatternGenerator& generator)const{generator.generate(*this); return *this;}
-};
-
-struct FixedSize: PatternGenerator{
-	virtual const png_uint_32& width()const override final{return fixed_width;}
-	virtual const png_uint_32& height()const override final{return fixed_height;}
-};
-
-struct ColorBar: FixedSize{
+class ColorBar: PatternGenerator{
+public:
 	virtual void generate(FrameBuffer buffer)const override
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
 		const png_uint_32 x = width*3/4;
-		std::fill(&buffer[0][0],             &buffer[0][width/8],       white  /100*40);
-		std::fill(&buffer[0][width/8],       &buffer[0][width/8+x/7],   white  /100*75);
-		std::fill(&buffer[0][width/8+x/7],   &buffer[0][width/8+x/7*2], yellow /100*75);
-		std::fill(&buffer[0][width/8+x/7*2], &buffer[0][width/8+x/7*3], cyan   /100*75);
-		std::fill(&buffer[0][width/8+x/7*3], &buffer[0][width/8+x/7*4], green  /100*75);
-		std::fill(&buffer[0][width/8+x/7*4], &buffer[0][width/8+x/7*5], magenta/100*75);
-		std::fill(&buffer[0][width/8+x/7*5], &buffer[0][width/8+x/7*6], red    /100*75);
-		std::fill(&buffer[0][width/8+x/7*6], &buffer[0][width/8+x],     blue   /100*75);
-		std::fill(&buffer[0][width/8+x],     &buffer[0][width],         white  /100*40);
+		std::fill(&buffer[0][0],               &buffer[0][width/8],         white  /100*40);
+		std::fill(&buffer[0][width/8],         &buffer[0][width/8 + x/7],   white  /100*75);
+		std::fill(&buffer[0][width/8 + x/7],   &buffer[0][width/8 + x/7*2], yellow /100*75);
+		std::fill(&buffer[0][width/8 + x/7*2], &buffer[0][width/8 + x/7*3], cyan   /100*75);
+		std::fill(&buffer[0][width/8 + x/7*3], &buffer[0][width/8 + x/7*4], green  /100*75);
+		std::fill(&buffer[0][width/8 + x/7*4], &buffer[0][width/8 + x/7*5], magenta/100*75);
+		std::fill(&buffer[0][width/8 + x/7*5], &buffer[0][width/8 + x/7*6], red    /100*75);
+		std::fill(&buffer[0][width/8 + x/7*6], &buffer[0][width/8 + x],     blue   /100*75);
+		std::fill(&buffer[0][width/8 + x],     &buffer[0][width],           white  /100*40);
 		const png_uint_32 h1 = height*7/12;
 		std::fill(RowBlock::cast(&buffer[1][0]), RowBlock::cast(&buffer[h1][0]), *RowBlock::cast(&buffer[0][0]));
 
@@ -1754,3 +1768,4 @@ int main(int argc, char* argv[])
 	generate_builtins(argc, argv);
 	return 0;
 }
+
