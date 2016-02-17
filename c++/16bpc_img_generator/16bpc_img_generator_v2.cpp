@@ -4,29 +4,34 @@
  * @details
  * To compile this program, do as described below.
  * @code
- * $ g++ --std=c++14 16bpc_img_generator.cpp -lpng -ltiff -lz
+ * $ g++ 16bpc_img_generator.cpp -lpng -ltiff -lz
+ * @endcode
+ * Then, run like this:
+ * @code
+ * $ ./a.out width=1920 height=1080 input=/dev/zero output=hoge
  * @endcode
  */
 
 // TODO ColorStep
 // TODO Multi
 // TODO Focus
-// TODO Generators should not have width and/or height params.
 
 #define PNG_NO_SETJMP
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
-#include <random>
+// #include <random>
 #include <sstream>
 #include <vector>
-#include <unistd.h>
 #include <png.h>
 #include <tiffio.h>
-#include <zlib.h>
+// #include <zlib.h>
 
 int bitdepth  = 16;
 int colortype = PNG_COLOR_TYPE_RGB;
@@ -37,30 +42,54 @@ class FrameBuffer;
 class PatternGenerator{
 public:
 	virtual ~PatternGenerator(){}
-	virtual void generate(FrameBuffer buffer)const = 0;
+	virtual void generate(FrameBuffer& buffer)const = 0;
 };
 
 class Pixel{
 public:
 	Pixel(png_uint_16 R = 0x0000, png_uint_16 G = 0x0000, png_uint_16 B = 0x0000): R_(R), G_(G), B_(B){}
 	Pixel(unsigned long long int binary): R_(binary>>32&0xffff), G_(binary>>16&0xffff), B_(binary&0xffff){}
-	Pixel operator+(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_ + rhs.R_), static_cast<png_uint_16>(G_ + rhs.G_), static_cast<png_uint_16>(B_ + rhs.B_)};}
-	Pixel operator-(const Pixel& rhs)const{return {static_cast<png_uint_16>(R_ - rhs.R_), static_cast<png_uint_16>(G_ - rhs.G_), static_cast<png_uint_16>(B_ - rhs.B_)};}
-	Pixel operator*(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_*rhs), static_cast<png_uint_16>(G_*rhs), static_cast<png_uint_16>(B_*rhs)};}
-	Pixel operator/(png_uint_16 rhs)const{return {static_cast<png_uint_16>(R_/rhs), static_cast<png_uint_16>(G_/rhs), static_cast<png_uint_16>(B_/rhs)};}
+	Pixel operator+(const Pixel& rhs)const
+	{
+		return Pixel(
+			static_cast<png_uint_16>(R_ + rhs.R_),
+			static_cast<png_uint_16>(G_ + rhs.G_),
+			static_cast<png_uint_16>(B_ + rhs.B_));
+	}
+	Pixel operator-(const Pixel& rhs)const
+	{
+		return Pixel(
+			static_cast<png_uint_16>(R_ - rhs.R_),
+			static_cast<png_uint_16>(G_ - rhs.G_),
+			static_cast<png_uint_16>(B_ - rhs.B_));
+	}
+	Pixel operator*(png_uint_16 rhs)const
+	{
+		return Pixel(
+			static_cast<png_uint_16>(R_*rhs),
+			static_cast<png_uint_16>(G_*rhs),
+			static_cast<png_uint_16>(B_*rhs));
+	}
+	Pixel operator/(png_uint_16 rhs)const
+	{
+		return Pixel(
+			static_cast<png_uint_16>(R_/rhs),
+			static_cast<png_uint_16>(G_/rhs),
+			static_cast<png_uint_16>(B_/rhs));
+	}
 private:
 	png_uint_16 R_;
 	png_uint_16 G_;
 	png_uint_16 B_;
 };
-Pixel black  {0x0000, 0x0000, 0x0000};
-Pixel white  {0xffff, 0xffff, 0xffff};
-Pixel red    {0xffff, 0x0000, 0x0000};
-Pixel green  {0x0000, 0xffff, 0x0000};
-Pixel blue   {0x0000, 0x0000, 0xffff};
-Pixel cyan   {0x0000, 0xffff, 0xffff};
-Pixel magenta{0xffff, 0x0000, 0xffff};
-Pixel yellow {0xffff, 0xffff, 0x0000};
+Pixel black  (0x0000, 0x0000, 0x0000);
+Pixel white  (0xffff, 0xffff, 0xffff);
+Pixel red    (0xffff, 0x0000, 0x0000);
+Pixel green  (0x0000, 0xffff, 0x0000);
+Pixel blue   (0x0000, 0x0000, 0xffff);
+Pixel cyan   (0x0000, 0xffff, 0xffff);
+Pixel magenta(0xffff, 0x0000, 0xffff);
+Pixel yellow (0xffff, 0xffff, 0x0000);
 
 class Row{
 public:
@@ -83,21 +112,37 @@ private:
 
 class FrameBuffer{
 public:
-	FrameBuffer(png_bytep head, const png_uint_32& width, const png_uint_32& height): head_(head), width_(width), height_(height){}
+	FrameBuffer(const png_uint_32& width, const png_uint_32& height):
+		head_(new png_byte[height*width*pixelsize]), width_(width), height_(height){}
+	~FrameBuffer(){delete[] head_;}
+	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
+	FrameBuffer& operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
+	FrameBuffer& operator<<(std::istream& is)
+	{
+		const int size = height()*width()*pixelsize;
+		for(int i = 0; i < size; ++i){
+			int c = is.get();
+			if(is.eof()){
+				break;
+			}
+			head_[i] = c;
+		}
+		return *this;
+	}
 	png_bytep head()const{return head_;}
 	const png_uint_32& width()const{return width_;}
 	const png_uint_32& height()const{return height_;}
-	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
-	const FrameBuffer& operator<<(const PatternGenerator& generator)const{generator.generate(*this); return *this;}
 private:
-	const png_bytep head_;
+	FrameBuffer(const FrameBuffer&);
+	FrameBuffer& operator=(const FrameBuffer&);
+	png_bytep head_;
 	const png_uint_32& width_;
 	const png_uint_32& height_;
 };
 
 class Painter{
 public:
-	virtual ~Painter() = default;
+	virtual ~Painter(){}
 	virtual Pixel operator()() = 0;
 };
 
@@ -109,18 +154,19 @@ private:
 	const Pixel pixel_;
 };
 
-class RandomColor: Painter{
-public:
-	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
-	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
-private:
-	std::mt19937 engine_;
-	std::uniform_int_distribution<png_uint_16> distribution_;
-};
+//class RandomColor: Painter{
+//public:
+//	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
+//	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+//private:
+//	std::mt19937 engine_;
+//	std::uniform_int_distribution<png_uint_16> distribution_;
+//};
 
 class Gradator: Painter{
 public:
-	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false): step_(step), state_(initial), invert_(invert){}
+	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false):
+		step_(step), state_(initial), invert_(invert){}
 	Pixel operator()()
 	{
 		Pixel tmp = state_;
@@ -128,14 +174,14 @@ public:
 		return tmp;
 	}
 private:
-	const Pixel step_;
+	Pixel step_;
 	Pixel state_;
-	const bool invert_;
+	bool invert_;
 };
 
 class ColorBar: public PatternGenerator{
 public:
-	virtual void generate(FrameBuffer buffer)const
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
@@ -177,7 +223,7 @@ public:
 class Luster: public PatternGenerator{
 public:
 	Luster(const Pixel& pixel): pixel_(pixel){}
-	virtual void generate(FrameBuffer buffer)const{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_);}
+	virtual void generate(FrameBuffer& buffer)const{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_);}
 private:
 	const Pixel pixel_;
 };
@@ -185,7 +231,7 @@ private:
 class Checker: public PatternGenerator{
 public:
 	Checker(bool invert = false): invert_(invert){}
-	virtual void generate(FrameBuffer buffer)const
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const Pixel pattern1 = invert_ ? black : white;
 		const Pixel pattern2 = invert_ ? white : black;
@@ -211,8 +257,9 @@ private:
 
 class StairStepH: public PatternGenerator{
 public:
-	StairStepH(int stairs = 2, int steps = 20, bool invert = false): stairs_(stairs), steps_(steps), invert_(invert){}
-	virtual void generate(FrameBuffer buffer)const
+	StairStepH(int stairs = 2, int steps = 20, bool invert = false):
+		stairs_(stairs), steps_(steps), invert_(invert){}
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
@@ -220,9 +267,10 @@ public:
 		const png_uint_32 step_width = width/steps_ + (width%steps_ ? 1 : 0);
 		bool invert = invert_;
 		for(png_uint_32 row = 0; row < height; row += stair_height){
-			Gradator gradator{white/steps_, invert ? white : black, invert};
+			Gradator gradator(white/steps_, invert ? white : black, invert);
 			for(png_uint_32 column = 0; column < width; column += step_width){
-				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+step_width)], gradator());
+				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+step_width)],
+						gradator());
 			}
 			Row::fill(buffer[row + 1], buffer[std::min(height, row+stair_height)], buffer[row]);
 			invert = !invert;
@@ -236,8 +284,9 @@ private:
 
 class StairStepV: public PatternGenerator{
 public:
-	StairStepV(int stairs = 2, int steps = 20, bool invert = false): stairs_(stairs), steps_(steps), invert_(invert){}
-	virtual void generate(FrameBuffer buffer)const
+	StairStepV(int stairs = 2, int steps = 20, bool invert = false):
+		stairs_(stairs), steps_(steps), invert_(invert){}
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
@@ -246,12 +295,13 @@ public:
 		bool invert = invert_;
 		std::vector<Gradator> gradators;
 		for(int i = 0; i < stairs_; ++i){
-			gradators.push_back({white/steps_, invert ? white : black, invert});
+			gradators.push_back(Gradator(white/steps_, invert ? white : black, invert));
 			invert = !invert;
 		}
 		for(png_uint_32 row = 0; row < height; row += step_height){
 			for(png_uint_32 column = 0; column < width; column += stair_width){
-				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+stair_width)], gradators.at(column/stair_width)());
+				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+stair_width)],
+						gradators.at(column/stair_width)());
 			}
 			Row::fill(buffer[row + 1], buffer[std::min(height, row+step_height)], buffer[row]);
 		}
@@ -264,7 +314,7 @@ private:
 
 class Ramp: public PatternGenerator{
 public:
-	virtual void generate(FrameBuffer buffer)const
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
@@ -299,7 +349,7 @@ public:
 class CrossHatch: public PatternGenerator{
 public:
 	CrossHatch(png_uint_32 width, png_uint_32 height): lattice_width_(width), lattice_height_(height){}
-	virtual void generate(FrameBuffer buffer)const
+	virtual void generate(FrameBuffer& buffer)const
 	{
 		const png_uint_32 width = buffer.width();
 		const png_uint_32 height = buffer.height();
@@ -337,18 +387,18 @@ private:
 	const png_uint_32 lattice_height_;
 };
 
-class WhiteNoise: public PatternGenerator{
-public:
-	virtual void generate(FrameBuffer buffer)const
-	{
-		RandomColor random_color;
-		for(png_uint_32 row = 0; row < buffer.height(); ++row){
-			for(png_uint_32 column = 0; column < buffer.width(); ++column){
-				buffer[row][column] = random_color();
-			}
-		}
-	}
-};
+//class WhiteNoise: public PatternGenerator{
+//public:
+//	virtual void generate(FrameBuffer& buffer)const
+//	{
+//		RandomColor random_color;
+//		for(png_uint_32 row = 0; row < buffer.height(); ++row){
+//			for(png_uint_32 column = 0; column < buffer.width(); ++column){
+//				buffer[row][column] = random_color();
+//			}
+//		}
+//	}
+//};
 
 unsigned char char_width  = 8; // dots
 unsigned char char_height = 8; // dots
@@ -1521,12 +1571,17 @@ unsigned char characters[][8] = {
 
 class Character: public PatternGenerator{
 public:
-	Character(const std::string& text, const Pixel& pixel = white, int scale = 1, png_uint_32 row = 0, png_uint_32 column = 0): text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
-	virtual void generate(FrameBuffer buffer)const{write(buffer, row_, column_, text_, pixel_, scale_);}
-	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, unsigned char c, const Pixel& pixel, int scale)const
+	Character(const std::string& text, const Pixel& pixel = white,
+			int scale = 1, png_uint_32 row = 0, png_uint_32 column = 0):
+		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
+	virtual void generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_);}
+	void write(FrameBuffer& buffer, png_uint_32 row, png_uint_32 column,
+			unsigned char c, const Pixel& pixel, int scale)const
 	{
 		if('~' < c || buffer.height() <= row || buffer.width() <= column){
-			std::cerr << "warning: not supported: row: " << row << ", col: " << column << ", ascii: " << c << '(' << int(c) << ')' << std::endl;
+			std::cerr << "warning: not supported: row: " << row
+				<< ", col: " << column << ", ascii: "
+				<< c << '(' << int(c) << ')' << std::endl;
 			return;
 		}
 		for(unsigned char i = 0; i < char_height; ++i){
@@ -1541,7 +1596,8 @@ public:
 			}
 		}
 	}
-	void write(FrameBuffer buffer, png_uint_32 row, png_uint_32 column, const std::string& str, const Pixel& pixel, int scale)const
+	void write(FrameBuffer& buffer, png_uint_32 row, png_uint_32 column,
+			const std::string& str, const Pixel& pixel, int scale)const
 	{
 		for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
 			if(str[i] == '\n'){
@@ -1568,10 +1624,12 @@ class TypeWriter: public PatternGenerator{
 public:
 	TypeWriter(const std::string& textfilename): width_(), height_(), text_()
 	{
-		std::ifstream ifs(textfilename);
+		std::ifstream ifs(textfilename.c_str());
 		std::string line;
 		while(std::getline(ifs, line)){
-			width_ = std::max(width_, static_cast<png_uint_32>(line.size() + (char_tab_width - 1)*std::count_if(line.begin(), line.end(), [](char c){return c == '\t';})));
+			width_ = std::max(width_,
+					static_cast<png_uint_32>(line.size() +
+						(char_tab_width - 1)*std::count_if(line.begin(), line.end(), is_tab)));
 			text_ += line + '\n';
 			++height_;
 		}
@@ -1580,90 +1638,103 @@ public:
 	}
 	virtual const png_uint_32& width()const{return width_;}
 	virtual const png_uint_32& height()const{return height_;}
-	virtual void generate(FrameBuffer buffer)const{buffer << Character(text_, white);}
+	virtual void generate(FrameBuffer& buffer)const{buffer << Character(text_, white);}
 private:
+	static bool is_tab(char c){return c == '\t';}
 	png_uint_32 width_;
 	png_uint_32 height_;
 	std::string text_;
 };
 
-class CSVLoader: public PatternGenerator{
-public:
-	CSVLoader(const std::string& filename): CSVLoader(std::istringstream(read(filename))){}
-	CSVLoader(std::istream&& is): width_(), height_(), pixels_()
-	{
-		std::string line;
-		while(std::getline(is, line)){
-			std::replace(line.begin(), line.end(), ',', ' ');
-			std::istringstream iss(line);
-			std::string token;
-			width_ = 0;
-			while(iss >> token){
-				pixels_.push_back(std::stoull(token, nullptr, 0));
-				++width_;
-			}
-			++height_;
-		}
-	}
-	virtual const png_uint_32& width()const{return width_;}
-	virtual const png_uint_32& height()const{return height_;}
-	virtual void generate(FrameBuffer buffer)const{std::copy(pixels_.begin(), pixels_.end(), &buffer[0][0]);}
-private:
-	std::string read(const std::string& filename)
-	{
-		gzFile_s* fp = gzopen(filename.c_str(), "rb");
-		if(!fp){
-			std::perror("");
-			return "";
-		}
-		const unsigned int buffer_size = 1024 * 256;
-		if(gzbuffer(fp, buffer_size)){
-			std::perror("");
-			return "";
-		}
-		char buffer[buffer_size];
-		unsigned int len = 0;
-		std::string str;
-		while((len = gzread(fp, buffer, buffer_size)) > 0){
-			str.append(buffer, len);
-		}
-		gzclose(fp);
-		return str;
-	}
-	png_uint_32 width_;
-	png_uint_32 height_;
-	std::vector<Pixel> pixels_;
-};
+//class CSVLoader: public PatternGenerator{
+//public:
+//	CSVLoader(const std::string& filename): CSVLoader(std::istringstream(read(filename))){}
+//	CSVLoader(std::istream&& is): width_(), height_(), pixels_()
+//	{
+//		std::string line;
+//		while(std::getline(is, line)){
+//			std::replace(line.begin(), line.end(), ',', ' ');
+//			std::istringstream iss(line);
+//			std::string token;
+//			width_ = 0;
+//			while(iss >> token){
+//				pixels_.push_back(std::stoull(token, NULL, 0));
+//				++width_;
+//			}
+//			++height_;
+//		}
+//	}
+//	virtual const png_uint_32& width()const{return width_;}
+//	virtual const png_uint_32& height()const{return height_;}
+//	virtual void generate(FrameBuffer& buffer)const{std::copy(pixels_.begin(), pixels_.end(), &buffer[0][0]);}
+//private:
+//	std::string read(const std::string& filename)
+//	{
+//		gzFile_s* fp = gzopen(filename.c_str(), "rb");
+//		if(!fp){
+//			std::perror("");
+//			return "";
+//		}
+//		const unsigned int buffer_size = 1024 * 256;
+//		if(gzbuffer(fp, buffer_size)){
+//			std::perror("");
+//			return "";
+//		}
+//		char buffer[buffer_size];
+//		unsigned int len = 0;
+//		std::string str;
+//		while((len = gzread(fp, buffer, buffer_size)) > 0){
+//			str.append(buffer, len);
+//		}
+//		gzclose(fp);
+//		return str;
+//	}
+//	png_uint_32 width_;
+//	png_uint_32 height_;
+//	std::vector<Pixel> pixels_;
+//};
 
-void generate_16bpc_png(const std::string& output_filename, const FrameBuffer& buffer)
+png_uint_16 swap_msb_lsb(png_uint_16 value)
 {
-	std::unique_ptr<FILE, int(*)(FILE*)> fp(std::fopen(output_filename.c_str(), "wb"), std::fclose);
+	return value >> 8 | value << 8;
+}
+
+void generate_16bpc_png(const std::string& output_filename, FrameBuffer& buffer)
+{
+	FILE* fp = std::fopen(output_filename.c_str(), "wb");
 	if(!fp){
 		std::perror("");
 		return;
 	}
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr){
 		return;
 	}
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr){
-		png_destroy_write_struct(&png_ptr, nullptr);
+		png_destroy_write_struct(&png_ptr, NULL);
 		return;
 	}
-	png_init_io(png_ptr, fp.get());
-	png_set_IHDR(png_ptr, info_ptr, buffer.width(), buffer.height(), bitdepth, colortype, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-	std::unique_ptr<png_bytep[]> row_ptrs(new png_bytep[buffer.height()]);
+	png_init_io(png_ptr, fp);
+	png_set_IHDR(png_ptr, info_ptr, buffer.width(), buffer.height(),
+			bitdepth, colortype, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_bytepp row_ptrs = new png_bytep[buffer.height()];
 	for(png_uint_32 i = 0; i < buffer.height(); ++i){
 		row_ptrs[i] = buffer.head() + i*buffer.width()*pixelsize;
 	}
-	png_set_rows(png_ptr, info_ptr, row_ptrs.get());
-	std::transform(reinterpret_cast<uint16_t*>(buffer.head()), reinterpret_cast<uint16_t*>(buffer.head() + buffer.height()*buffer.width()*pixelsize), reinterpret_cast<uint16_t*>(buffer.head()), [](uint16_t i){return i>>8 | i<<8;});
-	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
+	png_set_rows(png_ptr, info_ptr, row_ptrs);
+	std::transform(
+			reinterpret_cast<png_uint_16*>(buffer.head()),
+			reinterpret_cast<png_uint_16*>(buffer.head() + buffer.height()*buffer.width()*pixelsize),
+			reinterpret_cast<png_uint_16*>(buffer.head()), swap_msb_lsb);
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
+	delete[] row_ptrs;
+	std::fclose(fp);
 }
 
-void generate_16bpc_tif(const std::string& output_filename, const FrameBuffer& buffer)
+void generate_16bpc_tif(const std::string& output_filename, FrameBuffer& buffer)
 {
 	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
 	if(!image){
@@ -1682,129 +1753,102 @@ void generate_16bpc_tif(const std::string& output_filename, const FrameBuffer& b
 	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFWriteEncodedStrip(image, 0, buffer.head(), buffer.height()*buffer.width()*pixelsize);
+	TIFFWriteEncodedStrip(image, 0, buffer.head(),
+			buffer.height()*buffer.width()*pixelsize);
 	TIFFClose(image);
 }
 
-void generate_16bpc_img(const std::string& output_filename_base, const FrameBuffer& buffer)
+void generate_16bpc_img(const std::string& output_basename, FrameBuffer& buffer)
 {
-	generate_16bpc_tif(output_filename_base + ".tif", buffer);
-	generate_16bpc_png(output_filename_base + ".png", buffer);
+	generate_16bpc_tif(output_basename + ".tif", buffer);
+	generate_16bpc_png(output_basename + ".png", buffer);
 }
 
-void generate_builtins(std::uint32_t width, std::uint32_t height)
+void generate_builtin_patterns(png_uint_32 width, png_uint_32 height)
 {
-	std::unique_ptr<png_byte[]> block(new png_byte[height*width*pixelsize]);
-	FrameBuffer buffer(block.get(), width, height);
+	FrameBuffer buffer(width, height);
 
-	buffer << ColorBar();
-	generate_16bpc_img("colorbar", buffer);
-
-	buffer << Luster(white);
-	generate_16bpc_img("white100", buffer);
-
-	buffer << Luster(red);
-	generate_16bpc_img("red100", buffer);
-
-	buffer << Luster(green);
-	generate_16bpc_img("green100", buffer);
-
-	buffer << Luster(blue);
-	generate_16bpc_img("blue100", buffer);
-
-	buffer << Luster(white/2);
-	generate_16bpc_img("white50", buffer);
-
-	buffer << Luster(red/2);
-	generate_16bpc_img("red50", buffer);
-
-	buffer << Luster(green/2);
-	generate_16bpc_img("green50", buffer);
-
-	buffer << Luster(blue/2);
-	generate_16bpc_img("blue50", buffer);
-
-	buffer << Checker();
-	generate_16bpc_img("checker1", buffer);
-
-	buffer << Checker(true);
-	generate_16bpc_img("checker2", buffer);
-
-	buffer << StairStepH();
-	generate_16bpc_img("stairstepH1", buffer);
-
-	buffer << StairStepH(1, 20, false);
-	generate_16bpc_img("stairstepH2", buffer);
-
-	buffer << StairStepH(1, 20, true);
-	generate_16bpc_img("stairstepH3", buffer);
-
-	buffer << StairStepV();
-	generate_16bpc_img("stairstepV1", buffer);
-
-	buffer << StairStepV(1, 20, false);
-	generate_16bpc_img("stairstepV2", buffer);
-
-	buffer << StairStepV(1, 20, true);
-	generate_16bpc_img("stairstepV3", buffer);
-
-	buffer << Ramp();
-	generate_16bpc_img("ramp", buffer);
-
-	buffer << Luster(black) << CrossHatch(192, 108);
-	generate_16bpc_img("crosshatch", buffer);
-
-	buffer << Luster(black) << Character(" !\"#$%&'()*+,-./\n0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\nabcdefghijklmno\npqrstuvwxyz{|}~", red, 10);
-	generate_16bpc_img("character", buffer);
-
-	buffer << WhiteNoise();
-	generate_16bpc_img("whitenoise", buffer);
+	generate_16bpc_img("colorbar", buffer << ColorBar());
+	generate_16bpc_img("white100", buffer << Luster(white));
+	generate_16bpc_img("red100", buffer << Luster(red));
+	generate_16bpc_img("green100", buffer << Luster(green));
+	generate_16bpc_img("blue100", buffer << Luster(blue));
+	generate_16bpc_img("white50", buffer << Luster(white/2));
+	generate_16bpc_img("red50", buffer << Luster(red/2));
+	generate_16bpc_img("green50", buffer << Luster(green/2));
+	generate_16bpc_img("blue50", buffer << Luster(blue/2));
+	generate_16bpc_img("checker1", buffer << Checker());
+	generate_16bpc_img("checker2", buffer << Checker(true));
+	generate_16bpc_img("stairstepH1", buffer << StairStepH());
+	generate_16bpc_img("stairstepH2", buffer << StairStepH(1, 20, false));
+	generate_16bpc_img("stairstepH3", buffer << StairStepH(1, 20, true));
+	generate_16bpc_img("stairstepV1", buffer << StairStepV());
+	generate_16bpc_img("stairstepV2", buffer << StairStepV(1, 20, false));
+	generate_16bpc_img("stairstepV3", buffer << StairStepV(1, 20, true));
+	generate_16bpc_img("ramp", buffer << Ramp());
+	generate_16bpc_img("crosshatch", buffer << Luster(black) << CrossHatch(192, 108));
+	generate_16bpc_img("character", buffer << Luster(black) << Character(" !\"#$%&'()*+,-./\n"
+			"0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\n"
+			"abcdefghijklmno\npqrstuvwxyz{|}~", red, 10));
+//	generate_16bpc_img("whitenoise", buffer << WhiteNoise());
 }
 
-void generate_self(std::uint32_t width, std::uint32_t height)
+void generate_self(png_uint_32 width, png_uint_32 height)
 {
-	std::unique_ptr<png_byte[]> block(new png_byte[height*width*pixelsize]);
-	FrameBuffer buffer(block.get(), width, height);
+	generate_16bpc_img("sourcecode", FrameBuffer(width, height)
+			<< Luster(black) << TypeWriter(__FILE__));
+}
 
-	buffer << Luster(black) << TypeWriter(__FILE__);
-	generate_16bpc_img("sourcecode", buffer);
+typedef std::map<std::string, std::string> Store;
+bool is_equal(char c){return c == '=';}
+
+Store getopt(int argc, char* argv[])
+{
+	Store store;
+	for(int i = 1; i < argc; ++i){
+		if(std::count_if(argv[i], argv[i] + std::strlen(argv[i]), is_equal) == 1){
+			std::string::size_type idx = std::string(argv[i]).find('=');
+			std::string key(argv[i], idx);
+			std::string value(argv[i] + idx + 1);
+			store[key] = value;
+		}
+	}
+	return store;
 }
 
 int main(int argc, char* argv[])
 {
-	int c;
-	bool builtins_enabled = false;
+	Store store = getopt(argc, argv);
+
+	bool builtin_patterns_enabled = false;
 	std::string input = "-";
 	std::string output = "-";
-	std::uint32_t height = 1080;
-	std::uint32_t width = 1920;
-	while((c = getopt(argc, argv, "bh:i:o:w:")) != -1){
-		switch(c){
-			case 'b':
-				builtins_enabled = true;
-				break;
-			case 'h':
-				height = std::stoi(optarg);
-				break;
-			case 'i':
-				input = optarg;
-				break;
-			case 'o':
-				output = optarg;
-				break;
-			case 'w':
-				width = std::stoi(optarg);
-				break;
-			case '?':
-				break;
-			default:
-				break;
-		}
+	png_uint_32 height = 2160;
+	png_uint_32 width = 3840;
+	if(store["builtins"] != ""){
+		builtin_patterns_enabled = true;
+	}
+	if(store["input"] != ""){
+		input = store["input"];
+	}
+	if(store["output"] != ""){
+		output = store["output"];
+	}
+	if(store["height"] != ""){
+		height = atoi(store["height"].c_str());
+	}
+	if(store["width"] != ""){
+		width = atoi(store["width"].c_str());
 	}
 
-	if(builtins_enabled){
-		generate_builtins(width, height);
+	if(builtin_patterns_enabled){
+		generate_builtin_patterns(width, height);
 		return 0;
 	}
+
+	FrameBuffer buffer(width, height);
+	std::ifstream ifs(input.c_str());
+	generate_16bpc_png(output, buffer << ifs);
+
 	return 0;
 }
