@@ -27,7 +27,9 @@
 #include <iostream>
 #include <map>
 #include <memory>
-// #include <random>
+#if 201103L <= __cplusplus
+#	include <random>
+#endif
 #include <sstream>
 #include <vector>
 #ifdef ENABLE_PNG
@@ -165,15 +167,6 @@ private:
 	const Pixel pixel_;
 };
 
-//class RandomColor: Painter{
-//public:
-//	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
-//	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
-//private:
-//	std::mt19937 engine_;
-//	std::uniform_int_distribution<uint16_t> distribution_;
-//};
-
 class Gradator: Painter{
 public:
 	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false):
@@ -189,6 +182,17 @@ private:
 	Pixel state_;
 	bool invert_;
 };
+
+#if 201103L <= __cplusplus
+class RandomColor: Painter{
+public:
+	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
+	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+private:
+	std::mt19937 engine_;
+	std::uniform_int_distribution<uint16_t> distribution_;
+};
+#endif
 
 class ColorBar: public PatternGenerator{
 public:
@@ -398,18 +402,20 @@ private:
 	const uint32_t lattice_height_;
 };
 
-//class WhiteNoise: public PatternGenerator{
-//public:
-//	virtual void generate(FrameBuffer& buffer)const
-//	{
-//		RandomColor random_color;
-//		for(uint32_t row = 0; row < buffer.height(); ++row){
-//			for(uint32_t column = 0; column < buffer.width(); ++column){
-//				buffer[row][column] = random_color();
-//			}
-//		}
-//	}
-//};
+#if 201103L <= __cplusplus
+class WhiteNoise: public PatternGenerator{
+public:
+	virtual void generate(FrameBuffer& buffer)const
+	{
+		RandomColor random_color;
+		for(uint32_t row = 0; row < buffer.height(); ++row){
+			for(uint32_t column = 0; column < buffer.width(); ++column){
+				buffer[row][column] = random_color();
+			}
+		}
+	}
+};
+#endif
 
 const unsigned char char_width  = 8; // dots
 const unsigned char char_height = 8; // dots
@@ -1705,6 +1711,32 @@ private:
 //	std::vector<Pixel> pixels_;
 //};
 
+#ifdef ENABLE_TIFF
+void generate_16bpc_tiff(const std::string& output_filename, FrameBuffer& buffer)
+{
+	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
+	if(!image){
+		perror("");
+		return;
+	}
+	TIFFSetField(image, TIFFTAG_IMAGEWIDTH, buffer.width());
+	TIFFSetField(image, TIFFTAG_IMAGELENGTH, buffer.height());
+	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, bitdepth);
+	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 3);
+	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, buffer.height());
+	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
+	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
+	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
+	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
+	TIFFWriteEncodedStrip(image, 0, buffer.head(),
+			buffer.height()*buffer.width()*pixelsize);
+	TIFFClose(image);
+}
+#endif
+
 uint16_t swap_msb_lsb(uint16_t value)
 {
 	return value >> 8 | value << 8;
@@ -1747,36 +1779,10 @@ void generate_16bpc_png(const std::string& output_filename, FrameBuffer& buffer)
 }
 #endif
 
-#ifdef ENABLE_TIFF
-void generate_16bpc_tif(const std::string& output_filename, FrameBuffer& buffer)
-{
-	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
-	if(!image){
-		perror("");
-		return;
-	}
-	TIFFSetField(image, TIFFTAG_IMAGEWIDTH, buffer.width());
-	TIFFSetField(image, TIFFTAG_IMAGELENGTH, buffer.height());
-	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, bitdepth);
-	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 3);
-	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, buffer.height());
-	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-	TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
-	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
-	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
-	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFWriteEncodedStrip(image, 0, buffer.head(),
-			buffer.height()*buffer.width()*pixelsize);
-	TIFFClose(image);
-}
-#endif
-
 void generate_16bpc_img(const std::string& output_basename, FrameBuffer& buffer)
 {
 #ifdef ENABLE_TIFF
-	generate_16bpc_tif(output_basename + ".tif", buffer);
+	generate_16bpc_tiff(output_basename + ".tif", buffer);
 #endif
 #ifdef ENABLE_PNG
 	generate_16bpc_png(output_basename + ".png", buffer);
@@ -1809,7 +1815,9 @@ void generate_builtin_patterns(uint32_t width, uint32_t height)
 	generate_16bpc_img("character",   buffer << Luster(black) << Character(" !\"#$%&'()*+,-./\n"
 			"0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\n"
 			"abcdefghijklmno\npqrstuvwxyz{|}~", red, 10));
-//	generate_16bpc_img("whitenoise", buffer << WhiteNoise());
+#if 201103L <= __cplusplus
+	generate_16bpc_img("whitenoise", buffer << WhiteNoise());
+#endif
 }
 
 void generate_self(uint32_t width, uint32_t height)
@@ -1835,18 +1843,22 @@ Store getopt(int argc, char* argv[])
 	return store;
 }
 
+std::string append_extension(const std::string& filename, const std::string& ext)
+{
+	const std::string::size_type idx = filename.find(ext);
+	if(idx == std::string::npos || idx + ext.size() != filename.size()){
+		return filename + ext;
+	}else{
+		return filename;
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
+	const uint32_t height = store["height"] == "" ? 1080 : atoi(store["height"].c_str());
+	const uint32_t width = store["width"] == "" ? 1920 : atoi(store["width"].c_str());
 
-	uint32_t height = 2160;
-	uint32_t width = 3840;
-	if(store["height"] != ""){
-		height = atoi(store["height"].c_str());
-	}
-	if(store["width"] != ""){
-		width = atoi(store["width"].c_str());
-	}
 	if(store["builtins"] != ""){
 		generate_builtin_patterns(width, height);
 		return 0;
@@ -1860,9 +1872,14 @@ int main(int argc, char* argv[])
 		buffer << ifs;
 	}
 
-#ifdef ENABLE_PNG
-	generate_16bpc_png(output, buffer);
+	if(store["output"] == ""){
+		store["output"] = "out";
+	}
+#ifdef ENABLE_TIFF
+	generate_16bpc_tiff(append_extension(store["output"], ".tif"), buffer);
 #endif
-
+#ifdef ENABLE_PNG
+	generate_16bpc_png(append_extension(store["output"], ".png"), buffer);
+#endif
 	return 0;
 }
