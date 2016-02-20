@@ -1,18 +1,25 @@
 .PHONY: all clean ramp beta builtins
 
+width = 1920
+height = 1080
+
 all: 16bpcgen_fe 16bpcgen_be
 
+clean:
+	${RM} 16bpcgen_fe 16bpcgen_be
+	${RM} *.png *.tif
+
 ramp: all
-	./16bpcgen_fe initial=000000000000 increment=002200220022 tread=1 | ./16bpcgen_be
+	./16bpcgen_fe width=${width} height=${height} initial=000000000000 increment=002200220022 tread=1 | ./16bpcgen_be width=${width} height=${height}
 
 beta: 16bpcgen_be
 	cat /dev/zero | ./16bpcge_be
 
 builtins: 16bpcgen_be
-	./16bpcgen_be builtins=yes
+	./16bpcgen_be width=${width} height=${height} builtins=yes
 
 16bpcgen_fe: 16bpcgen_fe.cpp
-	${CXX}
+	${LINK.cc} $^ -o $@
 
 16bpcgen_be: 16bpcgen_be.cpp
-	${CXX} -DENABLE_PNG -DENABLE_TIFF $^ -o $@ -lpng -ltiff
+	${LINK.cc} -DENABLE_PNG -DENABLE_TIFF $^ -o $@ -lpng -ltiff
