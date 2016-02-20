@@ -1842,9 +1842,9 @@ int main(int argc, char* argv[])
 	}
 
 	FrameBuffer buffer(width, height);
-	if(store["input"] == ""){
+	if(store["input"] == "-"){
 		buffer << std::cin;
-	}else{
+	}else if(store["input"] != ""){
 		std::ifstream ifs(store["input"].c_str());
 		buffer << ifs;
 	}

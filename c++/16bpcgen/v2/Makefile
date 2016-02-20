@@ -10,10 +10,10 @@ clean:
 	${RM} *.png *.tif
 
 ramp: all
-	./16bpcgen_fe width=${width} height=${height} initial=000000000000 increment=002200220022 tread=1 | ./16bpcgen_be width=${width} height=${height}
+	./16bpcgen_fe width=${width} height=${height} initial=000000000000 increment=002200220022 tread=1 | ./16bpcgen_be width=${width} height=${height} input=- output=ramp
 
 beta: 16bpcgen_be
-	cat /dev/zero | ./16bpcge_be
+	./16bpcgen_be width=${width} height=${height} input=- output=black < /dev/zero
 
 builtins: 16bpcgen_be
 	./16bpcgen_be width=${width} height=${height} builtins=yes
