@@ -1,15 +1,10 @@
 /**
  * @file
- * @brief Program to generate 16 bpc(bits per component) PNG/TIFF images.
+ * @brief Backend of 16bpcgen.
  * @details
- * To compile this program, do as described below.
- * @code
- * $ g++ -DENABLE_PNG -DENABLE_TIFF 16bpc_img_generator.cpp -lpng -ltiff -lz
- * @endcode
- * Then, run like this:
- * @code
- * $ ./a.out width=1920 height=1080 input=/dev/zero output=hoge
- * @endcode
+ * This program can:
+ * - generate PNG and TIFF images of predefined(builtin) patterns,
+ * - generate PNG and TIFF images based on binary sequence from stdin.
  */
 
 // TODO ColorStep
@@ -22,10 +17,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <cstring>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <memory>
 #if 201103L <= __cplusplus
 #	include <random>
@@ -33,12 +26,13 @@
 #include <sstream>
 #include <vector>
 #ifdef ENABLE_PNG
-#	include <png.h>
+#	include <libpng16/png.h>
 #endif
 #ifdef ENABLE_TIFF
 #	include <tiffio.h>
 #endif
 // #include <zlib.h>
+#include "getopt.h"
 
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
@@ -1824,23 +1818,6 @@ void generate_self(uint32_t width, uint32_t height)
 {
 	generate_16bpc_img("sourcecode", FrameBuffer(width, height)
 			<< Luster(black) << TypeWriter(__FILE__));
-}
-
-typedef std::map<std::string, std::string> Store;
-bool is_equal(char c){return c == '=';}
-
-Store getopt(int argc, char* argv[])
-{
-	Store store;
-	for(int i = 1; i < argc; ++i){
-		if(std::count_if(argv[i], argv[i] + std::strlen(argv[i]), is_equal) == 1){
-			const std::string::size_type idx = std::string(argv[i]).find('=');
-			const std::string key(argv[i], idx);
-			const std::string value(argv[i] + idx + 1);
-			store[key] = value;
-		}
-	}
-	return store;
 }
 
 std::string append_extension(const std::string& filename, const std::string& ext)
