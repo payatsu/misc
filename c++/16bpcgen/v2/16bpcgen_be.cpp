@@ -281,7 +281,7 @@ public:
 				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+step_width)],
 						gradator());
 			}
-			Row::fill(buffer[row + 1], buffer[std::min(height, row+stair_height)], buffer[row]);
+			Row::fill(buffer[row + 1], buffer[std::min(height, row + stair_height)], buffer[row]);
 			invert = !invert;
 		}
 	}
@@ -312,7 +312,7 @@ public:
 				std::fill(&buffer[row][column], &buffer[row][std::min(width, column+stair_width)],
 						gradators.at(column/stair_width)());
 			}
-			Row::fill(buffer[row + 1], buffer[std::min(height, row+step_height)], buffer[row]);
+			Row::fill(buffer[row + 1], buffer[std::min(height, row + step_height)], buffer[row]);
 		}
 	}
 private:

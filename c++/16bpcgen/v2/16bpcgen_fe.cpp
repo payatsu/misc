@@ -27,11 +27,11 @@ unsigned long long read_rgb(const char* str)
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
-	const uint32_t           height    = store["height"]    == "" ? 1080            : atoi(store["height"].c_str());
-	const uint32_t           width     = store["width"]     == "" ? 1920            : atoi(store["width"].c_str());
-	const unsigned long long initial   = store["initial"]   == "" ? 0x0             : read_rgb(store["initial"].c_str());
-	const unsigned long long increment = store["increment"] == "" ? 0x002200220022  : read_rgb(store["increment"].c_str());
-	const uint32_t           tread     = store["tread"]     == "" ? 192             : atoi(store["tread"].c_str());
+	const uint32_t           height    = store["height"]    == "" ? 1080           : atoi(store["height"].c_str());
+	const uint32_t           width     = store["width"]     == "" ? 1920           : atoi(store["width"].c_str());
+	const unsigned long long initial   = store["initial"]   == "" ? 0x0            : read_rgb(store["initial"].c_str());
+	const unsigned long long increment = store["increment"] == "" ? 0x002200220022 : read_rgb(store["increment"].c_str());
+	const uint32_t           tread     = store["tread"]     == "" ? 192            : atoi(store["tread"].c_str());
 	for(uint32_t i = 0; i < height; ++i){
 		unsigned short rgb[] = {
 			static_cast<unsigned short>(initial >> 32 & 0xffff),
