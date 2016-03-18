@@ -1,9 +1,12 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+
+#define SIZE 12
 
 int main(void)
 {
@@ -17,14 +20,13 @@ int main(void)
 		perror("ioctl()");
 		return -1;
 	}
-	const int size = 12;
-	uint8_t buf[size] = {};
+	uint8_t buf[SIZE] = {};
 	buf[0] = 0x48;
 	if(write(fd, buf, 1) != 1){
 		perror("write()");
 		return -1;
 	}
-	if(read(fd, buf, size) != size){
+	if(read(fd, buf, SIZE) != SIZE){
 		perror("read()");
 		return -1;
 	}
@@ -41,7 +43,7 @@ int main(void)
 	i2c_msg msg = {
 		.addr  = 0x48,
 		.flags = I2C_M_RD,
-		.len   = size,
+		.len   =SIZE,
 		.buf   = buf,
 	};
 	i2c_rdwr_ioctl_data data = {
