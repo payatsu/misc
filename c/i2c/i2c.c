@@ -36,7 +36,7 @@ int main(void)
 	if(4096 <= temp){
 		temp -= 8192;
 	}
-	printf("%fd℃\n", temp/16.0);
+	printf("%f℃\n", temp/16.0);
 	return 0;
 
 	/*************************
