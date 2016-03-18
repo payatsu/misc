@@ -1,5 +1,4 @@
-#include <iostream>
-#include <errno.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -15,22 +14,27 @@ int main(void)
 	}
 
 	if(ioctl(fd, I2C_SLAVE, 0x48) < 0){
-		perror("ioctl");
+		perror("ioctl()");
 		return -1;
 	}
 	const int size = 12;
 	uint8_t buf[size] = {};
 	buf[0] = 0x48;
 	if(write(fd, buf, 1) != 1){
-		perror("write");
+		perror("write()");
 		return -1;
 	}
 	if(read(fd, buf, size) != size){
-		perror("read");
+		perror("read()");
 		return -1;
 	}
 
 	close(fd);
+	int temp = (buf[0] << 8 | buf[1]) >> 3;
+	if(4096 <= temp){
+		temp -= 8192;
+	}
+	printf("%d℃\n", temp);
 	return 0;
 
 	/*************************
