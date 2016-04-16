@@ -24,7 +24,7 @@ class Gradator: Painter{
 public:
 	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false):
 		step_(step), state_(initial), invert_(invert){}
-	Pixel operator()()
+	virtual Pixel operator()()
 	{
 		Pixel tmp = state_;
 		state_ = invert_ ? state_ - step_ : state_ + step_;

@@ -14,80 +14,26 @@
 #define _USE_MATH_DEFINES
 #define PNG_NO_SETJMP
 
-#include <algorithm>
 #include <cstdio>
 #include <fstream>
-#include <iostream>
-#include <memory>
-// #include <sstream>
-// #include <vector>
 #ifdef ENABLE_PNG
 #	include <libpng16/png.h>
 #endif
 #ifdef ENABLE_TIFF
 #	include <tiffio.h>
 #endif
-// #include <zlib.h>
 #include "getopt.hpp"
 
 #include "FrameBuffer.hpp"
 #include "Painter.hpp"
 #include "PatternGenerator.hpp"
 
-//class CSVLoader: public PatternGenerator{
-//public:
-//	CSVLoader(const std::string& filename): CSVLoader(std::istringstream(read(filename))){}
-//	CSVLoader(std::istream&& is): width_(), height_(), pixels_()
-//	{
-//		std::string line;
-//		while(std::getline(is, line)){
-//			std::replace(line.begin(), line.end(), ',', ' ');
-//			std::istringstream iss(line);
-//			std::string token;
-//			width_ = 0;
-//			while(iss >> token){
-//				pixels_.push_back(std::stoull(token, NULL, 0));
-//				++width_;
-//			}
-//			++height_;
-//		}
-//	}
-//	virtual const uint32_t& width()const{return width_;}
-//	virtual const uint32_t& height()const{return height_;}
-//	virtual void generate(FrameBuffer& buffer)const{std::copy(pixels_.begin(), pixels_.end(), &buffer[0][0]);}
-//private:
-//	std::string read(const std::string& filename)
-//	{
-//		gzFile_s* fp = gzopen(filename.c_str(), "rb");
-//		if(!fp){
-//			std::perror("");
-//			return "";
-//		}
-//		const unsigned int buffer_size = 1024 * 256;
-//		if(gzbuffer(fp, buffer_size)){
-//			std::perror("");
-//			return "";
-//		}
-//		char buffer[buffer_size];
-//		unsigned int len = 0;
-//		std::string str;
-//		while((len = gzread(fp, buffer, buffer_size)) > 0){
-//			str.append(buffer, len);
-//		}
-//		gzclose(fp);
-//		return str;
-//	}
-//	uint32_t width_;
-//	uint32_t height_;
-//	std::vector<Pixel> pixels_;
-//};
-
 #ifdef ENABLE_TIFF
 void generate_16bpc_tiff(const std::string& output_filename, FrameBuffer& buffer)
 {
 	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
 	if(!image){
-		perror("");
+		std::perror("");
 		return;
 	}
 	TIFFSetField(image, TIFFTAG_IMAGEWIDTH, buffer.width());

@@ -4,7 +4,7 @@
  */
 
 #include <iostream>
-#include "getopt.h"
+#include "getopt.hpp"
 
 typedef unsigned int uint32_t;
 
