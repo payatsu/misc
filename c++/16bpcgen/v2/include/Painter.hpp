@@ -12,7 +12,7 @@ public:
 	virtual Pixel operator()() = 0;
 };
 
-class UniColor: Painter{
+class UniColor: public Painter{
 public:
 	UniColor(const Pixel& pixel): pixel_(pixel){}
 	virtual Pixel operator()(){return pixel_;}
@@ -20,7 +20,7 @@ private:
 	const Pixel pixel_;
 };
 
-class Gradator: Painter{
+class Gradator: public Painter{
 public:
 	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false):
 		step_(step), state_(initial), invert_(invert){}
@@ -37,7 +37,7 @@ private:
 };
 
 #if 201103L <= __cplusplus
-class RandomColor: Painter{
+class RandomColor: public Painter{
 public:
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
 	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}

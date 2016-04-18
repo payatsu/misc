@@ -46,7 +46,8 @@ private:
 	const bool invert_;
 };
 
-class Ramp: public PatternGenerator{ public:
+class Ramp: public PatternGenerator{
+public:
 	virtual void generate(FrameBuffer& buffer)const;
 };
 
@@ -78,6 +79,7 @@ public:
 			int scale = 1, uint32_t row = 0, uint32_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 	virtual void generate(FrameBuffer& buffer)const;
+private:
 	void write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 			unsigned char c, const Pixel& pixel, int scale)const;
 	void write(FrameBuffer& buffer, uint32_t row, uint32_t column,

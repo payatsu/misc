@@ -1350,7 +1350,9 @@ const unsigned char characters[][8] = {
 		0x00,
 	},
 };
+
 void Character::generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_);}
+
 void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 		unsigned char c, const Pixel& pixel, int scale)const
 {
@@ -1372,6 +1374,7 @@ void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 		}
 	}
 }
+
 void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 		const std::string& str, const Pixel& pixel, int scale)const
 {
