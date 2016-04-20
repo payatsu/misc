@@ -4,7 +4,7 @@ includedir := include/
 
 srcdir := src/
 srcfe  := ${addprefix ${srcdir}, 16bpcgen_fe.cpp}
-srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp write_img.cpp}
+srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp read_img.cpp write_img.cpp}
 
 bindir := ${CURDIR}/bin/
 binfe  := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcfe}}}
@@ -12,6 +12,7 @@ binbe  := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcbe}}}
 apps   := ${binfe} ${binbe}
 
 CPPFLAGS := -I${includedir} -DENABLE_PNG -DENABLE_TIFF
+CXXFLAGS := -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wformat -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings
 LDLIBS   := -lpng -ltiff
 
 width  := 1920

@@ -76,7 +76,7 @@ class Row{
 public:
 	Row(uint8_t* row, const uint32_t& width): row_(row), width_(width){}
 	const uint32_t& width()const{return width_;}
-	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(row_ + column*pixelsize);}
+	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
 	bool operator!=(const Row& rhs)const{return this->row_ != rhs.row_;}
 	static void fill(Row first, Row last, const Row& row)
@@ -87,7 +87,7 @@ public:
 		}
 	}
 private:
-	uint8_t* row_;
+	const uint8_t* row_;
 	const uint32_t& width_;
 };
 
@@ -95,30 +95,19 @@ class FrameBuffer{
 public:
 	FrameBuffer(const uint32_t& width, const uint32_t& height):
 		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
+	FrameBuffer(const FrameBuffer&);
 	~FrameBuffer(){delete[] head_;}
 	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	FrameBuffer& operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
-	FrameBuffer& operator<<(std::istream& is)
-	{
-		const int size = height()*width()*pixelsize;
-		for(int i = 0; i < size; ++i){
-			int c = is.get();
-			if(is.eof()){
-				break;
-			}
-			head_[i] = c;
-		}
-		return *this;
-	}
+	FrameBuffer& operator<<(std::istream& is);
 	uint8_t* head()const{return head_;}
 	const uint32_t& width()const{return width_;}
 	const uint32_t& height()const{return height_;}
 private:
-	FrameBuffer(const FrameBuffer&);
 	FrameBuffer& operator=(const FrameBuffer&);
 	uint8_t* head_;
-	const uint32_t& width_;
-	const uint32_t& height_;
+	const uint32_t width_;
+	const uint32_t height_;
 };
 
 #endif
