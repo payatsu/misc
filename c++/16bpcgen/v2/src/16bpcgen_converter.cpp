@@ -1,7 +1,6 @@
 #include "FrameBuffer.hpp"
 #include "getopt.hpp"
 #include "read_img.hpp"
-#include "write_img.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -13,7 +12,7 @@ int main(int argc, char* argv[])
 	int result = 0;
 	FrameBuffer buffer = read_16bpc_tiff(input, result);
 
-	write_16bpc_tiff(output, buffer);
+	buffer >> output;
 
 	return 0;
 }

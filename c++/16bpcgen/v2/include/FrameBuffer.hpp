@@ -95,21 +95,32 @@ class FrameBuffer{
 public:
 	FrameBuffer(const uint32_t& width, const uint32_t& height):
 		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
-	FrameBuffer(const FrameBuffer&);
+	FrameBuffer(const std::string& filename);
+	FrameBuffer(const FrameBuffer& buffer);
 	~FrameBuffer(){delete[] head_;}
 	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	FrameBuffer& operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
 	FrameBuffer& operator<<(std::istream& is);
+	FrameBuffer& operator>>(const std::string& filename)const{return write(filename);}
+	FrameBuffer& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
-	uint8_t* tail()const{return head_ + height_*width_*pixelsize;}
+	uint8_t* tail()const{return head_ + data_size();}
 	const uint32_t& width()const{return width_;}
 	const uint32_t& height()const{return height_;}
 	uint32_t data_size()const{return height_*width_*pixelsize;}
 private:
-	FrameBuffer& operator=(const FrameBuffer&);
+#ifdef ENABLE_TIFF
+	FrameBuffer& write_tiff(const std::string& filename)const;
+#endif
+#ifdef ENABLE_PNG
+	FrameBuffer& write_png(const std::string& filename)const;
+#endif
+	FrameBuffer& operator=(const FrameBuffer& buffer);
 	uint8_t* head_;
-	const uint32_t width_;
-	const uint32_t height_;
+	uint32_t width_;
+	uint32_t height_;
 };
 
+bool have_ext(const std::string& filename, const std::string& ext);
+std::string append_extension(const std::string& filename, const std::string& ext);
 #endif

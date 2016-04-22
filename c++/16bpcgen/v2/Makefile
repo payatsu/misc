@@ -4,8 +4,8 @@ includedir := include/
 
 srcdir := src/
 srcfe  := ${addprefix ${srcdir}, 16bpcgen_fe.cpp}
-srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp write_img.cpp}
-srccnv := ${addprefix ${srcdir}, 16bpcgen_converter.cpp FrameBuffer.cpp read_img.cpp write_img.cpp}
+srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp}
+srccnv := ${addprefix ${srcdir}, 16bpcgen_converter.cpp FrameBuffer.cpp read_img.cpp}
 
 bindir := ${CURDIR}/bin/
 binfe  := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcfe}}}
