@@ -1,15 +1,17 @@
-.PHONY: all apps clean binclean imgclean ramp betanuri whitenoise builtins
+.PHONY: all apps gtags clean binclean imgclean ramp betanuri whitenoise builtins
 
 includedir := include/
 
 srcdir := src/
 srcfe  := ${addprefix ${srcdir}, 16bpcgen_fe.cpp}
-srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp read_img.cpp write_img.cpp}
+srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp PatternGenerator.cpp write_img.cpp}
+srccnv := ${addprefix ${srcdir}, 16bpcgen_converter.cpp FrameBuffer.cpp read_img.cpp write_img.cpp}
 
 bindir := ${CURDIR}/bin/
 binfe  := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcfe}}}
 binbe  := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcbe}}}
-apps   := ${binfe} ${binbe}
+bincnv := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srccnv}}}
+apps   := ${binfe} ${binbe} ${bincnv}
 
 CPPFLAGS := -I${includedir} -DENABLE_PNG -DENABLE_TIFF
 CXXFLAGS := -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wformat -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings
@@ -24,7 +26,13 @@ all: apps ramp betanuri whitenoise builtins
 
 apps: ${apps}
 
+gtags: GTAGS GRTAGS GPATH
+
+GTAGS GRTAGS GPATH:
+	gtags -c
+
 clean: binclean imgclean
+	${RM} GTAGS GRTAGS GPATH
 
 binclean:
 	${RM} -r ${dir ${apps}}
@@ -36,13 +44,6 @@ ramp: ${apps}
 	mkdir -p ${imgdir}
 	cd ${imgdir}; \
 	${binfe} width=${width} height=${height} initial=000000000000 increment=002200220022 tread=1 | ${binbe} width=${width} height=${height} input=- output=ramp-by-fe
-
-# 	cd ${imgdir}; \
-# 	for i in `seq ${height}`; do \
-# 		for j in `seq ${width}`; do \
-# 			printf \\u`printf %04x $$i`; \
-# 		done; \
-# 	done | ${binbe} width=${width} height=${height} input=- output=ramp-by-shell
 
 betanuri: ${binbe}
 	mkdir -p ${imgdir}
@@ -64,5 +65,9 @@ ${binfe}: ${srcfe}
 	${LINK.cc} $^ -o $@
 
 ${binbe}: ${srcbe}
+	mkdir -p ${dir $@}
+	${LINK.cc} $^ ${LDLIBS} -o $@
+
+${bincnv}: ${srccnv}
 	mkdir -p ${dir $@}
 	${LINK.cc} $^ ${LDLIBS} -o $@

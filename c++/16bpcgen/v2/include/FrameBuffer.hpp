@@ -101,8 +101,10 @@ public:
 	FrameBuffer& operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
 	FrameBuffer& operator<<(std::istream& is);
 	uint8_t* head()const{return head_;}
+	uint8_t* tail()const{return head_ + height_*width_*pixelsize;}
 	const uint32_t& width()const{return width_;}
 	const uint32_t& height()const{return height_;}
+	uint32_t size()const{return height_*width_;}
 private:
 	FrameBuffer& operator=(const FrameBuffer&);
 	uint8_t* head_;

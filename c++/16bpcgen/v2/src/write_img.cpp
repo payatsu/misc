@@ -10,7 +10,7 @@
 #include "write_img.hpp"
 
 #ifdef ENABLE_TIFF
-int write_16bpc_tiff(const std::string& output_filename, FrameBuffer& buffer)
+int write_16bpc_tiff(const std::string& output_filename, const FrameBuffer& buffer)
 {
 	TIFF* image = TIFFOpen(output_filename.c_str(), "w");
 	if(!image){
@@ -29,22 +29,15 @@ int write_16bpc_tiff(const std::string& output_filename, FrameBuffer& buffer)
 	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFWriteEncodedStrip(image, 0, buffer.head(),
-			buffer.height()*buffer.width()*pixelsize);
+	TIFFWriteEncodedStrip(image, 0, buffer.head(), buffer.size());
 	TIFFClose(image);
 	return EXIT_SUCCESS;
 }
 #endif
 
 #ifdef ENABLE_PNG
-int write_16bpc_png(const std::string& output_filename, FrameBuffer& buffer)
+int write_16bpc_png(const std::string& output_filename, const FrameBuffer& buffer)
 {
-	FILE* fp = std::fopen(output_filename.c_str(), "wb");
-	if(!fp){
-		std::perror(__func__);
-		return EXIT_FAILURE;
-	}
-
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr){
 		return EXIT_FAILURE;
@@ -53,6 +46,13 @@ int write_16bpc_png(const std::string& output_filename, FrameBuffer& buffer)
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr){
 		png_destroy_write_struct(&png_ptr, NULL);
+		return EXIT_FAILURE;
+	}
+
+	FILE* fp = std::fopen(output_filename.c_str(), "wb");
+	if(!fp){
+		std::perror(__func__);
+		png_destroy_write_struct(&png_ptr, &info_ptr);
 		return EXIT_FAILURE;
 	}
 
@@ -68,29 +68,44 @@ int write_16bpc_png(const std::string& output_filename, FrameBuffer& buffer)
 	png_set_rows(png_ptr, info_ptr, row_ptrs);
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
 
-	png_destroy_write_struct(&png_ptr, &info_ptr);
 	delete[] row_ptrs;
+	png_destroy_write_struct(&png_ptr, &info_ptr);
 	std::fclose(fp);
 	return EXIT_SUCCESS;
 }
 #endif
 
-int write_16bpc_img(const std::string& output_basename, FrameBuffer& buffer)
+int write_16bpc_img(const std::string& output_filename, const FrameBuffer& buffer)
 {
-	int result = EXIT_SUCCESS;
+	if(have_ext(output_filename, ".tif")){
 #ifdef ENABLE_TIFF
-	 result |= write_16bpc_tiff(output_basename + ".tif", buffer);
+		return write_16bpc_tiff(output_filename, buffer);
+#endif
+	}else if(have_ext(output_filename, ".png")){
+#ifdef ENABLE_PNG
+		return write_16bpc_png(output_filename, buffer);
+#endif
+	}else{
+		int result = EXIT_SUCCESS;
+#ifdef ENABLE_TIFF
+		result |= write_16bpc_tiff(output_filename + ".tif", buffer);
 #endif
 #ifdef ENABLE_PNG
-	 result |= write_16bpc_png(output_basename + ".png", buffer);
+		result |= write_16bpc_png(output_filename + ".png", buffer);
 #endif
-	 return result;
+		return result;
+	}
+}
+
+bool have_ext(const std::string& filename, const std::string& ext)
+{
+	const std::string::size_type idx = filename.find(ext);
+	return !(idx == std::string::npos || idx + ext.size() != filename.size());
 }
 
 std::string append_extension(const std::string& filename, const std::string& ext)
 {
-	const std::string::size_type idx = filename.find(ext);
-	if(idx == std::string::npos || idx + ext.size() != filename.size()){
+	if(!have_ext(filename, ext)){
 		return filename + ext;
 	}else{
 		return filename;
