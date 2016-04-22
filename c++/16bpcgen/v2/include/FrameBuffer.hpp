@@ -104,7 +104,7 @@ public:
 	uint8_t* tail()const{return head_ + height_*width_*pixelsize;}
 	const uint32_t& width()const{return width_;}
 	const uint32_t& height()const{return height_;}
-	uint32_t size()const{return height_*width_;}
+	uint32_t data_size()const{return height_*width_*pixelsize;}
 private:
 	FrameBuffer& operator=(const FrameBuffer&);
 	uint8_t* head_;

@@ -29,7 +29,7 @@ int write_16bpc_tiff(const std::string& output_filename, const FrameBuffer& buff
 	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
 	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFWriteEncodedStrip(image, 0, buffer.head(), buffer.size());
+	TIFFWriteEncodedStrip(image, 0, buffer.head(), buffer.data_size());
 	TIFFClose(image);
 	return EXIT_SUCCESS;
 }

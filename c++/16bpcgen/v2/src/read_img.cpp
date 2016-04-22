@@ -58,7 +58,7 @@ FrameBuffer read_16bpc_tiff(const std::string& input_filename, int& result)
 		return FrameBuffer(0, 0);
 	}
 
-	FrameBuffer buffer = FrameBuffer(0, 0);
+	FrameBuffer buffer = FrameBuffer(width, length);
 
 	tmsize_t strip_size = TIFFStripSize(image);
 	uint32_t num_strips = TIFFNumberOfStrips(image);
@@ -66,7 +66,7 @@ FrameBuffer read_16bpc_tiff(const std::string& input_filename, int& result)
 	tmsize_t read_result = 0;
 	for(uint32_t i = 0; i < num_strips; ++i){
 		if((read_result = TIFFReadEncodedStrip(image, i, buffer.head() + offset, strip_size)) == -1){
-			std::fprintf(stderr, "%s\n", __func__);
+			std::fprintf(stderr, "%s %d\n", __func__, i);
 			TIFFClose(image);
 			result = EXIT_FAILURE;
 			return FrameBuffer(0, 0);
