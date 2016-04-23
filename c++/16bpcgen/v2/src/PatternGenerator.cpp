@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <vector>
 #include "PatternGenerator.hpp"
 #include "Painter.hpp"

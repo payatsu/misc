@@ -12,6 +12,7 @@
 // TODO Focus
 
 #include <fstream>
+#include <iostream>
 #include "FrameBuffer.hpp"
 #include "getopt.hpp"
 #include "PatternGenerator.hpp"

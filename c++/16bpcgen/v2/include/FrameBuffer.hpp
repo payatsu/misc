@@ -2,10 +2,7 @@
 #define _16BPCGEN_FRAMEBUFFER_HPP_
 
 #include <algorithm>
-#include <iostream>
-#ifdef ENABLE_PNG
-#	include <libpng16/png.h>
-#endif
+#include <iosfwd>
 
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
@@ -110,15 +107,17 @@ public:
 	uint32_t data_size()const{return height_*width_*pixelsize;}
 private:
 #ifdef ENABLE_TIFF
+	void read_tiff(const std::string& filename);
 	FrameBuffer& write_tiff(const std::string& filename)const;
 #endif
 #ifdef ENABLE_PNG
+	void read_png(const std::string & filename);
 	FrameBuffer& write_png(const std::string& filename)const;
 #endif
 	FrameBuffer& operator=(const FrameBuffer& buffer);
-	uint8_t* head_;
-	uint32_t width_;
-	uint32_t height_;
+	uint8_t* const head_;
+	const uint32_t width_;
+	const uint32_t height_;
 };
 
 bool have_ext(const std::string& filename, const std::string& ext);
