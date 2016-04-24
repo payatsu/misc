@@ -51,7 +51,6 @@ public:
 };
 
 // TODO コントラスト調整。
-// TODO 切り出し。
 // TODO ガンマ補正。
 // TODO ノイズ除去（メディアン）
 // TODO エッジ検出（Sobel, Roberts, Prewitt）

@@ -15,14 +15,28 @@ public:
 	const uint32_t offset_y_;
 };
 
-class Tone: public ImageProcess{
+class AreaSpecifier: public ImageProcess{
+public:
+	AreaSpecifier(const Area& area = Area()): area_(area){}
+	virtual FrameBuffer& process(FrameBuffer& buffer)const = 0;
+	bool is_in(const FrameBuffer& buffer)const;
+protected:
+	const Area& area_;
+};
+
+class Tone: public AreaSpecifier{
 public:
 	Tone(const PixelConverter& converter, const Area& area = Area()):
-		converter_(converter), area_(area){}
+		AreaSpecifier(area), converter_(converter){}
 	virtual FrameBuffer& process(FrameBuffer& buffer)const;
 private:
 	const PixelConverter& converter_;
-	const Area& area_;
+};
+
+class Crop: public AreaSpecifier{
+public:
+	Crop(const Area& area): AreaSpecifier(area){}
+	virtual FrameBuffer& process(FrameBuffer& buffer)const;
 };
 
 #endif

@@ -9,7 +9,10 @@ int main(int argc, char* argv[])
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 
-	FrameBuffer(input) >> Tone(GrayScale(), Area(1920/2, 1080/2, 1920/4, 1080/4)) >> output;
+	FrameBuffer(input)
+		>> Tone(GrayScale(), Area(1920/2, 1080/2))
+		>> Crop(Area(1920/2, 1080/2, 1920/4, 1080/4))
+		>> output;
 
 	return 0;
 }

@@ -50,6 +50,19 @@ FrameBuffer::FrameBuffer(const FrameBuffer& buffer):
 	std::copy(buffer.head(), buffer.tail(), head());
 }
 
+FrameBuffer& FrameBuffer::operator=(const FrameBuffer& buffer)
+{
+	if(this == &buffer){
+		return *this;
+	}
+	delete[] head_;
+	width_  = buffer.width();
+	height_ = buffer.height();
+	head_   = new uint8_t[data_size()];
+	std::copy(buffer.head(), buffer.tail(), head());
+	return *this;
+}
+
 FrameBuffer& FrameBuffer::operator<<(const PatternGenerator& generator){return generator.generate(*this);}
 
 
@@ -114,9 +127,9 @@ void FrameBuffer::read_tiff(const std::string& filename)
 		std::cerr << __func__ << ": not supported photometric: " << photometric << std::endl;
 	}
 
-	const_cast<uint32_t&>(width_)  = image_width;
-	const_cast<uint32_t&>(height_) = image_length;
-	const_cast<uint8_t*&>(head_)   = new uint8_t[height_*width_*pixelsize];
+	width_  = image_width;
+	height_ = image_length;
+	head_   = new uint8_t[data_size()];
 
 	const tmsize_t strip_size = TIFFStripSize(image);
 	const uint32_t num_strips = TIFFNumberOfStrips(image);
@@ -214,9 +227,9 @@ void FrameBuffer::read_png(const std::string& filename)
 				 NULL);
 	uint8_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
 
-	const_cast<uint32_t&>(width_)  = png_get_image_width(png_ptr, info_ptr);
-	const_cast<uint32_t&>(height_) = png_get_image_height(png_ptr, info_ptr);
-	const_cast<uint8_t*&>(head_)   = new uint8_t[height_*width_*pixelsize];
+	width_  = png_get_image_width(png_ptr, info_ptr);
+	height_ = png_get_image_height(png_ptr, info_ptr);
+	head_   = new uint8_t[data_size()];
 
 	for(uint32_t i = 0; i < height_; ++i){
 		std::copy(&row_ptrs[i][0], &row_ptrs[i][width_*pixelsize], reinterpret_cast<uint8_t*>(&this->operator[](i)[0]));

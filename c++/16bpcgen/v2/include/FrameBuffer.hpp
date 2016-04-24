@@ -32,6 +32,7 @@ public:
 		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
 	FrameBuffer(const std::string& filename);
 	FrameBuffer(const FrameBuffer& buffer);
+	FrameBuffer& operator=(const FrameBuffer& buffer);
 	~FrameBuffer(){delete[] head_;}
 	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	FrameBuffer& operator<<(const PatternGenerator& generator);
@@ -53,10 +54,9 @@ private:
 	void read_png(const std::string & filename);
 	FrameBuffer& write_png(const std::string& filename)const;
 #endif
-	FrameBuffer& operator=(const FrameBuffer& buffer);
-	uint8_t* const head_;
-	const uint32_t width_;
-	const uint32_t height_;
+	uint8_t* head_;
+	uint32_t width_;
+	uint32_t height_;
 };
 
 bool have_ext(const std::string& filename, const std::string& ext);
