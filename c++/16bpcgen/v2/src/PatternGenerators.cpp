@@ -1,9 +1,11 @@
+#include <algorithm>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "PatternGenerator.hpp"
+#include "FrameBuffer.hpp"
+#include "PatternGenerators.hpp"
 #include "Painter.hpp"
 
 void ColorBar::generate(FrameBuffer& buffer)const
@@ -1408,3 +1410,5 @@ TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), te
 	width_ *= char_width;
 	height_ *= char_height;
 }
+
+void TypeWriter::generate(FrameBuffer& buffer)const{buffer << Character(text_, white);}

@@ -4,7 +4,7 @@
 #if 201103L <= __cplusplus
 #	include <random>
 #endif
-#include "FrameBuffer.hpp"
+#include "Pixel.hpp"
 
 class Painter{
 public:
@@ -22,7 +22,7 @@ private:
 
 class Gradator: public Painter{
 public:
-	Gradator(const Pixel& step, const Pixel& initial=black, bool invert=false):
+	Gradator(const Pixel& step, const Pixel& initial = black, bool invert = false):
 		step_(step), state_(initial), invert_(invert){}
 	virtual Pixel operator()()
 	{

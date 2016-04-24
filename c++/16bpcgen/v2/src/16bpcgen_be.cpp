@@ -15,7 +15,7 @@
 #include <iostream>
 #include "FrameBuffer.hpp"
 #include "getopt.hpp"
-#include "PatternGenerator.hpp"
+#include "PatternGenerators.hpp"
 
 void generate_builtin_patterns(uint32_t width, uint32_t height)
 {

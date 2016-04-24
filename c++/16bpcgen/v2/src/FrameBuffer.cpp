@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
@@ -10,6 +11,8 @@
 #	include <libpng16/png.h>
 #endif
 #include "FrameBuffer.hpp"
+#include "PatternGenerator.hpp"
+#include "Pixel.hpp"
 
 const int bitdepth  = 16;
 #ifdef ENABLE_PNG
@@ -25,6 +28,14 @@ const Pixel blue   (0x0000, 0x0000, 0xffff);
 const Pixel cyan   (0x0000, 0xffff, 0xffff);
 const Pixel magenta(0xffff, 0x0000, 0xffff);
 const Pixel yellow (0xffff, 0xffff, 0x0000);
+
+void Row::fill(Row first, Row last, const Row& row)
+{
+	while(first != last){
+		std::copy(&row[0], &row[row.width()], &first[0]);
+		++first;
+	}
+}
 
 FrameBuffer::FrameBuffer(const std::string& filename): head_(NULL), width_(0), height_(0)
 {
@@ -46,6 +57,9 @@ FrameBuffer::FrameBuffer(const FrameBuffer& buffer):
 {
 	std::copy(buffer.head(), buffer.tail(), head());
 }
+
+FrameBuffer& FrameBuffer::operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
+
 
 FrameBuffer& FrameBuffer::operator<<(std::istream& is)
 {
