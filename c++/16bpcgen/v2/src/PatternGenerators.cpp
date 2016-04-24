@@ -8,7 +8,7 @@
 #include "PatternGenerators.hpp"
 #include "Painter.hpp"
 
-void ColorBar::generate(FrameBuffer& buffer)const
+FrameBuffer& ColorBar::generate(FrameBuffer& buffer)const
 {
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
@@ -44,11 +44,12 @@ void ColorBar::generate(FrameBuffer& buffer)const
 	std::fill(&buffer[h3][width/8 + x/7*3/2 + 2*x/7], &buffer[h3][width/8 + x],               black);
 	std::fill(&buffer[h3][width/8 + x],               &buffer[h3][width],                     white/100*15);
 	Row::fill(buffer[h3 + 1], buffer[height], buffer[h3]);
+	return buffer;
 }
 
-void Luster::generate(FrameBuffer& buffer)const{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_);}
+FrameBuffer& Luster::generate(FrameBuffer& buffer)const{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_); return buffer;}
 
-void Checker::generate(FrameBuffer& buffer)const
+FrameBuffer& Checker::generate(FrameBuffer& buffer)const
 {
 	const Pixel pattern1 = invert_ ? black : white;
 	const Pixel pattern2 = invert_ ? white : black;
@@ -67,9 +68,10 @@ void Checker::generate(FrameBuffer& buffer)const
 	std::fill(&buffer[height/4][width/4*3], &buffer[height/4][width],     pattern1);
 	Row::fill(buffer[height/4+1], buffer[height/4*2], buffer[height/4]);
 	Row::fill(buffer[height/4*3], buffer[height],     buffer[height/4]);
+	return buffer;
 }
 
-void StairStepH::generate(FrameBuffer& buffer)const
+FrameBuffer& StairStepH::generate(FrameBuffer& buffer)const
 {
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
@@ -85,9 +87,10 @@ void StairStepH::generate(FrameBuffer& buffer)const
 		Row::fill(buffer[row + 1], buffer[std::min(height, row + stair_height)], buffer[row]);
 		invert = !invert;
 	}
+	return buffer;
 }
 
-void StairStepV::generate(FrameBuffer& buffer)const
+FrameBuffer& StairStepV::generate(FrameBuffer& buffer)const
 {
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
@@ -106,9 +109,10 @@ void StairStepV::generate(FrameBuffer& buffer)const
 		}
 		Row::fill(buffer[row + 1], buffer[std::min(height, row + step_height)], buffer[row]);
 	}
+	return buffer;
 }
 
-void Ramp::generate(FrameBuffer& buffer)const
+FrameBuffer& Ramp::generate(FrameBuffer& buffer)const
 {
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
@@ -137,9 +141,10 @@ void Ramp::generate(FrameBuffer& buffer)const
 	Row::fill(buffer[height/12*9  + 1], buffer[height/12*10], buffer[height/12*9]);
 	Row::fill(buffer[height/12*10 + 1], buffer[height/12*11], buffer[height/12*10]);
 	Row::fill(buffer[height/12*11 + 1], buffer[height],       buffer[height/12*11]);
+	return buffer;
 }
 
-void CrossHatch::generate(FrameBuffer& buffer)const
+FrameBuffer& CrossHatch::generate(FrameBuffer& buffer)const
 {
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
@@ -171,10 +176,11 @@ void CrossHatch::generate(FrameBuffer& buffer)const
 		uint32_t column = std::min(width  - 1, static_cast<uint32_t>(shift_h + radius*std::cos(theta)));
 		buffer[row][column] = white;
 	}
+	return buffer;
 }
 
 #if 201103L <= __cplusplus
-void WhiteNoise::generate(FrameBuffer& buffer)const
+FrameBuffer& WhiteNoise::generate(FrameBuffer& buffer)const
 {
 	RandomColor random_color;
 	for(uint32_t row = 0; row < buffer.height(); ++row){
@@ -182,6 +188,7 @@ void WhiteNoise::generate(FrameBuffer& buffer)const
 			buffer[row][column] = random_color();
 		}
 	}
+	return buffer;
 }
 #endif
 
@@ -1355,7 +1362,7 @@ const unsigned char characters[][8] = {
 	},
 };
 
-void Character::generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_);}
+FrameBuffer& Character::generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_); return buffer;}
 
 void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 		unsigned char c, const Pixel& pixel, int scale)const
@@ -1411,4 +1418,4 @@ TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), te
 	height_ *= char_height;
 }
 
-void TypeWriter::generate(FrameBuffer& buffer)const{buffer << Character(text_, white);}
+FrameBuffer& TypeWriter::generate(FrameBuffer& buffer)const{buffer << Character(text_, white); return buffer;}

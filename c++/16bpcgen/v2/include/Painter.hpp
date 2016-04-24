@@ -43,7 +43,7 @@ public:
 	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 private:
 	std::mt19937 engine_;
-	std::uniform_int_distribution<uint16_t> distribution_;
+	std::uniform_int_distribution<Pixel::value_type> distribution_;
 };
 #endif
 

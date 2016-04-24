@@ -7,10 +7,6 @@
  * - generate PNG and TIFF images based on binary sequence from stdin.
  */
 
-// TODO ColorStep
-// TODO Multi
-// TODO Focus
-
 #include <fstream>
 #include <iostream>
 #include "FrameBuffer.hpp"

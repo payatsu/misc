@@ -1,12 +1,13 @@
 #ifndef _16BPCGEN_PATTERN_GENERATOR_HPP_
 #define _16BPCGEN_PATTERN_GENERATOR_HPP_
 
-class FrameBuffer;
+#include "ImageProcess.hpp"
 
-class PatternGenerator{
+class PatternGenerator: public ImageProcess{
 public:
 	virtual ~PatternGenerator(){}
-	virtual void generate(FrameBuffer& buffer)const = 0;
+	virtual FrameBuffer& process(FrameBuffer& buffer)const{return generate(buffer);}
+	virtual FrameBuffer& generate(FrameBuffer& buffer)const = 0;
 };
 
 #endif

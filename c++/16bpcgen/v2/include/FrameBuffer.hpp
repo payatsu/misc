@@ -3,6 +3,7 @@
 
 #include <iosfwd>
 #include "typedef.hpp"
+class ImageProcess;
 class Pixel;
 class PatternGenerator;
 
@@ -35,6 +36,7 @@ public:
 	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	FrameBuffer& operator<<(const PatternGenerator& generator);
 	FrameBuffer& operator<<(std::istream& is);
+	FrameBuffer& operator>>(const ImageProcess& process);
 	FrameBuffer& operator>>(const std::string& filename)const{return write(filename);}
 	FrameBuffer& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}

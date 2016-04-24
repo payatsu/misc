@@ -11,6 +11,7 @@
 #	include <libpng16/png.h>
 #endif
 #include "FrameBuffer.hpp"
+#include "ImageProcess.hpp"
 #include "PatternGenerator.hpp"
 #include "Pixel.hpp"
 
@@ -19,15 +20,6 @@ const int bitdepth  = 16;
 const int colortype = PNG_COLOR_TYPE_RGB;
 #endif
 const int pixelsize = 6;
-
-const Pixel black  (0x0000, 0x0000, 0x0000);
-const Pixel white  (0xffff, 0xffff, 0xffff);
-const Pixel red    (0xffff, 0x0000, 0x0000);
-const Pixel green  (0x0000, 0xffff, 0x0000);
-const Pixel blue   (0x0000, 0x0000, 0xffff);
-const Pixel cyan   (0x0000, 0xffff, 0xffff);
-const Pixel magenta(0xffff, 0x0000, 0xffff);
-const Pixel yellow (0xffff, 0xffff, 0x0000);
 
 void Row::fill(Row first, Row last, const Row& row)
 {
@@ -58,7 +50,7 @@ FrameBuffer::FrameBuffer(const FrameBuffer& buffer):
 	std::copy(buffer.head(), buffer.tail(), head());
 }
 
-FrameBuffer& FrameBuffer::operator<<(const PatternGenerator& generator){generator.generate(*this); return *this;}
+FrameBuffer& FrameBuffer::operator<<(const PatternGenerator& generator){return generator.generate(*this);}
 
 
 FrameBuffer& FrameBuffer::operator<<(std::istream& is)
@@ -73,6 +65,8 @@ FrameBuffer& FrameBuffer::operator<<(std::istream& is)
 	}
 	return *this;
 }
+
+FrameBuffer& FrameBuffer::operator>>(const ImageProcess& process){return process.process(*this);}
 
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {

@@ -5,40 +5,48 @@
 
 class Pixel{
 public:
-	Pixel(uint16_t R = 0x0000, uint16_t G = 0x0000, uint16_t B = 0x0000): R_(R), G_(G), B_(B){}
-	Pixel(unsigned long long int binary): R_(binary>>32&0xffff), G_(binary>>16&0xffff), B_(binary&0xffff){}
+	typedef uint16_t value_type;
+	const static value_type max = 0xffff;
+	Pixel(value_type R = 0x0, value_type G = 0x0, value_type B = 0x0): R_(R), G_(G), B_(B){}
+	Pixel(unsigned long long int binary): R_(binary>>32&max), G_(binary>>16&max), B_(binary&max){}
 	Pixel operator+(const Pixel& rhs)const
 	{
 		return Pixel(
-			static_cast<uint16_t>(R_ + rhs.R_),
-			static_cast<uint16_t>(G_ + rhs.G_),
-			static_cast<uint16_t>(B_ + rhs.B_));
+			static_cast<value_type>(R_ + rhs.R_),
+			static_cast<value_type>(G_ + rhs.G_),
+			static_cast<value_type>(B_ + rhs.B_));
 	}
 	Pixel operator-(const Pixel& rhs)const
 	{
 		return Pixel(
-			static_cast<uint16_t>(R_ - rhs.R_),
-			static_cast<uint16_t>(G_ - rhs.G_),
-			static_cast<uint16_t>(B_ - rhs.B_));
+			static_cast<value_type>(R_ - rhs.R_),
+			static_cast<value_type>(G_ - rhs.G_),
+			static_cast<value_type>(B_ - rhs.B_));
 	}
-	Pixel operator*(uint16_t rhs)const
+	Pixel operator*(value_type rhs)const
 	{
 		return Pixel(
-			static_cast<uint16_t>(R_*rhs),
-			static_cast<uint16_t>(G_*rhs),
-			static_cast<uint16_t>(B_*rhs));
+			static_cast<value_type>(R_*rhs),
+			static_cast<value_type>(G_*rhs),
+			static_cast<value_type>(B_*rhs));
 	}
-	Pixel operator/(uint16_t rhs)const
+	Pixel operator/(value_type rhs)const
 	{
 		return Pixel(
-			static_cast<uint16_t>(R_/rhs),
-			static_cast<uint16_t>(G_/rhs),
-			static_cast<uint16_t>(B_/rhs));
+			static_cast<value_type>(R_/rhs),
+			static_cast<value_type>(G_/rhs),
+			static_cast<value_type>(B_/rhs));
 	}
+	value_type R()const{return R_;}
+	value_type G()const{return G_;}
+	value_type B()const{return B_;}
+	void setR(value_type R){R_ = R;}
+	void setG(value_type G){G_ = G;}
+	void setB(value_type B){B_ = B;}
 private:
-	uint16_t R_;
-	uint16_t G_;
-	uint16_t B_;
+	value_type R_;
+	value_type G_;
+	value_type B_;
 };
 
 extern const Pixel black;
