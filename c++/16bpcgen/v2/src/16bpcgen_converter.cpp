@@ -9,23 +9,23 @@ int main(int argc, char* argv[])
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 
-	std::vector<std::vector<Pixel::value_type> > array;
-	array.push_back(std::vector<Pixel::value_type>());
-	array.at(0).push_back(0);
-	array.at(0).push_back(1);
-	array.at(0).push_back(0);
-	array.push_back(std::vector<Pixel::value_type>());
-	array.at(1).push_back(1);
-	array.at(1).push_back(0);
-	array.at(1).push_back(-1);
-	array.push_back(std::vector<Pixel::value_type>());
-	array.at(2).push_back(0);
-	array.at(2).push_back(-1);
-	array.at(2).push_back(0);
+	std::vector<std::vector<Pixel::value_type> > kernel;
+	kernel.push_back(std::vector<Pixel::value_type>());
+	kernel.at(0).push_back(0);
+	kernel.at(0).push_back(1);
+	kernel.at(0).push_back(0);
+	kernel.push_back(std::vector<Pixel::value_type>());
+	kernel.at(1).push_back(1);
+	kernel.at(1).push_back(0);
+	kernel.at(1).push_back(-1);
+	kernel.push_back(std::vector<Pixel::value_type>());
+	kernel.at(2).push_back(0);
+	kernel.at(2).push_back(-1);
+	kernel.at(2).push_back(0);
 
 	FrameBuffer(input)
 		>> Channel(Channel::B)
-		>> Filter(array)
+		>> Filter(kernel)
 //		>> Normalize()
 		>> output;
 

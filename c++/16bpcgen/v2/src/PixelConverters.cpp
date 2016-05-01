@@ -74,3 +74,25 @@ Pixel& Reversal::convert(Pixel& pixel)const
 	}
 	return pixel;
 }
+
+Gamma::Gamma(const std::vector<Pixel::value_type>& lut, Ch ch):
+	Channel(ch), lut_(lut)
+{
+	if(lut_.size() != Pixel::max){
+		throw std::runtime_error(__func__);
+	}
+}
+
+Pixel& Gamma::convert(Pixel& pixel)const
+{
+	if(ch() & R){
+		pixel.R(lut_[pixel.R()]);
+	}
+	if(ch() & G){
+		pixel.G(lut_[pixel.G()]);
+	}
+	if(ch() & B){
+		pixel.G(lut_[pixel.B()]);
+	}
+	return pixel;
+}

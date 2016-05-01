@@ -1,6 +1,7 @@
 #ifndef _16BPCGEN_PIXELCONVERTERS_HPP_
 #define _16BPCGEN_PIXELCONVERTERS_HPP_
 
+#include <vector>
 #include "Pixel.hpp"
 #include "PixelConverter.hpp"
 #include "typedef.hpp"
@@ -50,10 +51,12 @@ public:
 	virtual Pixel& convert(Pixel& pixel)const;
 };
 
-// TODO コントラスト調整。
-// TODO ガンマ補正。
-// TODO ノイズ除去（メディアン）
-// TODO エッジ検出（Sobel, Roberts, Prewitt）
-// TODO 拡大縮小。
+class Gamma: public Channel{
+public:
+	Gamma(const std::vector<Pixel::value_type>& lut, Ch ch = R | G | B);
+	virtual Pixel& convert(Pixel& pixel)const;
+private:
+	std::vector<Pixel::value_type> lut_;
+};
 
 #endif

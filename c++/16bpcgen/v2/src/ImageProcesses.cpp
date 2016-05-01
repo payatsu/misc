@@ -84,12 +84,12 @@ FrameBuffer& Crop::process(FrameBuffer& buffer)const
 
 FrameBuffer& Filter::process(FrameBuffer& buffer)const
 {
-	if(!(array_.size() % 2) || array_.size() < 2){
+	if(!(kernel_.size() % 2) || kernel_.size() < 2){
 		throw std::runtime_error(__func__);
 	}
-	const std::size_t array_width = array_[0].size();
-	for(std::size_t i = 0; i < array_.size(); ++i){
-		if(!(array_[i].size() % 2) || array_.size() < 2 || array_[i].size() != array_width){
+	const std::size_t kernel_width = kernel_[0].size();
+	for(std::size_t i = 0; i < kernel_.size(); ++i){
+		if(!(kernel_[i].size() % 2) || kernel_.size() < 2 || kernel_[i].size() != kernel_width){
 			throw std::runtime_error(__func__);
 		}
 	}
@@ -97,18 +97,18 @@ FrameBuffer& Filter::process(FrameBuffer& buffer)const
 	FrameBuffer tmp = FrameBuffer(buffer.width(), buffer.height());
 	for(uint32_t h = 0; h < buffer.height(); ++h){
 		const uint32_t h_lowerbound =
-			h - array_.size()/2 < buffer.height() ? h - array_.size()/2 : 0 ;
+			h - kernel_.size()/2 < buffer.height() ? h - kernel_.size()/2 : 0 ;
 		const uint32_t h_upperbound = std::min(
-			static_cast<uint32_t>(h + array_.size()/2 + 1), buffer.height());
+			static_cast<uint32_t>(h + kernel_.size()/2 + 1), buffer.height());
 		for(uint32_t w = 0; w < buffer.width(); ++w){
 			const uint32_t w_lowerbound =
-				w - array_[0].size()/2 < buffer.width() ? w - array_[0].size()/2 : 0 ;
+				w - kernel_[0].size()/2 < buffer.width() ? w - kernel_[0].size()/2 : 0 ;
 			const uint32_t w_upperbound = std::min(
-				static_cast<uint32_t>(w + array_[0].size()/2 + 1), buffer.width());
+				static_cast<uint32_t>(w + kernel_[0].size()/2 + 1), buffer.width());
 			Pixel pixel = black;
 			for(uint32_t hh = h_lowerbound, i = 0; hh < h_upperbound; ++hh, ++i){
 				for(uint32_t ww = w_lowerbound, j = 0; ww < w_upperbound; ++ww, ++j){
-					pixel = pixel + buffer[hh][ww] * array_[i][j];
+					pixel = pixel + buffer[hh][ww] * kernel_[i][j];
 				}
 			}
 			tmp[h][w] = pixel;
