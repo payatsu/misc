@@ -11,7 +11,7 @@
 #	include <libpng16/png.h>
 #endif
 #include "FrameBuffer.hpp"
-#include "ImageProcess.hpp"
+#include "ImageProcesses.hpp"
 #include "PatternGenerator.hpp"
 #include "Pixel.hpp"
 
@@ -80,6 +80,8 @@ FrameBuffer& FrameBuffer::operator<<(std::istream& is)
 }
 
 FrameBuffer& FrameBuffer::operator>>(const ImageProcess& process){return process.process(*this);}
+
+FrameBuffer& FrameBuffer::operator>>(const PixelConverter& converter){return Tone(converter).process(*this);}
 
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {

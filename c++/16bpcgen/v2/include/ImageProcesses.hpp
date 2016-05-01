@@ -1,7 +1,9 @@
 #ifndef _16BPCGEN_IMAGEPROCESSES_HPP_
 #define _16BPCGEN_IMAGEPROCESSES_HPP_
 
+#include <vector>
 #include "ImageProcess.hpp"
+#include "Pixel.hpp"
 #include "typedef.hpp"
 class PixelConverter;
 
@@ -19,7 +21,7 @@ class AreaSpecifier: public ImageProcess{
 public:
 	AreaSpecifier(const Area& area = Area()): area_(area){}
 	virtual FrameBuffer& process(FrameBuffer& buffer)const = 0;
-	bool is_in(const FrameBuffer& buffer)const;
+	bool within(const FrameBuffer& buffer)const;
 protected:
 	const Area& area_;
 };
@@ -33,10 +35,24 @@ private:
 	const PixelConverter& converter_;
 };
 
+class Normalize: public AreaSpecifier{
+public:
+	Normalize(const Area& area = Area()): AreaSpecifier(area){}
+	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+};
+
 class Crop: public AreaSpecifier{
 public:
 	Crop(const Area& area): AreaSpecifier(area){}
 	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+};
+
+class Filter: public ImageProcess{
+public:
+	Filter(const std::vector<std::vector<Pixel::value_type> >& array): array_(array){}
+	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+private:
+	std::vector<std::vector<Pixel::value_type> > array_;
 };
 
 #endif

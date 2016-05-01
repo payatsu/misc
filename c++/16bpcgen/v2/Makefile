@@ -4,7 +4,7 @@ includedir := include/
 
 srcdir := src/
 srcfe  := ${addprefix ${srcdir}, 16bpcgen_fe.cpp}
-srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp FrameBuffer.cpp Pixel.cpp PatternGenerators.cpp}
+srcbe  := ${addprefix ${srcdir}, 16bpcgen_be.cpp        FrameBuffer.cpp Pixel.cpp ImageProcesses.cpp PatternGenerators.cpp}
 srccnv := ${addprefix ${srcdir}, 16bpcgen_converter.cpp FrameBuffer.cpp Pixel.cpp ImageProcesses.cpp PixelConverters.cpp}
 
 depdir := dep/

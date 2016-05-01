@@ -40,9 +40,9 @@ public:
 	value_type R()const{return R_;}
 	value_type G()const{return G_;}
 	value_type B()const{return B_;}
-	void setR(value_type R){R_ = R;}
-	void setG(value_type G){G_ = G;}
-	void setB(value_type B){B_ = B;}
+	void R(value_type R){R_ = R;}
+	void G(value_type G){G_ = G;}
+	void B(value_type B){B_ = B;}
 private:
 	value_type R_;
 	value_type G_;

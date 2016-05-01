@@ -4,8 +4,9 @@
 #include <iosfwd>
 #include "typedef.hpp"
 class ImageProcess;
-class Pixel;
 class PatternGenerator;
+class Pixel;
+class PixelConverter;
 
 extern const int bitdepth;
 #ifdef ENABLE_PNG
@@ -38,6 +39,7 @@ public:
 	FrameBuffer& operator<<(const PatternGenerator& generator);
 	FrameBuffer& operator<<(std::istream& is);
 	FrameBuffer& operator>>(const ImageProcess& process);
+	FrameBuffer& operator>>(const PixelConverter& converter);
 	FrameBuffer& operator>>(const std::string& filename)const{return write(filename);}
 	FrameBuffer& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}

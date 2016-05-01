@@ -1,16 +1,17 @@
 #include <stdexcept>
+#include "FrameBuffer.hpp"
 #include "PixelConverters.hpp"
 
 Pixel& Channel::convert(Pixel& pixel)const
 {
 	if(!(ch_ & R)){
-		pixel.setR(0);
+		pixel.R(0);
 	}
 	if(!(ch_ & G)){
-		pixel.setG(0);
+		pixel.G(0);
 	}
 	if(!(ch_ & B)){
-		pixel.setB(0);
+		pixel.B(0);
 	}
 	return pixel;
 }
@@ -46,15 +47,15 @@ Pixel& Offset::convert(Pixel& pixel)const
 {
 
 	if(ch() & R){
-		pixel.setR(invert_ ? std::max(pixel.R() - offset_, 0)
+		pixel.R(invert_ ? std::max(pixel.R() - offset_, 0)
 				   : std::min(pixel.R() + offset_, static_cast<int>(Pixel::max)));
 	}
 	if(ch() & G){
-		pixel.setG(invert_ ? std::max(pixel.G() - offset_, 0)
+		pixel.G(invert_ ? std::max(pixel.G() - offset_, 0)
 				   : std::min(pixel.G() + offset_, static_cast<int>(Pixel::max)));
 	}
 	if(ch() & B){
-		pixel.setB(invert_ ? std::max(pixel.B() - offset_, 0)
+		pixel.B(invert_ ? std::max(pixel.B() - offset_, 0)
 				   : std::min(pixel.B() + offset_, static_cast<int>(Pixel::max)));
 	}
 	return pixel;
@@ -63,13 +64,13 @@ Pixel& Offset::convert(Pixel& pixel)const
 Pixel& Reversal::convert(Pixel& pixel)const
 {
 	if(ch() & R){
-		pixel.setR(Pixel::max - pixel.R());
+		pixel.R(Pixel::max - pixel.R());
 	}
 	if(ch() & G){
-		pixel.setG(Pixel::max - pixel.G());
+		pixel.G(Pixel::max - pixel.G());
 	}
 	if(ch() & B){
-		pixel.setB(Pixel::max - pixel.B());
+		pixel.B(Pixel::max - pixel.B());
 	}
 	return pixel;
 }

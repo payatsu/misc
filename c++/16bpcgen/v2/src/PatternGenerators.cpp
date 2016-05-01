@@ -81,7 +81,7 @@ FrameBuffer& StairStepH::generate(FrameBuffer& buffer)const
 	for(uint32_t row = 0; row < height; row += stair_height){
 		Gradator gradator(white/steps_, invert ? white : black, invert);
 		for(uint32_t column = 0; column < width; column += step_width){
-			std::fill(&buffer[row][column], &buffer[row][std::min(width, column+step_width)],
+			std::fill(&buffer[row][column], &buffer[row][std::min(width, column + step_width)],
 					gradator());
 		}
 		Row::fill(buffer[row + 1], buffer[std::min(height, row + stair_height)], buffer[row]);
@@ -104,7 +104,7 @@ FrameBuffer& StairStepV::generate(FrameBuffer& buffer)const
 	}
 	for(uint32_t row = 0; row < height; row += step_height){
 		for(uint32_t column = 0; column < width; column += stair_width){
-			std::fill(&buffer[row][column], &buffer[row][std::min(width, column+stair_width)],
+			std::fill(&buffer[row][column], &buffer[row][std::min(width, column + stair_width)],
 					gradators.at(column/stair_width)());
 		}
 		Row::fill(buffer[row + 1], buffer[std::min(height, row + step_height)], buffer[row]);
