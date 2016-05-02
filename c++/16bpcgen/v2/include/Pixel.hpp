@@ -26,16 +26,16 @@ public:
 	Pixel operator*(value_type rhs)const
 	{
 		return Pixel(
-			static_cast<value_type>(R_*rhs),
-			static_cast<value_type>(G_*rhs),
-			static_cast<value_type>(B_*rhs));
+			static_cast<value_type>(R_ * rhs),
+			static_cast<value_type>(G_ * rhs),
+			static_cast<value_type>(B_ * rhs));
 	}
 	Pixel operator/(value_type rhs)const
 	{
 		return Pixel(
-			static_cast<value_type>(R_/rhs),
-			static_cast<value_type>(G_/rhs),
-			static_cast<value_type>(B_/rhs));
+			static_cast<value_type>(R_ / rhs),
+			static_cast<value_type>(G_ / rhs),
+			static_cast<value_type>(B_ / rhs));
 	}
 	value_type R()const{return R_;}
 	value_type G()const{return G_;}
