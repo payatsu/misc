@@ -118,10 +118,10 @@ void FrameBuffer::read_tiff(const std::string& filename)
 	uint32_t image_length = 0;
 	uint32_t image_width = 0;
 	if(!TIFFGetField(image, TIFFTAG_BITSPERSAMPLE, &bits_per_sample) ||
-	   !TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel) ||
-	   !TIFFGetField(image, TIFFTAG_PHOTOMETRIC, &photometric) ||
-	   !TIFFGetField(image, TIFFTAG_IMAGELENGTH, &image_length) ||
-	   !TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &image_width)){
+		!TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel) ||
+		!TIFFGetField(image, TIFFTAG_PHOTOMETRIC, &photometric) ||
+		!TIFFGetField(image, TIFFTAG_IMAGELENGTH, &image_length) ||
+		!TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &image_width)){
 		TIFFClose(image);
 		throw std::runtime_error(__func__);
 	}
@@ -222,11 +222,11 @@ void FrameBuffer::read_png(const std::string& filename)
 	png_init_io(png_ptr, fp);
 	png_set_sig_bytes(png_ptr, number);
 	png_read_png(png_ptr, info_ptr,
-				 PNG_TRANSFORM_STRIP_ALPHA |
-				 PNG_TRANSFORM_SWAP_ENDIAN |
-				 PNG_TRANSFORM_GRAY_TO_RGB |
-				 PNG_TRANSFORM_EXPAND_16,
-				 NULL);
+				PNG_TRANSFORM_STRIP_ALPHA |
+				PNG_TRANSFORM_SWAP_ENDIAN |
+				PNG_TRANSFORM_GRAY_TO_RGB |
+				PNG_TRANSFORM_EXPAND_16,
+				NULL);
 	uint8_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
 
 	width_  = png_get_image_width(png_ptr, info_ptr);

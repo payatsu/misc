@@ -51,8 +51,8 @@ FrameBuffer& Luster::generate(FrameBuffer& buffer)const{std::fill(&buffer[0][0],
 
 FrameBuffer& Checker::generate(FrameBuffer& buffer)const
 {
-	const Pixel pattern1 = invert_ ? black : white;
-	const Pixel pattern2 = invert_ ? white : black;
+	const Pixel<uint16_t> pattern1 = invert_ ? black : white;
+	const Pixel<uint16_t> pattern2 = invert_ ? white : black;
 	const uint32_t width = buffer.width();
 	const uint32_t height = buffer.height();
 	std::fill(&buffer[0][0],         &buffer[0][width/4],   pattern1);
@@ -1365,7 +1365,7 @@ const unsigned char characters[][8] = {
 FrameBuffer& Character::generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_); return buffer;}
 
 void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
-		unsigned char c, const Pixel& pixel, int scale)const
+		unsigned char c, const Pixel<uint16_t>& pixel, int scale)const
 {
 	if('~' < c || buffer.height() <= row || buffer.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
@@ -1387,7 +1387,7 @@ void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 }
 
 void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
-		const std::string& str, const Pixel& pixel, int scale)const
+		const std::string& str, const Pixel<uint16_t>& pixel, int scale)const
 {
 	for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
 		if(str[i] == '\n'){

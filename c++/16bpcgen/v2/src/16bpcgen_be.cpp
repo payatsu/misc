@@ -36,9 +36,9 @@ void generate_builtin_patterns(uint32_t width, uint32_t height)
 	buffer << StairStepV(1, 20, true)  >> "stairstepV3";
 	buffer << Ramp()                   >> "ramp";
 	buffer << Luster(black)
-		   << CrossHatch(192, 108)     >> "crosshatch";
+			<< CrossHatch(192, 108)     >> "crosshatch";
 	buffer << Luster(black)
-		   << Character(" !\"#$%&'()*+,-./\n"
+			<< Character(" !\"#$%&'()*+,-./\n"
 						"0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\n"
 						"abcdefghijklmno\npqrstuvwxyz{|}~", red, 10) >> "character";
 #if 201103L <= __cplusplus

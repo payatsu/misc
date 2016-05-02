@@ -9,30 +9,30 @@
 class Painter{
 public:
 	virtual ~Painter(){}
-	virtual Pixel operator()() = 0;
+	virtual Pixel<uint16_t> operator()() = 0;
 };
 
 class UniColor: public Painter{
 public:
-	UniColor(const Pixel& pixel): pixel_(pixel){}
-	virtual Pixel operator()(){return pixel_;}
+	UniColor(const Pixel<uint16_t>& pixel): pixel_(pixel){}
+	virtual Pixel<uint16_t> operator()(){return pixel_;}
 private:
-	const Pixel pixel_;
+	const Pixel<uint16_t> pixel_;
 };
 
 class Gradator: public Painter{
 public:
-	Gradator(const Pixel& step, const Pixel& initial = black, bool invert = false):
+	Gradator(const Pixel<uint16_t>& step, const Pixel<uint16_t>& initial = black, bool invert = false):
 		step_(step), state_(initial), invert_(invert){}
-	virtual Pixel operator()()
+	virtual Pixel<uint16_t> operator()()
 	{
-		Pixel tmp = state_;
+		Pixel<uint16_t> tmp = state_;
 		state_ = invert_ ? state_ - step_ : state_ + step_;
 		return tmp;
 	}
 private:
-	Pixel step_;
-	Pixel state_;
+	Pixel<uint16_t> step_;
+	Pixel<uint16_t> state_;
 	bool invert_;
 };
 
@@ -40,10 +40,10 @@ private:
 class RandomColor: public Painter{
 public:
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
-	virtual Pixel operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+	virtual Pixel<uint16_t> operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 private:
 	std::mt19937 engine_;
-	std::uniform_int_distribution<Pixel::value_type> distribution_;
+	std::uniform_int_distribution<Pixel<uint16_t>::value_type> distribution_;
 };
 #endif
 

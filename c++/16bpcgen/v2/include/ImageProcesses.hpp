@@ -49,10 +49,10 @@ public:
 
 class Filter: public ImageProcess{
 public:
-	Filter(const std::vector<std::vector<Pixel::value_type> >& kernel): kernel_(kernel){}
+	Filter(const std::vector<std::vector<double> >& kernel): kernel_(kernel){}
 	virtual FrameBuffer& process(FrameBuffer& buffer)const;
 private:
-	std::vector<std::vector<Pixel::value_type> > kernel_;
+	std::vector<std::vector<double> > kernel_;
 };
 
 #endif

@@ -5,7 +5,7 @@
 #include "typedef.hpp"
 class ImageProcess;
 class PatternGenerator;
-class Pixel;
+template <typename T> class Pixel;
 class PixelConverter;
 
 extern const int bitdepth;
@@ -18,7 +18,7 @@ class Row{
 public:
 	Row(uint8_t* row, const uint32_t& width): row_(row), width_(width){}
 	const uint32_t& width()const{return width_;}
-	Pixel& operator[](int column)const{return *reinterpret_cast<Pixel*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
+	Pixel<uint16_t>& operator[](int column)const{return *reinterpret_cast<Pixel<uint16_t>*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
 	bool operator!=(const Row& rhs)const{return this->row_ != rhs.row_;}
 	static void fill(Row first, Row last, const Row& row);
