@@ -54,6 +54,24 @@ public:
 			static_cast<value_type>(G_ / rhs),
 			static_cast<value_type>(B_ / rhs));
 	}
+	Pixel operator<<(uint8_t rhs)const
+	{
+		return Pixel(
+			static_cast<value_type>(R_ << rhs),
+			static_cast<value_type>(G_ << rhs),
+			static_cast<value_type>(B_ << rhs));
+	}
+	Pixel operator>>(uint8_t rhs)const
+	{
+		return Pixel(
+			static_cast<value_type>(R_ >> rhs),
+			static_cast<value_type>(G_ >> rhs),
+			static_cast<value_type>(B_ >> rhs));
+	}
+	Pixel& operator*=(value_type rhs){return *this = *this * rhs;}
+	Pixel& operator/=(value_type rhs){return *this = *this / rhs;}
+	Pixel& operator<<=(uint8_t rhs){return *this = *this << rhs;}
+	Pixel& operator>>=(uint8_t rhs){return *this = *this >> rhs;}
 	value_type R()const{return R_;}
 	value_type G()const{return G_;}
 	value_type B()const{return B_;}

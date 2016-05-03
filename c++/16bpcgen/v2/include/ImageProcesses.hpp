@@ -41,6 +41,12 @@ public:
 	virtual FrameBuffer& process(FrameBuffer& buffer)const;
 };
 
+class Median: public AreaSpecifier{
+public:
+	Median(const Area& area = Area()): AreaSpecifier(area){}
+	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+};
+
 class Crop: public AreaSpecifier{
 public:
 	Crop(const Area& area): AreaSpecifier(area){}
@@ -49,10 +55,54 @@ public:
 
 class Filter: public ImageProcess{
 public:
-	Filter(const std::vector<std::vector<double> >& kernel): kernel_(kernel){}
+	typedef std::vector<double> KernelRow;
+	typedef std::vector<KernelRow> Kernel;
+	Filter(const Kernel& kernel): kernel_(kernel){}
 	virtual FrameBuffer& process(FrameBuffer& buffer)const;
 private:
-	std::vector<std::vector<double> > kernel_;
+	Kernel kernel_;
+};
+
+class WeightedSmoothing: public Filter{
+public:
+	WeightedSmoothing(): Filter(init()){}
+private:
+	static Kernel init();
+};
+
+class UnSharpMask: public Filter{
+public:
+	UnSharpMask(): Filter(init()){}
+private:
+	static Kernel init();
+};
+
+class Prewitt: public Filter{
+public:
+	Prewitt(): Filter(init()){}
+private:
+	static Kernel init();
+};
+
+class Sobel: public Filter{
+public:
+	Sobel(): Filter(init()){}
+private:
+	static Kernel init();
+};
+
+class Laplacian3x3: public Filter{
+public:
+	Laplacian3x3(): Filter(init()){}
+private:
+	static Kernel init();
+};
+
+class Laplacian5x5: public Filter{
+public:
+	Laplacian5x5(): Filter(init()){}
+private:
+	static Kernel init();
 };
 
 #endif

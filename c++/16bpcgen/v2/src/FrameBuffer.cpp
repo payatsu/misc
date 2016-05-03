@@ -79,9 +79,21 @@ FrameBuffer& FrameBuffer::operator<<(std::istream& is)
 	return *this;
 }
 
+FrameBuffer& FrameBuffer::operator<<(uint8_t shift)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
+	return *this;
+}
+
 FrameBuffer& FrameBuffer::operator>>(const ImageProcess& process){return process.process(*this);}
 
 FrameBuffer& FrameBuffer::operator>>(const PixelConverter& converter){return Tone(converter).process(*this);}
+
+FrameBuffer& FrameBuffer::operator>>(uint8_t shift)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], rshifter(shift));
+	return *this;
+}
 
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {
@@ -103,6 +115,9 @@ FrameBuffer& FrameBuffer::write(const std::string& filename)const
 		return const_cast<FrameBuffer&>(*this);
 	}
 }
+
+void FrameBuffer::lshifter::operator()(Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
+void FrameBuffer::rshifter::operator()(Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
 
 #ifdef ENABLE_TIFF
 void FrameBuffer::read_tiff(const std::string& filename)
