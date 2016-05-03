@@ -11,7 +11,21 @@ public:
 	Pixel(value_type r = 0x0, value_type g = 0x0, value_type b = 0x0): R_(r), G_(g), B_(b){}
 	Pixel(unsigned long long int binary): R_(binary>>32&max), G_(binary>>16&max), B_(binary&max){}
 	template <typename U>
-	Pixel(const Pixel<U>& pixel): R_(static_cast<value_type>(pixel.R_)), G_(static_cast<value_type>(pixel.G_)), B_(static_cast<value_type>(pixel.B_)){}
+	Pixel(const Pixel<U>& pixel):
+		R_(static_cast<value_type>(pixel.R())),
+		G_(static_cast<value_type>(pixel.G())),
+		B_(static_cast<value_type>(pixel.B())){}
+	template <typename U>
+	Pixel& operator=(const Pixel<U>& pixel)
+	{
+		if(this == reinterpret_cast<const Pixel*>(&pixel)){
+			return *this;
+		}
+		R_ = static_cast<value_type>(pixel.R());
+		G_ = static_cast<value_type>(pixel.G());
+		B_ = static_cast<value_type>(pixel.B());
+		return *this;
+	}
 	Pixel operator+(const Pixel& rhs)const
 	{
 		return Pixel(
