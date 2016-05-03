@@ -71,12 +71,34 @@ FrameBuffer& Median::process(FrameBuffer& buffer)const
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? buffer.height() : area_.offset_y_ + area_.height_;
 
+	FrameBuffer result = buffer;
+
 	for(uint32_t h = area_.offset_y_; h < limit_h; ++h){
+		const uint32_t h_lowerbound = h - 1 < buffer.height() ? h - 1 : 0 ;
+		const uint32_t h_upperbound = std::min(h + 1, buffer.height());
 		for(uint32_t w = area_.offset_x_; w < limit_w; ++w){
-			;
+			const uint32_t w_lowerbound = w - 1 < buffer.width() ? w - 1 : 0 ;
+			const uint32_t w_upperbound = std::min(w + 1, buffer.width());
+			std::vector<Pixel<uint16_t>::value_type> values1;
+			std::vector<Pixel<uint16_t>::value_type> values2;
+			std::vector<Pixel<uint16_t>::value_type> values3;
+			for(uint32_t i = h_lowerbound; i < h_upperbound; ++i){
+				for(uint32_t j = w_lowerbound; j < w_upperbound; ++j){
+					values1.push_back(buffer[i][j].R());
+					values2.push_back(buffer[i][j].G());
+					values3.push_back(buffer[i][j].B());
+				}
+			}
+			std::sort(values1.begin(), values1.end());
+			std::sort(values2.begin(), values2.end());
+			std::sort(values3.begin(), values3.end());
+			result[h][w] = Pixel<uint16_t>(
+					values1[values1.size()/2],
+					values2[values2.size()/2],
+					values3[values3.size()/2]);
 		}
 	}
-	return buffer;
+	return buffer = result;
 }
 
 FrameBuffer& Crop::process(FrameBuffer& buffer)const

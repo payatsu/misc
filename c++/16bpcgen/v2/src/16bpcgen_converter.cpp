@@ -9,12 +9,21 @@ int main(int argc, char* argv[])
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 
-	FrameBuffer (input)
-		>> 8
-		>> WeightedSmoothing()
-		>> Laplacian3x3()
-		<< 8
-		>> output;
+	FrameBuffer gray = FrameBuffer(input) >> GrayScale() >> "grayscale.png";
+
+	FrameBuffer med_sobel   = gray;
+	FrameBuffer sobel       = gray;
+	FrameBuffer med_prewitt = gray;
+	FrameBuffer prewitt     = gray;
+
+	med_sobel   >> 12 >> Median() >> Sobel()   >> "median-sobel.png";
+	sobel       >> 12             >> Sobel()   >> "sobel.png";
+
+	med_prewitt >> 12 >> Median() >> Prewitt() >> "median-prewitt.png";
+	prewitt     >> 12             >> Prewitt() >> "prewitt.png";
+
+
+	; //>> output;
 
 	return 0;
 }
