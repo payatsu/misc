@@ -95,6 +95,30 @@ FrameBuffer& FrameBuffer::operator>>(uint8_t shift)
 	return *this;
 }
 
+FrameBuffer FrameBuffer::operator+(const FrameBuffer& buffer)const
+{
+	if(width() != buffer.width()){
+		throw std::runtime_error(__func__);
+	}
+	FrameBuffer result = FrameBuffer(width(), height() + buffer.height());
+	std::copy(head(), head() + data_size(), result.head());
+	std::copy(buffer.head(), buffer.head() + buffer.data_size(), result.head() + data_size());
+	return result;
+}
+
+FrameBuffer FrameBuffer::operator,(const FrameBuffer& buffer)const
+{
+	if(height() != buffer.height()){
+		throw std::runtime_error(__func__);
+	}
+	FrameBuffer result = FrameBuffer(width() + buffer.width(), height());
+	for(uint32_t h = 0; h < height(); ++h){
+		std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);
+		std::copy(buffer.head() + h * buffer.width() * pixelsize, buffer.head() + (h + 1) * buffer.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
+	}
+	return result;
+}
+
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {
 	if(have_ext(filename, ".tif")){
