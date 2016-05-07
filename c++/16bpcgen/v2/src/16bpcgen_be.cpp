@@ -65,10 +65,10 @@ int main(int argc, char* argv[])
 
 	FrameBuffer buffer(width, height);
 	if(store["input"] == "-"){
-		buffer << std::cin;
+		buffer <<= std::cin;
 	}else if(store["input"] != ""){
 		std::ifstream ifs(store["input"].c_str());
-		buffer << ifs;
+		buffer <<= ifs;
 	}
 
 	if(store["output"] == ""){

@@ -6,21 +6,27 @@
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
-	std::string input  = store["input"]  == "" ? "-" : store["input"];
-	std::string output = store["output"] == "" ? "-" : store["output"];
+	std::string input  = store["input"]  == "" ? "/dev/stdin"  : store["input"];
+	std::string output = store["output"] == "" ? "/dev/stdout" : store["output"];
 
-	FrameBuffer gray = FrameBuffer(input) >> GrayScale() >> "grayscale.png";
+	FrameBuffer image = FrameBuffer(input);
+	FrameBuffer gray = image >> GrayScale() >> "./img/grayscale.png";
 
-	FrameBuffer med_sobel   = gray;
-	FrameBuffer sobel       = gray;
-	FrameBuffer med_prewitt = gray;
-	FrameBuffer prewitt     = gray;
+	gray >> 12 >> Median() >> Sobel()        << 12 >> "./img/median-sobel.png";
+	gray >> 12             >> Sobel()        << 12 >> "./img/sobel.png";
 
-	med_sobel   >> 12 >> Median() >> Sobel()   >> "median-sobel.png";
-	sobel       >> 12             >> Sobel()   >> "sobel.png";
+	gray >> 12 >> Median() >> Prewitt()      << 12 >> "./img/median-prewitt.png";
+	gray >> 12             >> Prewitt()      << 12 >> "./img/prewitt.png";
 
-	med_prewitt >> 12 >> Median() >> Prewitt() >> "median-prewitt.png";
-	prewitt     >> 12             >> Prewitt() >> "prewitt.png";
+	gray >> 12 >> Median() >> Laplacian3x3() << 12 >> "./img/median-laplacian.png";
+	gray >> 12 >>             Laplacian3x3() << 12 >> "./img/laplacian.png";
+
+	image >> Channel(Channel::R) >> "./img/r.png";
+	image >> Channel(Channel::G) >> "./img/g.png";
+	image >> Channel(Channel::B) >> "./img/b.png";
+
+	image >> Reversal() >> "./img/reversal.png";
+
 
 
 	; //>> output;

@@ -63,10 +63,18 @@ FrameBuffer& FrameBuffer::operator=(const FrameBuffer& buffer)
 	return *this;
 }
 
-FrameBuffer& FrameBuffer::operator<<(const PatternGenerator& generator){return generator.generate(*this);}
+FrameBuffer FrameBuffer::operator<<(const PatternGenerator& generator)const
+{
+	FrameBuffer result = FrameBuffer(width(), height());
+	return generator.generate(result);
+}
 
+FrameBuffer& FrameBuffer::operator<<=(const PatternGenerator& generator)
+{
+	return generator.generate(*this);
+}
 
-FrameBuffer& FrameBuffer::operator<<(std::istream& is)
+FrameBuffer& FrameBuffer::operator<<=(std::istream& is)
 {
 	const uint32_t size = data_size();
 	for(uint32_t i = 0; i < size; ++i){
@@ -79,17 +87,53 @@ FrameBuffer& FrameBuffer::operator<<(std::istream& is)
 	return *this;
 }
 
-FrameBuffer& FrameBuffer::operator<<(uint8_t shift)
+FrameBuffer FrameBuffer::operator>>(const ImageProcess& process)const
+{
+	FrameBuffer result = FrameBuffer(*this);
+	return process.process(result);
+}
+
+FrameBuffer& FrameBuffer::operator>>=(const ImageProcess& process)
+{
+	return process.process(*this);
+}
+
+FrameBuffer FrameBuffer::operator>>(const PixelConverter& converter)const
+{
+	FrameBuffer result = FrameBuffer(*this);
+	return Tone(converter).process(result);
+}
+
+FrameBuffer& FrameBuffer::operator>>=(const PixelConverter& converter)
+{
+	return Tone(converter).process(*this);
+}
+
+FrameBuffer FrameBuffer::operator<<(uint8_t shift)const
+{
+	FrameBuffer result = FrameBuffer(width(), height());
+	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
+					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+					&result[0][0], lshifter(shift));
+	return result;
+}
+
+FrameBuffer FrameBuffer::operator>>(uint8_t shift)const
+{
+	FrameBuffer result = FrameBuffer(width(), height());
+	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
+					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+					&result[0][0], rshifter(shift));
+	return result;
+}
+
+FrameBuffer& FrameBuffer::operator<<=(uint8_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
 	return *this;
 }
 
-FrameBuffer& FrameBuffer::operator>>(const ImageProcess& process){return process.process(*this);}
-
-FrameBuffer& FrameBuffer::operator>>(const PixelConverter& converter){return Tone(converter).process(*this);}
-
-FrameBuffer& FrameBuffer::operator>>(uint8_t shift)
+FrameBuffer& FrameBuffer::operator>>=(uint8_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], rshifter(shift));
 	return *this;
@@ -119,6 +163,17 @@ FrameBuffer FrameBuffer::operator,(const FrameBuffer& buffer)const
 	return result;
 }
 
+//FrameBuffer FrameBuffer::operator&(const FrameBuffer& buffer)const
+//{
+//	if(width() != buffer.width() || height() != buffer.height()){
+//		throw std::runtime_error(__func__);
+//	}
+//	FrameBuffer result = FrameBuffer(width(), height());
+//
+//
+//	return result;
+//}
+
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {
 	if(have_ext(filename, ".tif")){
@@ -140,8 +195,10 @@ FrameBuffer& FrameBuffer::write(const std::string& filename)const
 	}
 }
 
-void FrameBuffer::lshifter::operator()(Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
-void FrameBuffer::rshifter::operator()(Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
+void            FrameBuffer::lshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
+Pixel<uint16_t> FrameBuffer::lshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel << shift_;}
+void            FrameBuffer::rshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
+Pixel<uint16_t> FrameBuffer::rshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel >> shift_;}
 
 #ifdef ENABLE_TIFF
 void FrameBuffer::read_tiff(const std::string& filename)

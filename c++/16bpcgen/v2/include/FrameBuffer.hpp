@@ -36,15 +36,23 @@ public:
 	FrameBuffer& operator=(const FrameBuffer& buffer);
 	~FrameBuffer(){delete[] head_;}
 	Row operator[](int row)const{return Row(head_ + row * width() * pixelsize, width());}
-	FrameBuffer& operator<<(const PatternGenerator& generator);
-	FrameBuffer& operator<<(std::istream& is);
-	FrameBuffer& operator<<(uint8_t shift);
-	FrameBuffer& operator>>(const ImageProcess& process);
-	FrameBuffer& operator>>(const PixelConverter& converter);
+	FrameBuffer  operator<< (const PatternGenerator& generator)const;
+	FrameBuffer& operator<<=(const PatternGenerator& generator);
+	FrameBuffer  operator<< (std::istream& is)const;
+	FrameBuffer& operator<<=(std::istream& is);
+	FrameBuffer  operator>> (const ImageProcess& process)const;
+	FrameBuffer& operator>>=(const ImageProcess& process);
+	FrameBuffer  operator>> (const PixelConverter& converter)const;
+	FrameBuffer& operator>>=(const PixelConverter& converter);
 	FrameBuffer& operator>>(const std::string& filename)const{return write(filename);}
-	FrameBuffer& operator>>(uint8_t shift);
+	FrameBuffer  operator<< (uint8_t shift)const;
+	FrameBuffer  operator>> (uint8_t shift)const;
+	FrameBuffer& operator<<=(uint8_t shift);
+	FrameBuffer& operator>>=(uint8_t shift);
 	FrameBuffer operator+(const FrameBuffer& buffer)const;
 	FrameBuffer operator,(const FrameBuffer& buffer)const;
+	FrameBuffer operator&(const FrameBuffer& buffer)const;
+	FrameBuffer operator|(const FrameBuffer& buffer)const;
 	FrameBuffer& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
 	uint8_t* tail()const{return head_ + data_size();}
@@ -55,14 +63,16 @@ private:
 	class lshifter{
 	public:
 		lshifter(uint8_t shift): shift_(shift){}
-		void operator()(Pixel<uint16_t>& pixel)const;
+		void            operator()(      Pixel<uint16_t>& pixel)const;
+		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
 	private:
 		uint8_t shift_;
 	};
 	class rshifter{
 	public:
 		rshifter(uint8_t shift): shift_(shift){}
-		void operator()(Pixel<uint16_t>& pixel)const;
+		void            operator()(      Pixel<uint16_t>& pixel)const;
+		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
 	private:
 		uint8_t shift_;
 	};
