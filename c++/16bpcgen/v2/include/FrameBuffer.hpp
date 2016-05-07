@@ -49,10 +49,10 @@ public:
 	FrameBuffer  operator>> (uint8_t shift)const;
 	FrameBuffer& operator<<=(uint8_t shift);
 	FrameBuffer& operator>>=(uint8_t shift);
-	FrameBuffer operator+(const FrameBuffer& buffer)const;
-	FrameBuffer operator,(const FrameBuffer& buffer)const;
-	FrameBuffer operator&(const FrameBuffer& buffer)const;
-	FrameBuffer operator|(const FrameBuffer& buffer)const;
+	FrameBuffer  operator+(const FrameBuffer& buffer)const;
+	FrameBuffer  operator,(const FrameBuffer& buffer)const;
+	FrameBuffer  operator&(const FrameBuffer& buffer)const;
+	FrameBuffer  operator|(const FrameBuffer& buffer)const;
 	FrameBuffer& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
 	uint8_t* tail()const{return head_ + data_size();}

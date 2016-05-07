@@ -163,16 +163,29 @@ FrameBuffer FrameBuffer::operator,(const FrameBuffer& buffer)const
 	return result;
 }
 
-//FrameBuffer FrameBuffer::operator&(const FrameBuffer& buffer)const
-//{
-//	if(width() != buffer.width() || height() != buffer.height()){
-//		throw std::runtime_error(__func__);
-//	}
-//	FrameBuffer result = FrameBuffer(width(), height());
-//
-//
-//	return result;
-//}
+FrameBuffer FrameBuffer::operator&(const FrameBuffer& buffer)const
+{
+	if(width() != buffer.width() || height() != buffer.height()){
+		throw std::runtime_error(__func__);
+	}
+	FrameBuffer result = FrameBuffer(width(), height());
+	for(uint32_t i = 0; i < data_size(); ++i){
+		result.head()[i] = head()[i] & buffer.head()[i];
+	}
+	return result;
+}
+
+FrameBuffer FrameBuffer::operator|(const FrameBuffer& buffer)const
+{
+	if(width() != buffer.width() || height() != buffer.height()){
+		throw std::runtime_error(__func__);
+	}
+	FrameBuffer result = FrameBuffer(width(), height());
+	for(uint32_t i = 0; i < data_size(); ++i){
+		result.head()[i] = head()[i] | buffer.head()[i];
+	}
+	return result;
+}
 
 FrameBuffer& FrameBuffer::write(const std::string& filename)const
 {
