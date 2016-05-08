@@ -1,6 +1,9 @@
 #include <algorithm>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#ifndef M_PI
+#	define 3.1415926535
+#endif
 #include <fstream>
 #include <iostream>
 #include <vector>
