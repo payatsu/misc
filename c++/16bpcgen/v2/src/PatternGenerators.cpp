@@ -4,96 +4,96 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "FrameBuffer.hpp"
+#include "Image.hpp"
 #include "PatternGenerators.hpp"
 #include "Painter.hpp"
 
-FrameBuffer& ColorBar::generate(FrameBuffer& buffer)const
+Image& ColorBar::generate(Image& image)const
 {
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
 	const uint32_t x = width*3/4;
-	std::fill(&buffer[0][0],               &buffer[0][width/8],         white  /100*40);
-	std::fill(&buffer[0][width/8],         &buffer[0][width/8 + x/7],   white  /100*75);
-	std::fill(&buffer[0][width/8 + x/7],   &buffer[0][width/8 + x/7*2], yellow /100*75);
-	std::fill(&buffer[0][width/8 + x/7*2], &buffer[0][width/8 + x/7*3], cyan   /100*75);
-	std::fill(&buffer[0][width/8 + x/7*3], &buffer[0][width/8 + x/7*4], green  /100*75);
-	std::fill(&buffer[0][width/8 + x/7*4], &buffer[0][width/8 + x/7*5], magenta/100*75);
-	std::fill(&buffer[0][width/8 + x/7*5], &buffer[0][width/8 + x/7*6], red    /100*75);
-	std::fill(&buffer[0][width/8 + x/7*6], &buffer[0][width/8 + x],     blue   /100*75);
-	std::fill(&buffer[0][width/8 + x],     &buffer[0][width],           white  /100*40);
+	std::fill(&image[0][0],               &image[0][width/8],         white  /100*40);
+	std::fill(&image[0][width/8],         &image[0][width/8 + x/7],   white  /100*75);
+	std::fill(&image[0][width/8 + x/7],   &image[0][width/8 + x/7*2], yellow /100*75);
+	std::fill(&image[0][width/8 + x/7*2], &image[0][width/8 + x/7*3], cyan   /100*75);
+	std::fill(&image[0][width/8 + x/7*3], &image[0][width/8 + x/7*4], green  /100*75);
+	std::fill(&image[0][width/8 + x/7*4], &image[0][width/8 + x/7*5], magenta/100*75);
+	std::fill(&image[0][width/8 + x/7*5], &image[0][width/8 + x/7*6], red    /100*75);
+	std::fill(&image[0][width/8 + x/7*6], &image[0][width/8 + x],     blue   /100*75);
+	std::fill(&image[0][width/8 + x],     &image[0][width],           white  /100*40);
 	const uint32_t h1 = height*7/12;
-	Row::fill(buffer[1], buffer[h1], buffer[0]);
+	Row::fill(image[1], image[h1], image[0]);
 
-	std::fill(&buffer[h1][0],             &buffer[h1][width/8],       cyan);
-	std::fill(&buffer[h1][width/8],       &buffer[h1][width/8 + x/7], white);
-	std::fill(&buffer[h1][width/8 + x/7], &buffer[h1][width/8 + x],   white/100*75);
-	std::fill(&buffer[h1][width/8 + x],   &buffer[h1][width],         blue);
+	std::fill(&image[h1][0],             &image[h1][width/8],       cyan);
+	std::fill(&image[h1][width/8],       &image[h1][width/8 + x/7], white);
+	std::fill(&image[h1][width/8 + x/7], &image[h1][width/8 + x],   white/100*75);
+	std::fill(&image[h1][width/8 + x],   &image[h1][width],         blue);
 	const uint32_t h2 = h1 + height/12;
-	Row::fill(buffer[h1 + 1], buffer[h2], buffer[h1]);
+	Row::fill(image[h1 + 1], image[h2], image[h1]);
 
-	std::fill(&buffer[h2][0],           &buffer[h2][width/8], yellow);
-	std::fill(&buffer[h2][width/8 + x], &buffer[h2][width],   red);
-	std::generate(&buffer[h2][width/8], &buffer[h2][width/8 + x], Gradator(white/x));
+	std::fill(&image[h2][0],           &image[h2][width/8], yellow);
+	std::fill(&image[h2][width/8 + x], &image[h2][width],   red);
+	std::generate(&image[h2][width/8], &image[h2][width/8 + x], Gradator(white/x));
 	const uint32_t h3 = h2 + height/12;
-	Row::fill(buffer[h2 + 1], buffer[h3], buffer[h2]);
+	Row::fill(image[h2 + 1], image[h3], image[h2]);
 
-	std::fill(&buffer[h3][0],                         &buffer[h3][width/8],                   white/100*15);
-	std::fill(&buffer[h3][width/8],                   &buffer[h3][width/8 + x/7*3/2],         black);
-	std::fill(&buffer[h3][width/8 + x/7*3/2],         &buffer[h3][width/8 + x/7*3/2 + 2*x/7], white);
-	std::fill(&buffer[h3][width/8 + x/7*3/2 + 2*x/7], &buffer[h3][width/8 + x],               black);
-	std::fill(&buffer[h3][width/8 + x],               &buffer[h3][width],                     white/100*15);
-	Row::fill(buffer[h3 + 1], buffer[height], buffer[h3]);
-	return buffer;
+	std::fill(&image[h3][0],                         &image[h3][width/8],                   white/100*15);
+	std::fill(&image[h3][width/8],                   &image[h3][width/8 + x/7*3/2],         black);
+	std::fill(&image[h3][width/8 + x/7*3/2],         &image[h3][width/8 + x/7*3/2 + 2*x/7], white);
+	std::fill(&image[h3][width/8 + x/7*3/2 + 2*x/7], &image[h3][width/8 + x],               black);
+	std::fill(&image[h3][width/8 + x],               &image[h3][width],                     white/100*15);
+	Row::fill(image[h3 + 1], image[height], image[h3]);
+	return image;
 }
 
-FrameBuffer& Luster::generate(FrameBuffer& buffer)const{std::fill(&buffer[0][0], &buffer[buffer.height()][0], pixel_); return buffer;}
+Image& Luster::generate(Image& image)const{std::fill(&image[0][0], &image[image.height()][0], pixel_); return image;}
 
-FrameBuffer& Checker::generate(FrameBuffer& buffer)const
+Image& Checker::generate(Image& image)const
 {
 	const Pixel<uint16_t> pattern1 = invert_ ? black : white;
 	const Pixel<uint16_t> pattern2 = invert_ ? white : black;
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
-	std::fill(&buffer[0][0],         &buffer[0][width/4],   pattern1);
-	std::fill(&buffer[0][width/4],   &buffer[0][width/4*2], pattern2);
-	std::fill(&buffer[0][width/4*2], &buffer[0][width/4*3], pattern1);
-	std::fill(&buffer[0][width/4*3], &buffer[0][width],     pattern2);
-	Row::fill(buffer[1],          buffer[height/4],   buffer[0]);
-	Row::fill(buffer[height/4*2], buffer[height/4*3], buffer[0]);
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
+	std::fill(&image[0][0],         &image[0][width/4],   pattern1);
+	std::fill(&image[0][width/4],   &image[0][width/4*2], pattern2);
+	std::fill(&image[0][width/4*2], &image[0][width/4*3], pattern1);
+	std::fill(&image[0][width/4*3], &image[0][width],     pattern2);
+	Row::fill(image[1],          image[height/4],   image[0]);
+	Row::fill(image[height/4*2], image[height/4*3], image[0]);
 
-	std::fill(&buffer[height/4][0],         &buffer[height/4][width/4],   pattern2);
-	std::fill(&buffer[height/4][width/4],   &buffer[height/4][width/4*2], pattern1);
-	std::fill(&buffer[height/4][width/4*2], &buffer[height/4][width/4*3], pattern2);
-	std::fill(&buffer[height/4][width/4*3], &buffer[height/4][width],     pattern1);
-	Row::fill(buffer[height/4+1], buffer[height/4*2], buffer[height/4]);
-	Row::fill(buffer[height/4*3], buffer[height],     buffer[height/4]);
-	return buffer;
+	std::fill(&image[height/4][0],         &image[height/4][width/4],   pattern2);
+	std::fill(&image[height/4][width/4],   &image[height/4][width/4*2], pattern1);
+	std::fill(&image[height/4][width/4*2], &image[height/4][width/4*3], pattern2);
+	std::fill(&image[height/4][width/4*3], &image[height/4][width],     pattern1);
+	Row::fill(image[height/4+1], image[height/4*2], image[height/4]);
+	Row::fill(image[height/4*3], image[height],     image[height/4]);
+	return image;
 }
 
-FrameBuffer& StairStepH::generate(FrameBuffer& buffer)const
+Image& StairStepH::generate(Image& image)const
 {
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
 	const uint32_t stair_height = height/stairs_;
 	const uint32_t step_width = width/steps_ + (width%steps_ ? 1 : 0);
 	bool invert = invert_;
 	for(uint32_t row = 0; row < height; row += stair_height){
 		Gradator gradator(white/steps_, invert ? white : black, invert);
 		for(uint32_t column = 0; column < width; column += step_width){
-			std::fill(&buffer[row][column], &buffer[row][std::min(width, column + step_width)],
+			std::fill(&image[row][column], &image[row][std::min(width, column + step_width)],
 					gradator());
 		}
-		Row::fill(buffer[row + 1], buffer[std::min(height, row + stair_height)], buffer[row]);
+		Row::fill(image[row + 1], image[std::min(height, row + stair_height)], image[row]);
 		invert = !invert;
 	}
-	return buffer;
+	return image;
 }
 
-FrameBuffer& StairStepV::generate(FrameBuffer& buffer)const
+Image& StairStepV::generate(Image& image)const
 {
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
 	const uint32_t stair_width = width/stairs_;
 	const uint32_t step_height = height/steps_ + (height%steps_ ? 1 : 0);
 	bool invert = invert_;
@@ -104,68 +104,68 @@ FrameBuffer& StairStepV::generate(FrameBuffer& buffer)const
 	}
 	for(uint32_t row = 0; row < height; row += step_height){
 		for(uint32_t column = 0; column < width; column += stair_width){
-			std::fill(&buffer[row][column], &buffer[row][std::min(width, column + stair_width)],
+			std::fill(&image[row][column], &image[row][std::min(width, column + stair_width)],
 					gradators.at(column/stair_width)());
 		}
-		Row::fill(buffer[row + 1], buffer[std::min(height, row + step_height)], buffer[row]);
+		Row::fill(image[row + 1], image[std::min(height, row + step_height)], image[row]);
 	}
-	return buffer;
+	return image;
 }
 
-FrameBuffer& Ramp::generate(FrameBuffer& buffer)const
+Image& Ramp::generate(Image& image)const
 {
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
-	std::generate(&buffer[0][0],            &buffer[0][width],            Gradator(red    /width));
-	std::generate(&buffer[height/12][0],    &buffer[height/12][width],    Gradator(green  /width));
-	std::generate(&buffer[height/12*2][0],  &buffer[height/12*2][width],  Gradator(blue   /width));
-	std::generate(&buffer[height/12*3][0],  &buffer[height/12*3][width],  Gradator(cyan   /width));
-	std::generate(&buffer[height/12*4][0],  &buffer[height/12*4][width],  Gradator(magenta/width));
-	std::generate(&buffer[height/12*5][0],  &buffer[height/12*5][width],  Gradator(yellow /width));
-	std::generate(&buffer[height/12*6][0],  &buffer[height/12*6][width],  Gradator(cyan   /width, red));
-	std::generate(&buffer[height/12*7][0],  &buffer[height/12*7][width],  Gradator(magenta/width, green));
-	std::generate(&buffer[height/12*8][0],  &buffer[height/12*8][width],  Gradator(yellow /width, blue));
-	std::generate(&buffer[height/12*9][0],  &buffer[height/12*9][width],  Gradator(red    /width, cyan));
-	std::generate(&buffer[height/12*10][0], &buffer[height/12*10][width], Gradator(green  /width, magenta));
-	std::generate(&buffer[height/12*11][0], &buffer[height/12*11][width], Gradator(blue   /width, yellow));
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
+	std::generate(&image[0][0],            &image[0][width],            Gradator(red    /width));
+	std::generate(&image[height/12][0],    &image[height/12][width],    Gradator(green  /width));
+	std::generate(&image[height/12*2][0],  &image[height/12*2][width],  Gradator(blue   /width));
+	std::generate(&image[height/12*3][0],  &image[height/12*3][width],  Gradator(cyan   /width));
+	std::generate(&image[height/12*4][0],  &image[height/12*4][width],  Gradator(magenta/width));
+	std::generate(&image[height/12*5][0],  &image[height/12*5][width],  Gradator(yellow /width));
+	std::generate(&image[height/12*6][0],  &image[height/12*6][width],  Gradator(cyan   /width, red));
+	std::generate(&image[height/12*7][0],  &image[height/12*7][width],  Gradator(magenta/width, green));
+	std::generate(&image[height/12*8][0],  &image[height/12*8][width],  Gradator(yellow /width, blue));
+	std::generate(&image[height/12*9][0],  &image[height/12*9][width],  Gradator(red    /width, cyan));
+	std::generate(&image[height/12*10][0], &image[height/12*10][width], Gradator(green  /width, magenta));
+	std::generate(&image[height/12*11][0], &image[height/12*11][width], Gradator(blue   /width, yellow));
 
-	Row::fill(buffer[1],                buffer[height/12],    buffer[0]);
-	Row::fill(buffer[height/12    + 1], buffer[height/12*2],  buffer[height/12]);
-	Row::fill(buffer[height/12*2  + 1], buffer[height/12*3],  buffer[height/12*2]);
-	Row::fill(buffer[height/12*3  + 1], buffer[height/12*4],  buffer[height/12*3]);
-	Row::fill(buffer[height/12*4  + 1], buffer[height/12*5],  buffer[height/12*4]);
-	Row::fill(buffer[height/12*5  + 1], buffer[height/12*6],  buffer[height/12*5]);
-	Row::fill(buffer[height/12*6  + 1], buffer[height/12*7],  buffer[height/12*6]);
-	Row::fill(buffer[height/12*7  + 1], buffer[height/12*8],  buffer[height/12*7]);
-	Row::fill(buffer[height/12*8  + 1], buffer[height/12*9],  buffer[height/12*8]);
-	Row::fill(buffer[height/12*9  + 1], buffer[height/12*10], buffer[height/12*9]);
-	Row::fill(buffer[height/12*10 + 1], buffer[height/12*11], buffer[height/12*10]);
-	Row::fill(buffer[height/12*11 + 1], buffer[height],       buffer[height/12*11]);
-	return buffer;
+	Row::fill(image[1],                image[height/12],    image[0]);
+	Row::fill(image[height/12    + 1], image[height/12*2],  image[height/12]);
+	Row::fill(image[height/12*2  + 1], image[height/12*3],  image[height/12*2]);
+	Row::fill(image[height/12*3  + 1], image[height/12*4],  image[height/12*3]);
+	Row::fill(image[height/12*4  + 1], image[height/12*5],  image[height/12*4]);
+	Row::fill(image[height/12*5  + 1], image[height/12*6],  image[height/12*5]);
+	Row::fill(image[height/12*6  + 1], image[height/12*7],  image[height/12*6]);
+	Row::fill(image[height/12*7  + 1], image[height/12*8],  image[height/12*7]);
+	Row::fill(image[height/12*8  + 1], image[height/12*9],  image[height/12*8]);
+	Row::fill(image[height/12*9  + 1], image[height/12*10], image[height/12*9]);
+	Row::fill(image[height/12*10 + 1], image[height/12*11], image[height/12*10]);
+	Row::fill(image[height/12*11 + 1], image[height],       image[height/12*11]);
+	return image;
 }
 
-FrameBuffer& CrossHatch::generate(FrameBuffer& buffer)const
+Image& CrossHatch::generate(Image& image)const
 {
-	const uint32_t width = buffer.width();
-	const uint32_t height = buffer.height();
+	const uint32_t width = image.width();
+	const uint32_t height = image.height();
 	for(uint32_t i = 0; i < height; i += lattice_height_){
-		std::fill(&buffer[i][0], &buffer[i][width], white);
+		std::fill(&image[i][0], &image[i][width], white);
 	}
-	std::fill(&buffer[height - 1][0], &buffer[height][0], white);
+	std::fill(&image[height - 1][0], &image[height][0], white);
 
 	for(uint32_t i = 0; i < width; i += lattice_width_){
 		for(uint32_t j = 0; j < height; ++j){
-			buffer[j][i] = white;
+			image[j][i] = white;
 		}
 	}
 	for(uint32_t i = 0; i < height; ++i){
-		buffer[i][width - 1] = white;
+		image[i][width - 1] = white;
 	}
 
 	const double slope = static_cast<double>(height)/width;
 	for(uint32_t i = 0; i < width; ++i){
-		buffer[slope*i][i] = white;
-		buffer[height - slope*i][i] = white;
+		image[slope*i][i] = white;
+		image[height - slope*i][i] = white;
 	}
 
 	const uint32_t radius = height/2;
@@ -174,21 +174,21 @@ FrameBuffer& CrossHatch::generate(FrameBuffer& buffer)const
 	for(double theta = 0; theta < 2*M_PI; theta += 2.0*M_PI/5000.0){
 		uint32_t row    = std::min(height - 1, static_cast<uint32_t>(shift_v + radius*std::sin(theta)));
 		uint32_t column = std::min(width  - 1, static_cast<uint32_t>(shift_h + radius*std::cos(theta)));
-		buffer[row][column] = white;
+		image[row][column] = white;
 	}
-	return buffer;
+	return image;
 }
 
 #if 201103L <= __cplusplus
-FrameBuffer& WhiteNoise::generate(FrameBuffer& buffer)const
+Image& WhiteNoise::generate(Image& image)const
 {
 	RandomColor random_color;
-	for(uint32_t row = 0; row < buffer.height(); ++row){
-		for(uint32_t column = 0; column < buffer.width(); ++column){
-			buffer[row][column] = random_color();
+	for(uint32_t row = 0; row < image.height(); ++row){
+		for(uint32_t column = 0; column < image.width(); ++column){
+			image[row][column] = random_color();
 		}
 	}
-	return buffer;
+	return image;
 }
 #endif
 
@@ -1362,12 +1362,12 @@ const unsigned char characters[][8] = {
 	},
 };
 
-FrameBuffer& Character::generate(FrameBuffer& buffer)const{write(buffer, row_, column_, text_, pixel_, scale_); return buffer;}
+Image& Character::generate(Image& image)const{write(image, row_, column_, text_, pixel_, scale_); return image;}
 
-void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
+void Character::write(Image& image, uint32_t row, uint32_t column,
 		unsigned char c, const Pixel<uint16_t>& pixel, int scale)const
 {
-	if('~' < c || buffer.height() <= row || buffer.width() <= column){
+	if('~' < c || image.height() <= row || image.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
 			<< ", col: " << column << ", ascii: "
 			<< c << '(' << int(c) << ')' << std::endl;
@@ -1378,7 +1378,7 @@ void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 			if(characters[c][i] & char_bitmask[j]){
 				for(int k = 0; k < scale; ++k){
 					for(int l = 0; l < scale; ++l){
-						buffer[row + i*scale + k][column + j*scale + l] = pixel;
+						image[row + i*scale + k][column + j*scale + l] = pixel;
 					}
 				}
 			}
@@ -1386,7 +1386,7 @@ void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 	}
 }
 
-void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
+void Character::write(Image& image, uint32_t row, uint32_t column,
 		const std::string& str, const Pixel<uint16_t>& pixel, int scale)const
 {
 	for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
@@ -1398,7 +1398,7 @@ void Character::write(FrameBuffer& buffer, uint32_t row, uint32_t column,
 			j += char_tab_width;
 			continue;
 		}
-		write(buffer, row, column + j*scale*char_width, str[i], pixel, scale);
+		write(image, row, column + j*scale*char_width, str[i], pixel, scale);
 		++j;
 	}
 }
@@ -1418,4 +1418,4 @@ TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), te
 	height_ *= char_height;
 }
 
-FrameBuffer& TypeWriter::generate(FrameBuffer& buffer)const{buffer << Character(text_, white); return buffer;}
+Image& TypeWriter::generate(Image& image)const{image << Character(text_, white); return image;}

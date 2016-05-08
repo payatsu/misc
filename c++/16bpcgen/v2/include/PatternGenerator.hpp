@@ -6,8 +6,8 @@
 class PatternGenerator: public ImageProcess{
 public:
 	virtual ~PatternGenerator(){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const{return generate(buffer);}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const = 0;
+	virtual Image& process(Image& image)const{return generate(image);}
+	virtual Image& generate(Image& image)const = 0;
 };
 
 #endif

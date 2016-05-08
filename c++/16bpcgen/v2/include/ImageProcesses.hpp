@@ -20,8 +20,8 @@ public:
 class AreaSpecifier: public ImageProcess{
 public:
 	AreaSpecifier(const Area& area = Area()): area_(area){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const = 0;
-	bool within(const FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const = 0;
+	bool within(const Image& image)const;
 protected:
 	const Area& area_;
 };
@@ -30,7 +30,7 @@ class Tone: public AreaSpecifier{
 public:
 	Tone(const PixelConverter& converter, const Area& area = Area()):
 		AreaSpecifier(area), converter_(converter){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const;
 private:
 	const PixelConverter& converter_;
 };
@@ -38,19 +38,19 @@ private:
 class Normalize: public AreaSpecifier{
 public:
 	Normalize(const Area& area = Area()): AreaSpecifier(area){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const;
 };
 
 class Median: public AreaSpecifier{
 public:
 	Median(const Area& area = Area()): AreaSpecifier(area){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const;
 };
 
 class Crop: public AreaSpecifier{
 public:
 	Crop(const Area& area): AreaSpecifier(area){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const;
 };
 
 class Filter: public ImageProcess{
@@ -58,7 +58,7 @@ public:
 	typedef std::vector<double> KernelRow;
 	typedef std::vector<KernelRow> Kernel;
 	Filter(const Kernel& kernel): kernel_(kernel){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const;
+	virtual Image& process(Image& image)const;
 private:
 	Kernel kernel_;
 };

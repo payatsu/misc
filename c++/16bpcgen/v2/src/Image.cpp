@@ -10,7 +10,7 @@
 #	define PNG_NO_SETJMP
 #	include <libpng16/png.h>
 #endif
-#include "FrameBuffer.hpp"
+#include "Image.hpp"
 #include "ImageProcesses.hpp"
 #include "PatternGenerator.hpp"
 #include "Pixel.hpp"
@@ -29,7 +29,7 @@ void Row::fill(Row first, Row last, const Row& row)
 	}
 }
 
-FrameBuffer::FrameBuffer(const std::string& filename): head_(NULL), width_(0), height_(0)
+Image::Image(const std::string& filename): head_(NULL), width_(0), height_(0)
 {
 	if(have_ext(filename, ".tif")){
 #ifdef ENABLE_TIFF
@@ -44,37 +44,37 @@ FrameBuffer::FrameBuffer(const std::string& filename): head_(NULL), width_(0), h
 	}
 }
 
-FrameBuffer::FrameBuffer(const FrameBuffer& buffer):
-	head_(new uint8_t[buffer.data_size()]), width_(buffer.width_), height_(buffer.height_)
+Image::Image(const Image& image):
+	head_(new uint8_t[image.data_size()]), width_(image.width_), height_(image.height_)
 {
-	std::copy(buffer.head(), buffer.tail(), head());
+	std::copy(image.head(), image.tail(), head());
 }
 
-FrameBuffer& FrameBuffer::operator=(const FrameBuffer& buffer)
+Image& Image::operator=(const Image& image)
 {
-	if(this == &buffer){
+	if(this == &image){
 		return *this;
 	}
 	delete[] head_;
-	width_  = buffer.width();
-	height_ = buffer.height();
+	width_  = image.width();
+	height_ = image.height();
 	head_   = new uint8_t[data_size()];
-	std::copy(buffer.head(), buffer.tail(), head());
+	std::copy(image.head(), image.tail(), head());
 	return *this;
 }
 
-FrameBuffer FrameBuffer::operator<<(const PatternGenerator& generator)const
+Image Image::operator<<(const PatternGenerator& generator)const
 {
-	FrameBuffer result = FrameBuffer(width(), height());
+	Image result = Image(width(), height());
 	return generator.generate(result);
 }
 
-FrameBuffer& FrameBuffer::operator<<=(const PatternGenerator& generator)
+Image& Image::operator<<=(const PatternGenerator& generator)
 {
 	return generator.generate(*this);
 }
 
-FrameBuffer& FrameBuffer::operator<<=(std::istream& is)
+Image& Image::operator<<=(std::istream& is)
 {
 	const uint32_t size = data_size();
 	for(uint32_t i = 0; i < size; ++i){
@@ -87,107 +87,107 @@ FrameBuffer& FrameBuffer::operator<<=(std::istream& is)
 	return *this;
 }
 
-FrameBuffer FrameBuffer::operator>>(const ImageProcess& process)const
+Image Image::operator>>(const ImageProcess& process)const
 {
-	FrameBuffer result = FrameBuffer(*this);
+	Image result = Image(*this);
 	return process.process(result);
 }
 
-FrameBuffer& FrameBuffer::operator>>=(const ImageProcess& process)
+Image& Image::operator>>=(const ImageProcess& process)
 {
 	return process.process(*this);
 }
 
-FrameBuffer FrameBuffer::operator>>(const PixelConverter& converter)const
+Image Image::operator>>(const PixelConverter& converter)const
 {
-	FrameBuffer result = FrameBuffer(*this);
+	Image result = Image(*this);
 	return Tone(converter).process(result);
 }
 
-FrameBuffer& FrameBuffer::operator>>=(const PixelConverter& converter)
+Image& Image::operator>>=(const PixelConverter& converter)
 {
 	return Tone(converter).process(*this);
 }
 
-FrameBuffer FrameBuffer::operator<<(uint8_t shift)const
+Image Image::operator<<(uint8_t shift)const
 {
-	FrameBuffer result = FrameBuffer(width(), height());
+	Image result = Image(width(), height());
 	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
 					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
 					&result[0][0], lshifter(shift));
 	return result;
 }
 
-FrameBuffer FrameBuffer::operator>>(uint8_t shift)const
+Image Image::operator>>(uint8_t shift)const
 {
-	FrameBuffer result = FrameBuffer(width(), height());
+	Image result = Image(width(), height());
 	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
 					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
 					&result[0][0], rshifter(shift));
 	return result;
 }
 
-FrameBuffer& FrameBuffer::operator<<=(uint8_t shift)
+Image& Image::operator<<=(uint8_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
 	return *this;
 }
 
-FrameBuffer& FrameBuffer::operator>>=(uint8_t shift)
+Image& Image::operator>>=(uint8_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], rshifter(shift));
 	return *this;
 }
 
-FrameBuffer FrameBuffer::operator+(const FrameBuffer& buffer)const
+Image Image::operator+(const Image& image)const
 {
-	if(width() != buffer.width()){
+	if(width() != image.width()){
 		throw std::runtime_error(__func__);
 	}
-	FrameBuffer result = FrameBuffer(width(), height() + buffer.height());
+	Image result = Image(width(), height() + image.height());
 	std::copy(head(), head() + data_size(), result.head());
-	std::copy(buffer.head(), buffer.head() + buffer.data_size(), result.head() + data_size());
+	std::copy(image.head(), image.head() + image.data_size(), result.head() + data_size());
 	return result;
 }
 
-FrameBuffer FrameBuffer::operator,(const FrameBuffer& buffer)const
+Image Image::operator,(const Image& image)const
 {
-	if(height() != buffer.height()){
+	if(height() != image.height()){
 		throw std::runtime_error(__func__);
 	}
-	FrameBuffer result = FrameBuffer(width() + buffer.width(), height());
+	Image result = Image(width() + image.width(), height());
 	for(uint32_t h = 0; h < height(); ++h){
 		std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);
-		std::copy(buffer.head() + h * buffer.width() * pixelsize, buffer.head() + (h + 1) * buffer.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
+		std::copy(image.head() + h * image.width() * pixelsize, image.head() + (h + 1) * image.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
 	}
 	return result;
 }
 
-FrameBuffer FrameBuffer::operator&(const FrameBuffer& buffer)const
+Image Image::operator&(const Image& image)const
 {
-	if(width() != buffer.width() || height() != buffer.height()){
+	if(width() != image.width() || height() != image.height()){
 		throw std::runtime_error(__func__);
 	}
-	FrameBuffer result = FrameBuffer(width(), height());
+	Image result = Image(width(), height());
 	for(uint32_t i = 0; i < data_size(); ++i){
-		result.head()[i] = head()[i] & buffer.head()[i];
+		result.head()[i] = head()[i] & image.head()[i];
 	}
 	return result;
 }
 
-FrameBuffer FrameBuffer::operator|(const FrameBuffer& buffer)const
+Image Image::operator|(const Image& image)const
 {
-	if(width() != buffer.width() || height() != buffer.height()){
+	if(width() != image.width() || height() != image.height()){
 		throw std::runtime_error(__func__);
 	}
-	FrameBuffer result = FrameBuffer(width(), height());
+	Image result = Image(width(), height());
 	for(uint32_t i = 0; i < data_size(); ++i){
-		result.head()[i] = head()[i] | buffer.head()[i];
+		result.head()[i] = head()[i] | image.head()[i];
 	}
 	return result;
 }
 
-FrameBuffer& FrameBuffer::write(const std::string& filename)const
+Image& Image::write(const std::string& filename)const
 {
 	if(have_ext(filename, ".tif")){
 #ifdef ENABLE_TIFF
@@ -204,17 +204,17 @@ FrameBuffer& FrameBuffer::write(const std::string& filename)const
 #ifdef ENABLE_PNG
 		write_png(filename + ".png");
 #endif
-		return const_cast<FrameBuffer&>(*this);
+		return const_cast<Image&>(*this);
 	}
 }
 
-void            FrameBuffer::lshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
-Pixel<uint16_t> FrameBuffer::lshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel << shift_;}
-void            FrameBuffer::rshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
-Pixel<uint16_t> FrameBuffer::rshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel >> shift_;}
+void            Image::lshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
+Pixel<uint16_t> Image::lshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel << shift_;}
+void            Image::rshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
+Pixel<uint16_t> Image::rshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel >> shift_;}
 
 #ifdef ENABLE_TIFF
-void FrameBuffer::read_tiff(const std::string& filename)
+void Image::read_tiff(const std::string& filename)
 {
 	TIFF* image = TIFFOpen(filename.c_str(), "r");
 	if(!image){
@@ -270,7 +270,7 @@ void FrameBuffer::read_tiff(const std::string& filename)
 	TIFFClose(image);
 }
 
-FrameBuffer& FrameBuffer::write_tiff(const std::string& filename)const
+Image& Image::write_tiff(const std::string& filename)const
 {
 	TIFF* image = TIFFOpen(filename.c_str(), "w");
 	if(!image){
@@ -290,12 +290,12 @@ FrameBuffer& FrameBuffer::write_tiff(const std::string& filename)const
 	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
 	TIFFWriteEncodedStrip(image, 0, head(), data_size());
 	TIFFClose(image);
-	return const_cast<FrameBuffer&>(*this);
+	return const_cast<Image&>(*this);
 }
 #endif
 
 #ifdef ENABLE_PNG
-void FrameBuffer::read_png(const std::string& filename)
+void Image::read_png(const std::string& filename)
 {
 	FILE* fp = fopen(filename.c_str(), "rb");
 	if(!fp){
@@ -349,7 +349,7 @@ void FrameBuffer::read_png(const std::string& filename)
 	std::fclose(fp);
 }
 
-FrameBuffer& FrameBuffer::write_png(const std::string& filename)const
+Image& Image::write_png(const std::string& filename)const
 {
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr){
@@ -384,7 +384,7 @@ FrameBuffer& FrameBuffer::write_png(const std::string& filename)const
 	delete[] row_ptrs;
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	std::fclose(fp);
-	return const_cast<FrameBuffer&>(*this);
+	return const_cast<Image&>(*this);
 }
 #endif
 

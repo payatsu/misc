@@ -6,13 +6,13 @@
 
 class ColorBar: public PatternGenerator{
 public:
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 };
 
 class Luster: public PatternGenerator{
 public:
 	Luster(const Pixel<uint16_t>& pixel): pixel_(pixel){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	const Pixel<uint16_t> pixel_;
 };
@@ -20,7 +20,7 @@ private:
 class Checker: public PatternGenerator{
 public:
 	Checker(bool invert = false): invert_(invert){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	const bool invert_;
 };
@@ -29,7 +29,7 @@ class StairStepH: public PatternGenerator{
 public:
 	StairStepH(int stairs = 2, int steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	const int stairs_;
 	const int steps_;
@@ -40,7 +40,7 @@ class StairStepV: public PatternGenerator{
 public:
 	StairStepV(int stairs = 2, int steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	const int stairs_;
 	const int steps_;
@@ -49,13 +49,13 @@ private:
 
 class Ramp: public PatternGenerator{
 public:
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 };
 
 class CrossHatch: public PatternGenerator{
 public:
 	CrossHatch(uint32_t width, uint32_t height): lattice_width_(width), lattice_height_(height){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	const uint32_t lattice_width_;
 	const uint32_t lattice_height_;
@@ -64,7 +64,7 @@ private:
 #if 201103L <= __cplusplus
 class WhiteNoise: public PatternGenerator{
 public:
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 };
 #endif
 
@@ -79,11 +79,11 @@ public:
 	Character(const std::string& text, const Pixel<uint16_t>& pixel = white,
 			int scale = 1, uint32_t row = 0, uint32_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
-	void write(FrameBuffer& buffer, uint32_t row, uint32_t column,
+	void write(Image& image, uint32_t row, uint32_t column,
 			unsigned char c, const Pixel<uint16_t>& pixel, int scale)const;
-	void write(FrameBuffer& buffer, uint32_t row, uint32_t column,
+	void write(Image& image, uint32_t row, uint32_t column,
 			const std::string& str, const Pixel<uint16_t>& pixel, int scale)const;
 private:
 	const std::string text_;
@@ -98,7 +98,7 @@ public:
 	TypeWriter(const std::string& textfilename);
 	virtual const uint32_t& width()const{return width_;}
 	virtual const uint32_t& height()const{return height_;}
-	virtual FrameBuffer& generate(FrameBuffer& buffer)const;
+	virtual Image& generate(Image& image)const;
 private:
 	static bool is_tab(char c){return c == '\t';}
 	uint32_t width_;

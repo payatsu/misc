@@ -1,5 +1,5 @@
-#ifndef _16BPCGEN_FRAMEBUFFER_HPP_
-#define _16BPCGEN_FRAMEBUFFER_HPP_
+#ifndef _16BPCGEN_IMAGE_HPP_
+#define _16BPCGEN_IMAGE_HPP_
 
 #include <iosfwd>
 #include "typedef.hpp"
@@ -27,33 +27,33 @@ private:
 	const uint32_t& width_;
 };
 
-class FrameBuffer{
+class Image{
 public:
-	FrameBuffer(const uint32_t& width, const uint32_t& height):
+	Image(const uint32_t& width, const uint32_t& height):
 		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
-	FrameBuffer(const std::string& filename);
-	FrameBuffer(const FrameBuffer& buffer);
-	FrameBuffer& operator=(const FrameBuffer& buffer);
-	~FrameBuffer(){delete[] head_;}
+	Image(const std::string& filename);
+	Image(const Image& image);
+	Image& operator=(const Image& image);
+	~Image(){delete[] head_;}
 	Row operator[](int row)const{return Row(head_ + row * width() * pixelsize, width());}
-	FrameBuffer  operator<< (const PatternGenerator& generator)const;
-	FrameBuffer& operator<<=(const PatternGenerator& generator);
-	FrameBuffer  operator<< (std::istream& is)const;
-	FrameBuffer& operator<<=(std::istream& is);
-	FrameBuffer  operator>> (const ImageProcess& process)const;
-	FrameBuffer& operator>>=(const ImageProcess& process);
-	FrameBuffer  operator>> (const PixelConverter& converter)const;
-	FrameBuffer& operator>>=(const PixelConverter& converter);
-	FrameBuffer& operator>>(const std::string& filename)const{return write(filename);}
-	FrameBuffer  operator<< (uint8_t shift)const;
-	FrameBuffer  operator>> (uint8_t shift)const;
-	FrameBuffer& operator<<=(uint8_t shift);
-	FrameBuffer& operator>>=(uint8_t shift);
-	FrameBuffer  operator+(const FrameBuffer& buffer)const;
-	FrameBuffer  operator,(const FrameBuffer& buffer)const;
-	FrameBuffer  operator&(const FrameBuffer& buffer)const;
-	FrameBuffer  operator|(const FrameBuffer& buffer)const;
-	FrameBuffer& write(const std::string& filename)const;
+	Image  operator<< (const PatternGenerator& generator)const;
+	Image& operator<<=(const PatternGenerator& generator);
+	Image  operator<< (std::istream& is)const;
+	Image& operator<<=(std::istream& is);
+	Image  operator>> (const ImageProcess& process)const;
+	Image& operator>>=(const ImageProcess& process);
+	Image  operator>> (const PixelConverter& converter)const;
+	Image& operator>>=(const PixelConverter& converter);
+	Image& operator>>(const std::string& filename)const{return write(filename);}
+	Image  operator<< (uint8_t shift)const;
+	Image  operator>> (uint8_t shift)const;
+	Image& operator<<=(uint8_t shift);
+	Image& operator>>=(uint8_t shift);
+	Image  operator+(const Image& image)const;
+	Image  operator,(const Image& image)const;
+	Image  operator&(const Image& image)const;
+	Image  operator|(const Image& image)const;
+	Image& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
 	uint8_t* tail()const{return head_ + data_size();}
 	const uint32_t& width()const{return width_;}
@@ -78,11 +78,11 @@ private:
 	};
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);
-	FrameBuffer& write_tiff(const std::string& filename)const;
+	Image& write_tiff(const std::string& filename)const;
 #endif
 #ifdef ENABLE_PNG
 	void read_png(const std::string & filename);
-	FrameBuffer& write_png(const std::string& filename)const;
+	Image& write_png(const std::string& filename)const;
 #endif
 	uint8_t* head_;
 	uint32_t width_;

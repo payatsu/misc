@@ -1,12 +1,12 @@
 #ifndef _16BPCGEN_IMAGEPROCESS_HPP_
 #define _16BPCGEN_IMAGEPROCESS_HPP_
 
-class FrameBuffer;
+class Image;
 
 class ImageProcess{
 public:
 	virtual ~ImageProcess(){}
-	virtual FrameBuffer& process(FrameBuffer& buffer)const = 0;
+	virtual Image& process(Image& image)const = 0;
 };
 
 #endif

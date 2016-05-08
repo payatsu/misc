@@ -1,5 +1,5 @@
 #include <stdexcept>
-#include "FrameBuffer.hpp"
+#include "Image.hpp"
 #include "PixelConverters.hpp"
 
 Pixel<uint16_t>& Channel::convert(Pixel<uint16_t>& pixel)const
