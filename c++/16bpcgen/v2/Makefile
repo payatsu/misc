@@ -25,8 +25,9 @@ imgdir := img/
 
 CXXOPT   := -O3
 CPPFLAGS := -I${includedir} -DENABLE_PNG -DENABLE_TIFF
-CXXFLAGS := -std=c++03 -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
+CXXFLAGS := -std=c++03 -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
+			-Wno-long-long \
 			${CXXOPT}
 LDLIBS   := -lpng -ltiff
 

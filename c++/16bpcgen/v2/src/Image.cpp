@@ -175,6 +175,31 @@ Image Image::operator&(const Image& image)const
 	return result;
 }
 
+Image Image::operator&(const Pixel<uint16_t>& pixel)const
+{
+	Image result = Image(width(), height());
+	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
+					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+					&result[0][0], bit_and(pixel));
+	return result;
+}
+
+Image& Image::operator&=(const Pixel<uint16_t>& pixel)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_and(pixel));
+	return *this;
+}
+
+Image Image::operator&(uint16_t value)const
+{
+	return *this & Pixel<uint16_t>(value, value, value);
+}
+
+Image& Image::operator&=(uint16_t value)
+{
+	return *this &= Pixel<uint16_t>(value, value, value);
+}
+
 Image Image::operator|(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
@@ -185,6 +210,38 @@ Image Image::operator|(const Image& image)const
 		result.head()[i] = head()[i] | image.head()[i];
 	}
 	return result;
+}
+
+Image& Image::operator|=(const Pixel<uint16_t>& pixel)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
+	return *this;
+}
+
+Image Image::operator|(const Pixel<uint16_t>& pixel)const
+{
+	Image result = Image(width(), height());
+	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
+					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+					&result[0][0], bit_or(pixel));
+	return result;
+}
+
+Image& Image::swap(Image& rhs)
+{
+	if(this == &rhs){
+		return *this;
+	}
+	uint8_t* const tmp_head   = head_;
+	const uint32_t tmp_width  = width_;
+	const uint32_t tmp_height = height_;
+	head_   = rhs.head_;
+	width_  = rhs.width_;
+	height_ = rhs.height_;
+	rhs.head_   = tmp_head;
+	rhs.width_  = tmp_width;
+	rhs.height_ = tmp_height;
+	return *this;
 }
 
 Image& Image::write(const std::string& filename)const
@@ -212,6 +269,10 @@ void            Image::lshifter::operator()(      Pixel<uint16_t>& pixel)const{p
 Pixel<uint16_t> Image::lshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel << shift_;}
 void            Image::rshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
 Pixel<uint16_t> Image::rshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel >> shift_;}
+void            Image::bit_and::operator()(      Pixel<uint16_t>& pixel)const{pixel &= pixel_;}
+Pixel<uint16_t> Image::bit_and::operator()(const Pixel<uint16_t>& pixel)const{return pixel & pixel_;}
+void            Image::bit_or::operator()(      Pixel<uint16_t>& pixel)const{pixel |= pixel_;}
+Pixel<uint16_t> Image::bit_or::operator()(const Pixel<uint16_t>& pixel)const{return pixel | pixel_;}
 
 #ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)

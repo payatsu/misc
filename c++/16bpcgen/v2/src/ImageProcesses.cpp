@@ -71,7 +71,7 @@ Image& Median::process(Image& image)const
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? image.height() : area_.offset_y_ + area_.height_;
 
-	Image result = image;
+	Image result = Image(image.width(), image.height());
 
 	for(uint32_t h = area_.offset_y_; h < limit_h; ++h){
 		const uint32_t h_lowerbound = h - 1 < image.height() ? h - 1 : 0 ;
@@ -98,7 +98,7 @@ Image& Median::process(Image& image)const
 					values3[values3.size()/2]);
 		}
 	}
-	return image = result;
+	return image.swap(result);
 }
 
 Image& Crop::process(Image& image)const
@@ -115,7 +115,7 @@ Image& Crop::process(Image& image)const
 			result[i][j] = image[h][w];
 		}
 	}
-	return image = result;
+	return image.swap(result);
 }
 
 Image& Filter::process(Image& image)const
@@ -150,7 +150,7 @@ Image& Filter::process(Image& image)const
 			result[h][w] = pixel;
 		}
 	}
-	return image = result;
+	return image.swap(result);
 }
 
 Filter::Kernel WeightedSmoothing::init()

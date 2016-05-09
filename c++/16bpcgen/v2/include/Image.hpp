@@ -51,14 +51,21 @@ public:
 	Image& operator>>=(uint8_t shift);
 	Image  operator+(const Image& image)const;
 	Image  operator,(const Image& image)const;
-	Image  operator&(const Image& image)const;
-	Image  operator|(const Image& image)const;
+	Image  operator& (const Image& image)const;
+	Image  operator& (const Pixel<uint16_t>& pixel)const;
+	Image& operator&=(const Pixel<uint16_t>& pixel);
+	Image  operator& (uint16_t value)const;
+	Image& operator&=(uint16_t value);
+	Image  operator| (const Image& image)const;
+	Image  operator| (const Pixel<uint16_t>& pixel)const;
+	Image& operator|=(const Pixel<uint16_t>& pixel);
 	Image& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
 	uint8_t* tail()const{return head_ + data_size();}
 	const uint32_t& width()const{return width_;}
 	const uint32_t& height()const{return height_;}
 	uint32_t data_size()const{return height_*width_*pixelsize;}
+	Image& swap(Image& rhs);
 private:
 	class lshifter{
 	public:
@@ -76,6 +83,22 @@ private:
 	private:
 		uint8_t shift_;
 	};
+	class bit_and{
+	public:
+		bit_and(const Pixel<uint16_t>& pixel): pixel_(pixel){}
+		void            operator()(      Pixel<uint16_t>& pixel)const;
+		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+	private:
+		const Pixel<uint16_t>& pixel_;
+	};
+	class bit_or{
+	public:
+		bit_or(const Pixel<uint16_t>& pixel): pixel_(pixel){}
+		void            operator()(      Pixel<uint16_t>& pixel)const;
+		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+	private:
+		const Pixel<uint16_t>& pixel_;
+	};
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);
 	Image& write_tiff(const std::string& filename)const;
@@ -91,4 +114,5 @@ private:
 
 bool have_ext(const std::string& filename, const std::string& ext);
 std::string append_extension(const std::string& filename, const std::string& ext);
+
 #endif

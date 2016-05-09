@@ -11,7 +11,7 @@ public:
 	enum{
 		R = 0x1,
 		G = 0x2,
-		B = 0x4,
+		B = 0x4
 	};
 	typedef uint8_t Ch;
 	Channel(Ch ch = R | G | B): ch_(ch){}
