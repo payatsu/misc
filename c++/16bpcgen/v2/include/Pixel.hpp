@@ -9,7 +9,6 @@ public:
 	typedef T value_type;
 	const static value_type max;
 	Pixel(value_type r = 0x0, value_type g = 0x0, value_type b = 0x0): R_(r), G_(g), B_(b){}
-	Pixel(unsigned long long int binary): R_(binary >> 32 & max), G_(binary >> 16 & max), B_(binary & max){}
 	template <typename U>
 	Pixel(const Pixel<U>& rhs):
 		R_(static_cast<value_type>(rhs.R())),
