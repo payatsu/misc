@@ -35,7 +35,7 @@ public:
 	Image(const Image& image);
 	Image& operator=(const Image& image);
 	~Image(){delete[] head_;}
-	Row operator[](int row)const{return Row(head_ + row * width() * pixelsize, width());}
+	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	Image  operator<< (const PatternGenerator& generator)const;
 	Image& operator<<=(const PatternGenerator& generator);
 	Image  operator<< (std::istream& is)const;

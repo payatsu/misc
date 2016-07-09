@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <unistd.h>
 #include "getopt.hpp"
 #include "Image.hpp"
 #include "ImageProcesses.hpp"
@@ -90,6 +92,8 @@ int main(int argc, char* argv[])
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 	
+//	mkdir("./img", 0755);
+//	chdir("./img");
 	if(input != "-"){
 		demo(Image(input));
 	}else{
