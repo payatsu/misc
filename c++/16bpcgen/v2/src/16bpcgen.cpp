@@ -42,13 +42,8 @@ void generate_self(uint32_t width, uint32_t height)
 	Image(width, height) << Luster(black) << TypeWriter(__FILE__) >> "sourcecode";
 }
 
-void demo(uint32_t width, uint32_t height)
+void demo(const Image& orig)
 {
-	generate_builtin_patterns(width, height);
-	generate_self(width, height);
-
-	Image orig = Image(width/4, height/5) << Ramp();
-
 	Image r = orig >> Channel(Channel::R);
 	Image g = orig >> Channel(Channel::G);
 	Image b = orig >> Channel(Channel::B);
@@ -80,13 +75,26 @@ void demo(uint32_t width, uint32_t height)
 	(prewitt, sobel, laplacian1, laplacian2)) >> "demo.png";
 }
 
+void demo(uint32_t width, uint32_t height)
+{
+	generate_builtin_patterns(width, height);
+	generate_self(width, height);
+
+	Image orig = Image(width/4, height/5) << Ramp();
+	demo(orig);
+}
+
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 	
-	demo(1920, 1200);
+	if(input != "-"){
+		demo(Image(input));
+	}else{
+		demo(1920, 1200);
+	}
 
 	return 0;
 }

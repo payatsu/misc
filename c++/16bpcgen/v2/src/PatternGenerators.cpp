@@ -1421,4 +1421,4 @@ TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), te
 	height_ *= char_height;
 }
 
-Image& TypeWriter::generate(Image& image)const{image << Character(text_, white); return image;}
+Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_, white);}
