@@ -1,9 +1,10 @@
 .PHONY: all gtags
 
-includedir := include/
+incdir := include/
 
 srcdir := src/
 srcs   := ${addprefix ${srcdir}, 16bpcgen.cpp Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp}
+main   := ${firstword ${srcs}}
 
 depdir := dep/
 deps   := ${patsubst ${srcdir}%.cpp, ${depdir}%.d, ${srcs}}
@@ -11,19 +12,23 @@ deps   := ${patsubst ${srcdir}%.cpp, ${depdir}%.d, ${srcs}}
 objdir := obj/
 objs   := ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${srcs}}
 
-bindir     := ${CURDIR}/bin/
-executable := ${patsubst ${srcdir}%.cpp,${bindir}%, ${firstword ${srcs}}}
+libdir := lib/
+libs   := ${patsubst ${srcdir}%.cpp, ${libdir}lib%.a, ${main}}
+
+bindir := bin/
+bins   := ${patsubst ${srcdir}%.cpp,${bindir}%, ${main}}
 
 imgdir := img/
 
 CXXOPT   := -O3
-CPPFLAGS += -I${includedir} -DENABLE_PNG -DENABLE_TIFF
+CPPFLAGS += -I${incdir} -DENABLE_PNG -DENABLE_TIFF
 CXXFLAGS += -std=c++03 -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
+LDFLAGS  += -L${libdir}
 LDLIBS   += -lpng -ltiff
 
-all: ${executable}
+all: ${bins}
 
 gtags: GTAGS GRTAGS GPATH
 
@@ -32,16 +37,20 @@ GTAGS GRTAGS GPATH:
 
 clean:
 	${RM} GTAGS GRTAGS GPATH
-	${RM} -r ${bindir} ${depdir} ${objdir}
+	${RM} -r ${bindir} ${depdir} ${objdir} ${libdir}
 	${RM} -r ${imgdir}
 
-${executable}: ${objs}
+${bins}: ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}} ${libs}
 	mkdir -p ${dir $@}
-	${LINK.cc} $^ ${LDLIBS} -o $@
+	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} ${LDLIBS}
+
+${libs}: ${filter-out ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}}, ${objs}}
+	mkdir -p ${dir $@}
+	${AR} ruv $@ $^
 
 ${objdir}%.o: ${srcdir}%.cpp
 	mkdir -p ${dir $@}
-	${COMPILE.cpp} `readlink -m $<` -o $@
+	${COMPILE.cpp} -o $@ `readlink -m $<`
 
 ${depdir}%.d: ${srcdir}%.cpp
 	mkdir -p ${dir $@}
