@@ -1406,7 +1406,8 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 	}
 }
 
-TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), text_()
+TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& pixel):
+	width_(), height_(), text_(), pixel_(pixel)
 {
 	std::ifstream ifs(textfilename.c_str());
 	std::string line;
@@ -1421,4 +1422,4 @@ TypeWriter::TypeWriter(const std::string& textfilename): width_(), height_(), te
 	height_ *= char_height;
 }
 
-Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_, white);}
+Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_, pixel_);}

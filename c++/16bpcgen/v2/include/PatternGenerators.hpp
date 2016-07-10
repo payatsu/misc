@@ -95,7 +95,7 @@ private:
 
 class TypeWriter: public PatternGenerator{
 public:
-	TypeWriter(const std::string& textfilename);
+	TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& pixel = white);
 	virtual const uint32_t& width()const{return width_;}
 	virtual const uint32_t& height()const{return height_;}
 	virtual Image& generate(Image& image)const;
@@ -104,6 +104,7 @@ private:
 	uint32_t width_;
 	uint32_t height_;
 	std::string text_;
+	const Pixel<uint16_t> pixel_;
 };
 
 #endif

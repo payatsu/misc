@@ -41,7 +41,7 @@ void generate_builtin_patterns(uint32_t width, uint32_t height)
 
 void generate_self(uint32_t width, uint32_t height)
 {
-	Image(width, height) << Luster(black) << TypeWriter(__FILE__) >> "sourcecode";
+	Image(width, height) << Luster(white) << TypeWriter(__FILE__, black) >> "sourcecode";
 }
 
 void demo(const Image& orig)
