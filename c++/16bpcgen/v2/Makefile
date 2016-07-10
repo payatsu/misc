@@ -41,7 +41,7 @@ ${executable}: ${objs}
 
 ${objdir}%.o: ${srcdir}%.cpp
 	mkdir -p ${dir $@}
-	${COMPILE.cpp} $< -o $@
+	${COMPILE.cpp} `readlink -m $<` -o $@
 
 ${depdir}%.d: ${srcdir}%.cpp
 	mkdir -p ${dir $@}

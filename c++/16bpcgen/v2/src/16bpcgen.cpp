@@ -92,8 +92,8 @@ int main(int argc, char* argv[])
 	std::string input  = store["input"]  == "" ? "-" : store["input"];
 	std::string output = store["output"] == "" ? "-" : store["output"];
 	
-//	mkdir("./img", 0755);
-//	chdir("./img");
+	mkdir("./img", 0755);
+	chdir("./img");
 	if(input != "-"){
 		demo(Image(input));
 	}else{
