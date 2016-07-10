@@ -101,7 +101,7 @@ Image& StairStepV::generate(Image& image)const
 	const uint32_t step_height = height/steps_ + (height%steps_ ? 1 : 0);
 	bool invert = invert_;
 	std::vector<Gradator> gradators;
-	for(int i = 0; i < stairs_; ++i){
+	for(unsigned int i = 0; i < stairs_; ++i){
 		gradators.push_back(Gradator(white/steps_, invert ? white : black, invert));
 		invert = !invert;
 	}
@@ -167,8 +167,8 @@ Image& CrossHatch::generate(Image& image)const
 
 	const double slope = static_cast<double>(height)/width;
 	for(uint32_t i = 0; i < width; ++i){
-		image[slope*i][i] = white;
-		image[height - slope*i][i] = white;
+		image[static_cast<unsigned int>(         slope*i)][i] = white;
+		image[static_cast<unsigned int>(height - slope*i)][i] = white;
 	}
 
 	const uint32_t radius = height/2;
@@ -1368,7 +1368,7 @@ const unsigned char characters[][8] = {
 Image& Character::generate(Image& image)const{write(image, row_, column_, text_, pixel_, scale_); return image;}
 
 void Character::write(Image& image, uint32_t row, uint32_t column,
-		unsigned char c, const Pixel<uint16_t>& pixel, int scale)const
+		char c, const Pixel<uint16_t>& pixel, unsigned int scale)const
 {
 	if('~' < c || image.height() <= row || image.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
@@ -1379,8 +1379,8 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 	for(unsigned char i = 0; i < char_height; ++i){
 		for(unsigned char j = 0; j < char_width; ++j){
 			if(characters[c][i] & char_bitmask[j]){
-				for(int k = 0; k < scale; ++k){
-					for(int l = 0; l < scale; ++l){
+				for(unsigned int k = 0; k < scale; ++k){
+					for(unsigned int l = 0; l < scale; ++l){
 						image[row + i*scale + k][column + j*scale + l] = pixel;
 					}
 				}
@@ -1390,7 +1390,7 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 }
 
 void Character::write(Image& image, uint32_t row, uint32_t column,
-		const std::string& str, const Pixel<uint16_t>& pixel, int scale)const
+		const std::string& str, const Pixel<uint16_t>& pixel, unsigned int scale)const
 {
 	for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
 		if(str[i] == '\n'){

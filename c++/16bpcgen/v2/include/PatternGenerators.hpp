@@ -27,23 +27,23 @@ private:
 
 class StairStepH: public PatternGenerator{
 public:
-	StairStepH(int stairs = 2, int steps = 20, bool invert = false):
+	StairStepH(unsigned int stairs = 2, unsigned int steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
 	virtual Image& generate(Image& image)const;
 private:
-	const int stairs_;
-	const int steps_;
+	const unsigned int stairs_;
+	const unsigned int steps_;
 	const bool invert_;
 };
 
 class StairStepV: public PatternGenerator{
 public:
-	StairStepV(int stairs = 2, int steps = 20, bool invert = false):
+	StairStepV(unsigned int stairs = 2, unsigned int steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
 	virtual Image& generate(Image& image)const;
 private:
-	const int stairs_;
-	const int steps_;
+	const unsigned int stairs_;
+	const unsigned int steps_;
 	const bool invert_;
 };
 
@@ -77,14 +77,14 @@ extern const unsigned char characters[][8];
 class Character: public PatternGenerator{
 public:
 	Character(const std::string& text, const Pixel<uint16_t>& pixel = white,
-			int scale = 1, uint32_t row = 0, uint32_t column = 0):
+			unsigned int scale = 1, uint32_t row = 0, uint32_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 	virtual Image& generate(Image& image)const;
 private:
 	void write(Image& image, uint32_t row, uint32_t column,
-			unsigned char c, const Pixel<uint16_t>& pixel, int scale)const;
+			char c, const Pixel<uint16_t>& pixel, unsigned int scale)const;
 	void write(Image& image, uint32_t row, uint32_t column,
-			const std::string& str, const Pixel<uint16_t>& pixel, int scale)const;
+			const std::string& str, const Pixel<uint16_t>& pixel, unsigned int scale)const;
 private:
 	const std::string text_;
 	const Pixel<uint16_t> pixel_;

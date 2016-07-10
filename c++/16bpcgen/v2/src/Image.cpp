@@ -19,7 +19,7 @@ const int bitdepth  = 16;
 #ifdef ENABLE_PNG
 const int colortype = PNG_COLOR_TYPE_RGB;
 #endif
-const int pixelsize = 6;
+const unsigned int pixelsize = 6;
 
 void Row::fill(Row first, Row last, const Row& row)
 {

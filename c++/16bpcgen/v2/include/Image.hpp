@@ -12,13 +12,13 @@ extern const int bitdepth;
 #ifdef ENABLE_PNG
 extern const int colortype;
 #endif
-extern const int pixelsize;
+extern const unsigned int pixelsize;
 
 class Row{
 public:
 	Row(uint8_t* row, const uint32_t& width): row_(row), width_(width){}
 	const uint32_t& width()const{return width_;}
-	Pixel<uint16_t>& operator[](int column)const{return *reinterpret_cast<Pixel<uint16_t>*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
+	Pixel<uint16_t>& operator[](unsigned int column)const{return *reinterpret_cast<Pixel<uint16_t>*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
 	bool operator!=(const Row& rhs)const{return this->row_ != rhs.row_;}
 	static void fill(Row first, Row last, const Row& row);
@@ -35,7 +35,7 @@ public:
 	Image(const Image& image);
 	Image& operator=(const Image& image);
 	~Image(){delete[] head_;}
-	Row operator[](int row)const{return Row(head_ + row*width()*pixelsize, width());}
+	Row operator[](unsigned int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	Image  operator<< (const PatternGenerator& generator)const;
 	Image& operator<<=(const PatternGenerator& generator);
 	Image  operator<< (std::istream& is)const;

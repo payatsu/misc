@@ -19,10 +19,11 @@ Pixel<uint16_t>& Channel::convert(Pixel<uint16_t>& pixel)const
 Pixel<uint16_t>& GrayScale::convert(Pixel<uint16_t>& pixel)const
 {
 	const int coefficient = 1024;
-	const Pixel<uint16_t>::value_type Y = (
-		0.2126*coefficient*pixel.R() +
-		0.7152*coefficient*pixel.G() +
-		0.0722*coefficient*pixel.B())/coefficient;
+	const Pixel<uint16_t>::value_type Y =
+		static_cast<Pixel<uint16_t>::value_type>((
+			0.2126*coefficient*pixel.R() +
+			0.7152*coefficient*pixel.G() +
+			0.0722*coefficient*pixel.B())/coefficient);
 	return pixel = Pixel<uint16_t>(Y, Y, Y);
 }
 

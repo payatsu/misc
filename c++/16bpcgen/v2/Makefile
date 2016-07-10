@@ -26,7 +26,7 @@ CXXFLAGS += -std=c++03 -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
 LDFLAGS  += -L${libdir}
-LDLIBS   += -lpng -ltiff
+LDLIBS   += -lpng -ltiff # -lz -llzma
 
 all: ${bins}
 
