@@ -167,8 +167,8 @@ Image& CrossHatch::generate(Image& image)const
 
 	const double slope = static_cast<double>(height)/width;
 	for(uint32_t i = 0; i < width; ++i){
-		image[static_cast<unsigned int>(         slope*i)][i] = white;
-		image[static_cast<unsigned int>(height - slope*i)][i] = white;
+		image[std::min(height - 1, static_cast<unsigned int>(         slope*i))][i] = white;
+		image[std::min(height - 1, static_cast<unsigned int>(height - slope*i))][i] = white;
 	}
 
 	const uint32_t radius = height/2;
