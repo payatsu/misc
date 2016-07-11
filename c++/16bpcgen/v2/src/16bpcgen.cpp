@@ -6,6 +6,11 @@
 #include "PatternGenerators.hpp"
 #include "PixelConverters.hpp"
 
+void generate_builtin_patterns(uint32_t width, uint32_t height);
+void generate_self(uint32_t width, uint32_t height);
+void demo(const Image& orig);
+void demo(uint32_t width, uint32_t height);
+
 void generate_builtin_patterns(uint32_t width, uint32_t height)
 {
 	Image image(width, height);

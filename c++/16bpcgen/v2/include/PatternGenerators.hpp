@@ -88,7 +88,7 @@ private:
 private:
 	const std::string text_;
 	const Pixel<uint16_t> pixel_;
-	const int scale_;
+	const unsigned int scale_;
 	const uint32_t row_;
 	const uint32_t column_;
 };

@@ -41,19 +41,19 @@ clean:
 	${RM} -r ${imgdir}
 
 ${bins}: ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}} ${libs}
-	mkdir -p ${dir $@}
+	@mkdir -p ${dir $@}
 	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} ${LDLIBS}
 
 ${libs}: ${filter-out ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}}, ${objs}}
-	mkdir -p ${dir $@}
+	@mkdir -p ${dir $@}
 	${AR} ruv $@ $^
 
 ${objdir}%.o: ${srcdir}%.cpp
-	mkdir -p ${dir $@}
-	${COMPILE.cpp} -o $@ `readlink -m $<`
+	@mkdir -p ${dir $@}
+	${COMPILE.cc} -o $@ `readlink -m $<`
 
 ${depdir}%.d: ${srcdir}%.cpp
-	mkdir -p ${dir $@}
+	@mkdir -p ${dir $@}
 	${CXX} ${CPPFLAGS} -MM -MT '$@ ${patsubst ${depdir}%.d, ${objdir}%.o, $@}' -MF $@ $<
 
 -include ${deps}
