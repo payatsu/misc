@@ -20,9 +20,10 @@ bins   := ${patsubst ${srcdir}%.cpp,${bindir}%, ${main}}
 
 imgdir := img/
 
+CXXVER   := -std=c++03
 CXXOPT   := -O3
 CPPFLAGS += -I${incdir} -DENABLE_PNG -DENABLE_TIFF
-CXXFLAGS += -std=c++03 -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
+CXXFLAGS += ${CXXVER} -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
 LDFLAGS  += -L${libdir}
