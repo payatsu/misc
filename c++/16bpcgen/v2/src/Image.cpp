@@ -65,7 +65,7 @@ Image& Image::operator=(const Image& image)
 
 Image Image::operator<<(const PatternGenerator& generator)const
 {
-	Image result = Image(width(), height());
+	Image result = Image(*this);
 	return generator.generate(result);
 }
 
@@ -212,12 +212,6 @@ Image Image::operator|(const Image& image)const
 	return result;
 }
 
-Image& Image::operator|=(const Pixel<uint16_t>& pixel)
-{
-	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
-	return *this;
-}
-
 Image Image::operator|(const Pixel<uint16_t>& pixel)const
 {
 	Image result = Image(width(), height());
@@ -225,6 +219,12 @@ Image Image::operator|(const Pixel<uint16_t>& pixel)const
 					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
 					&result[0][0], bit_or(pixel));
 	return result;
+}
+
+Image& Image::operator|=(const Pixel<uint16_t>& pixel)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
+	return *this;
 }
 
 Image& Image::swap(Image& rhs)
