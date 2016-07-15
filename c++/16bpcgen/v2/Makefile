@@ -55,6 +55,6 @@ ${objdir}%.o: ${srcdir}%.cpp
 
 ${depdir}%.d: ${srcdir}%.cpp
 	@mkdir -p ${dir $@}
-	${CXX} ${CPPFLAGS} -MM -MT '$@ ${patsubst ${depdir}%.d, ${objdir}%.o, $@}' -MF $@ $<
+	${CXX} ${CPPFLAGS} ${CXXFLAGS} -MM -MT '$@ ${patsubst ${depdir}%.d, ${objdir}%.o, $@}' -MF $@ $<
 
 -include ${deps}
