@@ -104,8 +104,11 @@ private:
 	Image& write_tiff(const std::string& filename)const;
 #endif
 #ifdef ENABLE_PNG
-	void read_png(const std::string & filename);
+	void read_png(const std::string& filename);
 	Image& write_png(const std::string& filename)const;
+#endif
+#ifdef ENABLE_JPEG
+	void read_jpeg(const std::string& filename);
 #endif
 	uint8_t* head_;
 	uint32_t width_;

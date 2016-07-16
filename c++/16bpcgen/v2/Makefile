@@ -22,12 +22,12 @@ imgdir := img/
 
 CXXVER   := -std=c++03
 CXXOPT   := -O3
-CPPFLAGS += -I${incdir} -DENABLE_PNG -DENABLE_TIFF
+CPPFLAGS += -I${incdir} -DENABLE_PNG -DENABLE_TIFF -DENABLE_JPEG
 CXXFLAGS += ${CXXVER} -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
 LDFLAGS  += -L${libdir}
-LDLIBS   += -lpng -ltiff # -lz -llzma
+LDLIBS   += -lpng -ltiff -ljpeg # -lz -llzma
 
 all: ${bins}
 

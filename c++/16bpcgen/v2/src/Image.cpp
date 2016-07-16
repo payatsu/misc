@@ -10,6 +10,9 @@
 #	define PNG_NO_SETJMP
 #	include <libpng16/png.h>
 #endif
+#ifdef ENABLE_JPEG
+#	include <jpeglib.h>
+#endif
 #include "Image.hpp"
 #include "ImageProcesses.hpp"
 #include "PatternGenerator.hpp"
@@ -446,6 +449,37 @@ Image& Image::write_png(const std::string& filename)const
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	std::fclose(fp);
 	return const_cast<Image&>(*this);
+}
+#endif
+
+#ifdef ENABLE_JPEG
+void Image::read_jpeg(const std::string& filename)
+{
+//	jpeg_decompress_struct cinfo;
+//	jpeg_error_mgr jerr;
+//	cinfo.err = jpeg_std_error(&jerr);
+//	jpeg_create_decompress(&cinfo);
+//
+//	FILE* fp = fopen(filename.c_str(), "rb");
+//	if(!fp){
+//		std::perror(__func__);
+//		throw std::runtime_error(__func__);
+//	}
+//	jpeg_stdio_src(&cinfo, fp);
+//
+//	jpeg_read_header(&cinfo, TRUE);
+//
+//	jpeg_start_decompress(&cinfo);
+//
+//	JSAMPARRAY img;
+//	while(cinfo.output_scanline < cinfo.output_height){
+//		jpeg_read_scanlines(&cinfo, img + cinfo.output_scanline, cinfo.output_height - cinfo.output_scanline);
+//	}
+//
+//	jpeg_finish_decompress(&cinfo);
+//
+//	jpeg_destroy_decompress(&cinfo);
+//	std::fclose(fp);
 }
 #endif
 
