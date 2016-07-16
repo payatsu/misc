@@ -2,3 +2,8 @@ img/
 obj/
 dep/
 bin/
+lib/
+GPATH
+GTAGS
+GRTAGS
+tags

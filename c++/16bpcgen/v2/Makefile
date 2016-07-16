@@ -36,8 +36,12 @@ gtags: GTAGS GRTAGS GPATH
 GTAGS GRTAGS GPATH:
 	gtags -c
 
+tags:
+	ctags ${incdir}*.hpp ${srcdir}*.cpp
+
 clean:
 	${RM} GTAGS GRTAGS GPATH
+	${RM} tags
 	${RM} -r ${bindir} ${depdir} ${objdir} ${libdir}
 	${RM} -r ${imgdir}
 
