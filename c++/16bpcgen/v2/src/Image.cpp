@@ -42,6 +42,10 @@ Image::Image(const std::string& filename): head_(NULL), width_(0), height_(0)
 #ifdef ENABLE_PNG
 		read_png(filename);
 #endif
+	}else if(have_ext(filename, ".jpg") || have_ext(filename, ".jpeg")){
+#ifdef ENABLE_JPEG
+		read_jpeg(filename);
+#endif
 	}else{
 		throw std::runtime_error(__func__ + std::string(": not supported file format"));
 	}
@@ -455,31 +459,41 @@ Image& Image::write_png(const std::string& filename)const
 #ifdef ENABLE_JPEG
 void Image::read_jpeg(const std::string& filename)
 {
-//	jpeg_decompress_struct cinfo;
-//	jpeg_error_mgr jerr;
-//	cinfo.err = jpeg_std_error(&jerr);
-//	jpeg_create_decompress(&cinfo);
-//
-//	FILE* fp = fopen(filename.c_str(), "rb");
-//	if(!fp){
-//		std::perror(__func__);
-//		throw std::runtime_error(__func__);
-//	}
-//	jpeg_stdio_src(&cinfo, fp);
-//
-//	jpeg_read_header(&cinfo, TRUE);
-//
-//	jpeg_start_decompress(&cinfo);
-//
-//	JSAMPARRAY img;
-//	while(cinfo.output_scanline < cinfo.output_height){
-//		jpeg_read_scanlines(&cinfo, img + cinfo.output_scanline, cinfo.output_height - cinfo.output_scanline);
-//	}
-//
-//	jpeg_finish_decompress(&cinfo);
-//
-//	jpeg_destroy_decompress(&cinfo);
-//	std::fclose(fp);
+	jpeg_decompress_struct cinfo;
+	jpeg_error_mgr jerr;
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_decompress(&cinfo);
+
+	FILE* fp = fopen(filename.c_str(), "rb");
+	if(!fp){
+		std::perror(__func__);
+		throw std::runtime_error(__func__);
+	}
+	jpeg_stdio_src(&cinfo, fp);
+
+	jpeg_read_header(&cinfo, TRUE);
+
+	jpeg_start_decompress(&cinfo);
+	width_  = cinfo.output_width;
+	height_ = cinfo.output_height;
+	head_   = new uint8_t[data_size()];
+
+	JSAMPARRAY img = new JSAMPROW[height_];
+	for(int i = 0; i < height_; ++i){
+		img[i] = head_ + i*width_*3;
+	}
+	while(cinfo.output_scanline < cinfo.output_height){
+		jpeg_read_scanlines(&cinfo, img + cinfo.output_scanline, cinfo.output_height - cinfo.output_scanline);
+	}
+	delete[] img;
+
+	jpeg_finish_decompress(&cinfo);
+	std::fclose(fp);
+	jpeg_destroy_decompress(&cinfo);
+
+	for(uint8_t *p = head_ + data_size()/2 - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
+		*last = *p;
+	}
 }
 #endif
 
