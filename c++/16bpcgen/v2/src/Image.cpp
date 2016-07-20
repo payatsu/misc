@@ -472,6 +472,7 @@ void Image::read_jpeg(const std::string& filename)
 	jpeg_stdio_src(&cinfo, fp);
 
 	jpeg_read_header(&cinfo, TRUE);
+	cinfo.out_color_space = JCS_RGB;
 
 	jpeg_start_decompress(&cinfo);
 	width_  = cinfo.output_width;
