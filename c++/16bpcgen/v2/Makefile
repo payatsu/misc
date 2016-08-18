@@ -1,4 +1,4 @@
-.PHONY: all gtags
+.PHONY: all gtags clean
 
 incdir := include/
 
@@ -42,12 +42,12 @@ tags:
 clean:
 	${RM} GTAGS GRTAGS GPATH
 	${RM} tags
-	${RM} -r ${bindir} ${depdir} ${objdir} ${libdir}
+	${RM} -r ${depdir} ${objdir} ${libdir} ${bindir}
 	${RM} -r ${imgdir}
 
 ${bins}: ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}} ${libs}
 	@mkdir -p ${dir $@}
-	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} ${LDLIBS}
+	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} -Llib ${LDLIBS}
 
 ${libs}: ${filter-out ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}}, ${objs}}
 	@mkdir -p ${dir $@}

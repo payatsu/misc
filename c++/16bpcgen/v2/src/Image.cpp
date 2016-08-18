@@ -410,8 +410,8 @@ void Image::read_png(const std::string& filename)
 	height_ = png_get_image_height(png_ptr, info_ptr);
 	head_   = new uint8_t[data_size()];
 
-	for(uint32_t i = 0; i < height_; ++i){
-		std::copy(&row_ptrs[i][0], &row_ptrs[i][width_*pixelsize], reinterpret_cast<uint8_t*>(&this->operator[](i)[0]));
+	for(uint32_t i = 0; i < height(); ++i){
+		std::copy(&row_ptrs[i][0], &row_ptrs[i][width()*pixelsize], reinterpret_cast<uint8_t*>(&this->operator[](i)[0]));
 	}
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	std::fclose(fp);
@@ -479,9 +479,9 @@ void Image::read_jpeg(const std::string& filename)
 	height_ = cinfo.output_height;
 	head_   = new uint8_t[data_size()];
 
-	JSAMPARRAY img = new JSAMPROW[height_];
-	for(int i = 0; i < height_; ++i){
-		img[i] = head_ + i*width_*3;
+	JSAMPARRAY img = new JSAMPROW[height()];
+	for(uint32_t i = 0; i < height(); ++i){
+		img[i] = head_ + i*width()*3;
 	}
 	while(cinfo.output_scanline < cinfo.output_height){
 		jpeg_read_scanlines(&cinfo, img + cinfo.output_scanline, cinfo.output_height - cinfo.output_scanline);
