@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- condig: utf-8 -*-
 
-dev = '/dev/pts/1'
+dev = '/dev/i2c-1'
 
 if __FILE__ == $0
 	fd = IO.sysopen dev, IO::RDWR
