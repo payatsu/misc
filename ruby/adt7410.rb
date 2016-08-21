@@ -7,5 +7,5 @@ File.open '/dev/i2c-1', IO::RDWR do |f|
 	buf = f.sysread 12
 	temp = (buf[0].ord << 8 | buf[1].ord) >> 3
 	temp -= 8192 if 4096 <= temp
-	printf "%f\n", temp/16.0
+	printf "%f℃\n", temp/16.0
 end
