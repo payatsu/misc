@@ -1,4 +1,5 @@
 #!/usr/bin/ruby
+# -*- coding: utf-8 -*-
 require 'fcntl'
 
 File.open '/dev/i2c-1', IO::RDWR do |f|
