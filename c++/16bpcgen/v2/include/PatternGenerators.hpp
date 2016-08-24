@@ -82,7 +82,7 @@ public:
 	virtual Image& generate(Image& image)const;
 private:
 	void write(Image& image, uint32_t row, uint32_t column,
-			char c, const Pixel<uint16_t>& pixel, unsigned int scale)const;
+			unsigned char c, const Pixel<uint16_t>& pixel, unsigned int scale)const;
 	void write(Image& image, uint32_t row, uint32_t column,
 			const std::string& str, const Pixel<uint16_t>& pixel, unsigned int scale)const;
 private:

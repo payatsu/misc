@@ -1368,7 +1368,7 @@ const unsigned char characters[][8] = {
 Image& Character::generate(Image& image)const{write(image, row_, column_, text_, pixel_, scale_); return image;}
 
 void Character::write(Image& image, uint32_t row, uint32_t column,
-		char c, const Pixel<uint16_t>& pixel, unsigned int scale)const
+		unsigned char c, const Pixel<uint16_t>& pixel, unsigned int scale)const
 {
 	if('~' < c || image.height() <= row || image.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
