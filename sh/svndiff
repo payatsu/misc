@@ -1,0 +1,40 @@
+#!/bin/sh -e
+
+cur_rev=`LANG=C svn info | sed -e '/Revision: /{s/Revision: //;p};d'`
+rev1=${cur_rev}
+
+usage()
+{
+	cat <<EOF
+[Usage]
+	$0 [-r REVISION] file...
+EOF
+}
+
+while getopts r: arg; do
+	case ${arg} in
+	r)
+		rev1=`echo ${OPTARG} | cut -f1 -d:`
+		rev2=`echo ${OPTARG} | cut -f2 -d:`
+	;;
+	\?)
+		usage; exit 1
+	;;
+	esac
+done
+shift `expr ${OPTIND} - 1`
+
+for target in $@; do
+	if [ -f ${target} ]; then
+		tmpfile=`mktemp ${target}.XXX`
+		mv ${target} ${tmpfile}
+		trap 'mv -f ${tmpfile} ${target}' INT QUIT USR1
+		[ ${rev1} = ${cur_rev} ] && svn revert ${target} || svn update -r ${rev1} ${target}
+		diff ${target} ${tmpfile} > /dev/null && echo no difference >&2 || vim -d ${target} ${tmpfile}
+		kill -USR1 $$
+	elif [ -d ${target} ]; then
+		for target in ${target}/*; do
+			$0 -r ${rev1} ${target}
+		done
+	fi
+done
