@@ -1,12 +1,16 @@
 #!/usr/bin/ruby
 # -*- coding: utf-8 -*-
-require 'fcntl'
 
-File.open '/dev/i2c-1', IO::RDWR do |f|
-	f.ioctl(0x0703, 0x48)
-	f.syswrite 0x48.chr
-	buf = f.sysread 12
+if $0 == __FILE__
+	require_relative 'i2c'
+	ADT7410 = 0x48
+	DATA_SIZE = 12
+	buf = i2c_read ADT7410, 0, DATA_SIZE
 	temp = (buf[0].ord << 8 | buf[1].ord) >> 3
 	temp -= 8192 if 4096 <= temp
 	printf "%f℃\n", temp/16.0
+
+	buf.each_byte do |i|
+		printf '%02x ', i.ord
+	end
 end
