@@ -35,7 +35,7 @@ detector.detect_objects(image).each do |region|
 	image.reset_roi
 end
 
-window = OpenCV::GUI::Window.new('laugh.rb')
+window = OpenCV::GUI::Window.new 'laugh.rb'
 window.show image
 OpenCV::GUI::wait_key
 
