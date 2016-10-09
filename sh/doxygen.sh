@@ -11,8 +11,10 @@ init()
 	! which doxygen > /dev/null 2>&1 && echo $0: command not found: doxygen >&2 && exit 1
 	! which dot     > /dev/null 2>&1 && echo $0: command not found: dot     >&2 && exit 1
 	! which global  > /dev/null 2>&1 && echo $0: command not found: global  >&2 && exit 1
-	tty=`tty`
 	css_file=my_style.css
+	img_fmt=svg
+	tty=`tty`
+	doxyfile=Doxyfile
 	clang_assisted_parsing=NO
 }
 
@@ -62,13 +64,15 @@ generate_doc()
 	/^TEMPLATE_RELATIONS /s/= NO$/= YES/
 	/^CALL_GRAPH /s/= NO$/= YES/
 	/^CALLER_GRAPH /s/= NO$/= YES/
+	/^DOT_IMAGE_FORMAT /s/= png$/= '${img_fmt}'/
 	/^INTERACTIVE_SVG /s/= NO$/= YES/
 	/^DOT_MULTI_TARGETS /s/= NO$/= YES/
-	' | tee ${tty} | doxygen -
+	' | tee ${tty} | tee ${doxyfile} | doxygen -
 }
 
 init
-while getopts cD:e:I:s arg; do
+
+while getopts cD:e:f:I:s arg; do
 	case ${arg} in
 	c)
 		clang_assisted_parsing=YES
@@ -78,6 +82,9 @@ while getopts cD:e:I:s arg; do
 		;;
 	e)
 		exclude="${exclude} ${OPTARG}"
+		;;
+	f)
+		img_fmt=${OPTARG}
 		;;
 	I)
 		include="${include} ${OPTARG}"
@@ -93,4 +100,4 @@ done
 shift `expr ${OPTIND} - 1`
 
 generate_css
-generate_doc
+generate_doc $*
