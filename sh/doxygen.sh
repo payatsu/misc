@@ -12,10 +12,12 @@ init()
 	! which dot     > /dev/null 2>&1 && echo $0: command not found: dot     >&2 && exit 1
 	! which global  > /dev/null 2>&1 && echo $0: command not found: global  >&2 && exit 1
 	css_file=my_style.css
+	make_dir=.
+	makefile=Makefile
+	clang_assisted_parsing=NO
 	img_fmt=svg
 	tty=`tty`
 	doxyfile=Doxyfile
-	clang_assisted_parsing=NO
 }
 
 generate_css()
@@ -31,6 +33,11 @@ generate_css()
 	' > ${css_file}
 }
 
+get_macros_from_Makefile()
+{
+	make -C ${make_dir} -f ${makefile} -n -p | grep -oe '-D *\w\+\(=\w\+\)\?' | sort | uniq | sed -e 's/^-D//;H;${x;y/\n/ /;p};d'
+}
+
 generate_doc()
 {
 	doxygen ${s_opt} -g - | sed -e '
@@ -43,6 +50,7 @@ generate_doc()
 	/^INPUT /s%=$%= '"$*"'%
 	/^RECURSIVE /s/= NO$/= YES/
 	/^EXCLUDE /s%=$%='"${exclude}"'%
+	/^EXCLUDE_PATTERNS /s%=$%= *.d%
 	/^SOURCE_BROWSER /s/= NO$/= YES/
 	/^INLINE_SOURCES /s/= NO$/= YES/
 	/^REFERENCED_BY_RELATION /s/= NO$/= YES/
@@ -56,7 +64,7 @@ generate_doc()
 	/^GENERATE_TREEVIEW /s/= NO$/= YES/
 	/^GENERATE_LATEX /s/= YES$/= NO/
 	/^INCLUDE_PATH /s%=$%='"${include}"'%
-	/^PREDEFINED /s/=$/='"${macro_definitions}"'/
+	/^PREDEFINED /s/=$/='"${macro_definitions}`get_macros_from_Makefile`"'/
 	/^HIDE_UNDOC_RELATIONS /s/= YES$/= NO/
 	/^HAVE_DOT /s/= NO$/= YES/
 	/^DOT_FONTNAME /s/= [[:alpha:]]\+$/= Ricty/
@@ -72,10 +80,13 @@ generate_doc()
 
 init
 
-while getopts cD:e:f:I:s arg; do
+while getopts cC:D:e:f:i:I:s arg; do
 	case ${arg} in
 	c)
 		clang_assisted_parsing=YES
+		;;
+	C)
+		make_dir=${OPTARG}
 		;;
 	D)
 		macro_definitions="${macro_definitions} ${OPTARG}"
@@ -84,6 +95,9 @@ while getopts cD:e:f:I:s arg; do
 		exclude="${exclude} ${OPTARG}"
 		;;
 	f)
+		makefile=${OPTARG}
+		;;
+	i)
 		img_fmt=${OPTARG}
 		;;
 	I)
