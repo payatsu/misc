@@ -3,6 +3,37 @@
 help()
 {
 	cat <<EOF
+[NAME]
+	`basename $0` - auto-generate documents powered by doxygen/graphviz
+
+[SYNOPSIS]
+	`basename $0` [-C src_root] [-f Makefile] [-e exclude_dir] [-s] [dir...]
+
+[DESCRIPTION]
+	-c
+		enable clang assisted parsing.
+
+	-C dir
+		same as 'make -C dir'.
+
+	-D name[=var]
+		same as 'cc -D name[=var]'.
+
+	-e name
+		exclude name from search directory.
+		name is file name or directory name.
+
+	-f makefile
+		same as 'make -f makefile'.
+
+	-i
+		Specify image format.
+
+	-I dir
+		same as 'cc -I dir'.
+
+	-s
+		omit detailed description within Doxyfile.
 EOF
 }
 
@@ -80,35 +111,18 @@ generate_doc()
 
 init
 
-while getopts cC:D:e:f:i:I:s arg; do
+while getopts cC:D:e:f:hi:I:s arg; do
 	case ${arg} in
-	c)
-		clang_assisted_parsing=YES
-		;;
-	C)
-		make_dir=${OPTARG}
-		;;
-	D)
-		macro_definitions="${macro_definitions} ${OPTARG}"
-		;;
-	e)
-		exclude="${exclude} ${OPTARG}"
-		;;
-	f)
-		makefile=${OPTARG}
-		;;
-	i)
-		img_fmt=${OPTARG}
-		;;
-	I)
-		include="${include} ${OPTARG}"
-		;;
-	s)
-		s_opt=-s
-		;;
-	\?)
-		help >&2; exit 1
-		;;
+	c)  clang_assisted_parsing=YES;;
+	C)  make_dir=${OPTARG};;
+	D)  macro_definitions="${macro_definitions} ${OPTARG}";;
+	e)  exclude="${exclude} ${OPTARG}";;
+	f)  makefile=${OPTARG};;
+	h)  help; exit 0;;
+	i)  img_fmt=${OPTARG};;
+	I)  include="${include} ${OPTARG}";;
+	s)  s_opt=-s;;
+	\?) help >&2; exit 1;;
 	esac
 done
 shift `expr ${OPTIND} - 1`
