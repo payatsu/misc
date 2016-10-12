@@ -66,7 +66,9 @@ generate_css()
 
 get_macros_from_Makefile()
 {
-	make -C ${make_dir} -f ${makefile} -n -p | grep -oe '-D *\w\+\(=\w\+\)\?' | sort | uniq | sed -e 's/^-D//;H;${x;y/\n/ /;p};d'
+	[ -f ${make_dir}/${makefile} ] &&
+		make -C ${make_dir} -f ${makefile} -n -p | grep -oe '-D *\w\+\(=\w\+\)\?' \
+			| sort | uniq | sed -e 's/^-D//;H;${x;y/\n/ /;p};d'
 }
 
 generate_doc()
@@ -80,18 +82,18 @@ generate_doc()
 	/^EXTRACT_STATIC /s/= NO$/= YES/
 	/^INPUT /s%=$%= '"$*"'%
 	/^RECURSIVE /s/= NO$/= YES/
-	/^EXCLUDE /s%=$%='"${exclude}"'%
-	/^EXCLUDE_PATTERNS /s%=$%= *.d%
+#	/^EXCLUDE /s%=$%='"${exclude}"'%
+	/^EXCLUDE_PATTERNS /s%=$%= *.d '"`echo ${exclude} | sed -e 's%\<.\+\>%*/&/*%g'`"'%
 	/^SOURCE_BROWSER /s/= NO$/= YES/
 	/^INLINE_SOURCES /s/= NO$/= YES/
 	/^REFERENCED_BY_RELATION /s/= NO$/= YES/
 	/^REFERENCES_RELATION /s/= NO$/= YES/
-# /^USE_HTAGS /s/= NO$/= YES/
-# /^CLANG_ASSISTED_PARSING /s/= NO$/= '${clang_assisted_parsing}'/
-# /^CLANG_OPTIONS /s%=$%= -stdlib=libc++%
+#	/^USE_HTAGS /s/= NO$/= YES/
+#	/^CLANG_ASSISTED_PARSING /s/= NO$/= '${clang_assisted_parsing}'/
+#	/^CLANG_OPTIONS /s%=$%= -stdlib=libc++%
 	/^HTML_EXTRA_STYLESHEET /s%=$%= '${css_file}'%
 	/^HTML_TIMESTAMP /s/= NO$/= YES/
-# /^HTML_DYNAMIC_SECTIONS /s/= NO$/= YES/
+#	/^HTML_DYNAMIC_SECTIONS /s/= NO$/= YES/
 	/^GENERATE_TREEVIEW /s/= NO$/= YES/
 	/^GENERATE_LATEX /s/= YES$/= NO/
 	/^INCLUDE_PATH /s%=$%='"${include}"'%
