@@ -45,9 +45,9 @@ clean:
 	${RM} -r ${depdir} ${objdir} ${libdir} ${bindir}
 	${RM} -r ${imgdir}
 
-${bins}: ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}} ${libs}
+${bindir}%: ${objdir}%.o ${libs}
 	@mkdir -p ${dir $@}
-	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} -Llib ${LDLIBS}
+	${LINK.cc} -o $@ $< -l${patsubst ${libdir}lib%.a,%, ${libs}} ${LDLIBS}
 
 ${libs}: ${filter-out ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${main}}, ${objs}}
 	@mkdir -p ${dir $@}
