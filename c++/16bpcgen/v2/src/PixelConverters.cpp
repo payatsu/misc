@@ -79,7 +79,7 @@ Pixel<uint16_t>& Reversal::convert(Pixel<uint16_t>& pixel)const
 Gamma::Gamma(const std::vector<Pixel<uint16_t>::value_type>& lut, Ch ch):
 	Channel(ch), lut_(lut)
 {
-	if(lut_.size() != Pixel<uint16_t>::max){
+	if(lut_.size() != Pixel<uint16_t>::max + 1){
 		throw std::runtime_error(__func__);
 	}
 }
