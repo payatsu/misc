@@ -6,10 +6,10 @@ srcdir := src/
 srcs   := ${addprefix ${srcdir}, 16bpcgen.cpp Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp}
 main   := ${firstword ${srcs}}
 
-depdir := dep/
+depdir := .dep/
 deps   := ${patsubst ${srcdir}%.cpp, ${depdir}%.d, ${srcs}}
 
-objdir := obj/
+objdir := .obj/
 objs   := ${patsubst ${srcdir}%.cpp, ${objdir}%.o, ${srcs}}
 
 libdir := lib/

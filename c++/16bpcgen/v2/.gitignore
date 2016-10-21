@@ -1,6 +1,6 @@
 img/
-obj/
-dep/
+.obj/
+.dep/
 bin/
 lib/
 GPATH

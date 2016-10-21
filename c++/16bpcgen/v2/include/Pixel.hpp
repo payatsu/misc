@@ -3,7 +3,7 @@
 
 #include "typedef.hpp"
 
-template <typename T>
+template <typename T = uint16_t>
 class Pixel{
 public:
 	typedef T value_type;
@@ -135,13 +135,13 @@ private:
 	value_type B_;
 };
 
-extern const Pixel<uint16_t> black;
-extern const Pixel<uint16_t> white;
-extern const Pixel<uint16_t> red;
-extern const Pixel<uint16_t> green;
-extern const Pixel<uint16_t> blue;
-extern const Pixel<uint16_t> cyan;
-extern const Pixel<uint16_t> magenta;
-extern const Pixel<uint16_t> yellow;
+extern const Pixel<> black;
+extern const Pixel<> white;
+extern const Pixel<> red;
+extern const Pixel<> green;
+extern const Pixel<> blue;
+extern const Pixel<> cyan;
+extern const Pixel<> magenta;
+extern const Pixel<> yellow;
 
 #endif
