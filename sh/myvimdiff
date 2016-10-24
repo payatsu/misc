@@ -1,0 +1,3 @@
+#!/bin/sh -e
+
+exec vim -d -c 'windo %foldopen!' $6 $7
