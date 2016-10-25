@@ -1,3 +1,4 @@
 #!/bin/sh -e
 
-exec vim -d -c 'windo %foldopen!' $6 $7
+screen -ls | grep -q ${PPID} || screen -d -m -S ${PPID}
+exec screen -r ${PPID} -X screen vim -d -c 'windo %foldopen!' $6 $7
