@@ -2,11 +2,6 @@
 
 vim_server_name=VIM
 
-! vim --version | grep -q -e '+clientserver' &&
-	echo Error, Vim with "'clientserver'" feature is required, but your Vim does not have the feature... && exit 1
-! vim --serverlist | grep -q -e ${vim_server_name} &&
-	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
-
 target1=
 target2=
 parent_process=`ps -U ${USER} | grep -e ${PPID} | grep -o -e '[[:graph:]]\+$'`
@@ -24,9 +19,14 @@ git)
 	target2=`readlink -m $2`
 esac
 
-cat <<EOF | grep -q -e '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\)$' && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
+cat <<EOF | grep -q -e '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
 ${target1}
 ${target2}
 EOF
+
+! vim --version | grep -q -e '+clientserver' &&
+	echo Error, Vim with "'clientserver'" feature is required, but your Vim does not have the feature... && exit 1
+! vim --serverlist | grep -q -e ${vim_server_name} &&
+	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
 
 vim --servername VIM --remote-tab +"view ${target1} | diffthis | vertical diffsplit ${target2} | silent! windo %foldopen!" /dev/null
