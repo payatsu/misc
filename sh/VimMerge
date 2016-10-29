@@ -29,4 +29,15 @@ EOF
 ! vim --serverlist | grep -q -e ${vim_server_name} &&
 	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
 
-vim --servername VIM --remote-tab +"view ${target1} | diffthis | vertical diffsplit ${target2} | silent! windo %foldopen!" /dev/null
+vim --servername VIM --remote-tab +"\
+	syntax on |\
+	set splitright |\
+	highlight DiffAdd guibg=lightblue |\
+	highlight DiffChange guibg=lightyellow |\
+	highlight DiffDelete guibg=lightred |\
+	highlight DiffText guibg=red |\
+	set fillchars=diff:\\  |\
+	view ${target1} |\
+	diffthis |\
+	vertical diffsplit ${target2} |\
+	silent! windo %foldopen!" /dev/null
