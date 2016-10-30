@@ -30,14 +30,21 @@ EOF
 	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
 
 vim --servername VIM --remote-tab +"\
+	set nocompatible |\
 	syntax on |\
+	filetype plugin indent on |\
 	set splitright |\
-	highlight DiffAdd guibg=lightblue |\
+	set fillchars=diff:\\  |\
+	set diffopt=filler,vertical |\
+	highlight DiffAdd    guibg=lightblue |\
 	highlight DiffChange guibg=lightyellow |\
 	highlight DiffDelete guibg=lightred |\
-	highlight DiffText guibg=red |\
-	set fillchars=diff:\\  |\
+	highlight DiffText   guibg=red |\
 	view ${target1} |\
 	diffthis |\
-	vertical diffsplit ${target2} |\
+	diffsplit ${target2} |\
+	let t:filetype = &filetype |\
+	wincmd h |\
+	let &filetype = t:filetype |\
+	wincmd l |\
 	silent! windo %foldopen!" /dev/null
