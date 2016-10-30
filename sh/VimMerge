@@ -49,6 +49,6 @@ vim --servername VIM --remote-tab +"\
 	wincmd h |\
 	let &filetype = t:filetype |\
 	wincmd l |\
-	silent! windo %foldopen!" /dev/null
+	windo set nofoldenable" /dev/null
 [ -n "${sleep}" ] && sleep ${sleep}
 exit 0
