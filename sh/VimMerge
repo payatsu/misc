@@ -21,7 +21,7 @@ git)
 	target2=`readlink -m $2`
 esac
 
-cat <<EOF | grep -q -e '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
+cat <<EOF | grep -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
 ${target1}
 ${target2}
 EOF
@@ -31,7 +31,7 @@ EOF
 ! vim --serverlist | grep -qe ^${vim_server_name}\$ &&
 	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
 
-vim --servername VIM --remote-tab +"\
+vim --servername ${vim_server_name} --remote-tab +"\
 	set nocompatible |\
 	syntax on |\
 	filetype plugin indent on |\
