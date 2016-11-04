@@ -38,10 +38,12 @@ vim --servername ${vim_server_name} --remote-tab +"\
 	set splitright |\
 	set fillchars=diff:\\  |\
 	set diffopt=filler,vertical |\
-	highlight DiffAdd    ctermfg=white ctermbg=lightblue   guifg=black guibg=lightblue |\
-	highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow |\
-	highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred |\
-	highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red |\
+	set t_Co=256 |\
+	colorscheme morning |\
+	highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue |\
+	highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow    |\
+	highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred  |\
+	highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red       |\
 	view ${target1} |\
 	diffthis |\
 	diffsplit ${target2} |\
