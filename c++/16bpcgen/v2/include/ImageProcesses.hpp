@@ -127,15 +127,15 @@ public:
 		TOP_LEFT,
 		TOP_RIGHT,
 		BOTTOM_LEFT,
-		BOTTOMM_RIGHT
+		BOTTOM_RIGHT
 	};
-	KeyStone(Vertex vertex, uint32_t column_offset, uint32_t row_offset):
-		vertex_(vertex), column_offset_(column_offset), row_offset_(row_offset){}
+	KeyStone(Vertex vertex, uint32_t width_offset, uint32_t height_offset):
+		vertex_(vertex), width_offset_(width_offset), height_offset_(height_offset){}
 	virtual Image& process(Image& image)const;
 private:
 	Vertex vertex_;
-	uint32_t column_offset_;
-	uint32_t row_offset_;
+	uint32_t width_offset_;
+	uint32_t height_offset_;
 };
 
 #endif

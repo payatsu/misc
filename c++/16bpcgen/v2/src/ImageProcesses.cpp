@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include "Image.hpp"
 #include "ImageProcesses.hpp"
+#include "PatternGenerators.hpp"
 #include "PixelConverter.hpp"
 
 bool AreaSpecifier::within(const Image& image)const
@@ -327,16 +328,31 @@ Image& VScale::process(Image& image)const
 
 Image& KeyStone::process(Image& image)const
 {
+	Image phase1 = Image(image.width(), image.height());
+	Image phase2 = Image(image.width(), image.height());
 	switch(vertex_){
-	TOP_LEFT:
+	case TOP_LEFT:
+		for(uint32_t h = 0; h < image.height(); ++h){
+			const uint32_t current_offset = width_offset_*(image.height() - h)/image.height();
+			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+				phase1[h][w + current_offset] = image[h][w * image.width() / (image.width() - current_offset)];
+			}
+		}
+		for(uint32_t w = 0; w < image.width(); ++w){
+			const uint32_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
+			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+				phase2[h + current_offset][w] = phase1[h * image.height() / (image.height() - current_offset)][w];
+			}
+		}
 		break;
-	TOP_RIGHT:
+	case TOP_RIGHT:
 		break;
-	BOTTOM_LEFT:
+	case BOTTOM_LEFT:
 		break;
-	BOTTOM_RIGHT:
+	case BOTTOM_RIGHT:
 		break;
 	default:
 		break;
 	}
+	return image.swap(phase2);
 }
