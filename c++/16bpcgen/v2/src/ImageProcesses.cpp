@@ -296,3 +296,47 @@ Filter::Kernel Laplacian5x5::init()
 	kernel[4].push_back(-1);
 	return kernel;
 }
+
+/**
+ * @TODO アルゴリズムがイケてないので改善する。
+ */
+Image& HScale::process(Image& image)const
+{
+	Image result(width_, image.height());
+	for(uint32_t h = 0; h < image.height(); ++h){
+		for(uint32_t w = 0; w < width_; ++w){
+			result[h][w] = image[h][w * image.width() / width_];
+		}
+	}
+	return image.swap(result);
+}
+
+/**
+ * @TODO アルゴリズムがイケてないので改善する。
+ */
+Image& VScale::process(Image& image)const
+{
+	Image result(image.width(), height_);
+	for(uint32_t w = 0; w < image.width(); ++w){
+		for(uint32_t h = 0; h < height_; ++h){
+			result[h][w] = image[h * image.height() / height_][w];
+		}
+	}
+	return image.swap(result);
+}
+
+Image& KeyStone::process(Image& image)const
+{
+	switch(vertex_){
+	TOP_LEFT:
+		break;
+	TOP_RIGHT:
+		break;
+	BOTTOM_LEFT:
+		break;
+	BOTTOM_RIGHT:
+		break;
+	default:
+		break;
+	}
+}

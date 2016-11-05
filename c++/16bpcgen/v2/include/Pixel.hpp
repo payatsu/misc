@@ -1,8 +1,8 @@
 #ifndef _16BPCGEN_PIXEL_HPP_
 #define _16BPCGEN_PIXEL_HPP_
 
-#include <ostream>
 #include <iomanip>
+#include <ostream>
 #include "typedef.hpp"
 
 template <typename T = uint16_t>

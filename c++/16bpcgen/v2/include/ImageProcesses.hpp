@@ -105,4 +105,37 @@ private:
 	static Kernel init();
 };
 
+class HScale: public ImageProcess{
+public:
+	HScale(uint32_t width): width_(width){}
+	virtual Image& process(Image& image)const;
+private:
+	uint32_t width_;
+};
+
+class VScale: public ImageProcess{
+public:
+	VScale(uint32_t height): height_(height){}
+	virtual Image& process(Image& image)const;
+private:
+	uint32_t height_;
+};
+
+class KeyStone: public ImageProcess{
+public:
+	enum Vertex{
+		TOP_LEFT,
+		TOP_RIGHT,
+		BOTTOM_LEFT,
+		BOTTOMM_RIGHT
+	};
+	KeyStone(Vertex vertex, uint32_t column_offset, uint32_t row_offset):
+		vertex_(vertex), column_offset_(column_offset), row_offset_(row_offset){}
+	virtual Image& process(Image& image)const;
+private:
+	Vertex vertex_;
+	uint32_t column_offset_;
+	uint32_t row_offset_;
+};
+
 #endif
