@@ -109,6 +109,19 @@ private:
 	const Pixel<uint16_t> pixel_;
 };
 
+class Line: public PatternGenerator{
+public:
+	Line(uint32_t from_col, uint32_t from_row, uint32_t to_col, uint32_t to_row, const Pixel<uint16_t>& pixel = white):
+		from_col_(from_col), from_row_(from_row), to_col_(to_col), to_row_(to_row), pixel_(pixel){}
+	virtual Image& generate(Image& image)const;
+private:
+	const uint32_t from_col_;
+	const uint32_t from_row_;
+	const uint32_t to_col_;
+	const uint32_t to_row_;
+	const Pixel<uint16_t> pixel_;
+};
+
 class Circle: public PatternGenerator{
 public:
 	Circle(uint32_t column, uint32_t row, const Pixel<uint16_t>& pixel = white, uint32_t radius = 0, bool fill_enabled = true):

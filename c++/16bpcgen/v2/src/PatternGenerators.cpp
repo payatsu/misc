@@ -1424,6 +1424,30 @@ TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& p
 
 Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_, pixel_);}
 
+Image& Line::generate(Image& image)const
+{
+	if(image.width() <= from_col_ || image.width() <= to_col_ || image.height() <= from_row_ || image.height() <= to_row_){
+		throw std::range_error(__func__);
+	}
+	uint32_t start_col = from_col_;
+	uint32_t start_row = from_row_;
+	uint32_t end_col   = to_col_;
+	uint32_t end_row   = to_row_;
+	if(end_row < start_row){
+		std::swap(start_col, end_col);
+		std::swap(start_row, end_row);
+	}
+	if(start_row == end_row){
+		std::fill(&image[start_row][start_col], &image[start_row][end_col], pixel_);
+	}else{
+		const double slope = static_cast<double>(end_col - start_col)/(end_row - start_row);
+		for(uint32_t r = 0; r < end_row - start_row; ++r){
+			image[r + start_row][r*slope + start_col] = pixel_;
+		}
+	}
+	return image;
+}
+
 Image& Circle::generate(Image& image)const
 {
 	if(image.width() <= column_ || image.height() <= row_){
