@@ -152,23 +152,23 @@ Image& CrossHatch::generate(Image& image)const
 	const uint32_t width = image.width();
 	const uint32_t height = image.height();
 	for(uint32_t i = 0; i < height; i += lattice_height_){
-		std::fill(&image[i][0], &image[i][width], white);
+		std::fill(&image[i][0], &image[i][width], pixel_);
 	}
-	std::fill(&image[height - 1][0], &image[height][0], white);
+	std::fill(&image[height - 1][0], &image[height][0], pixel_);
 
 	for(uint32_t i = 0; i < width; i += lattice_width_){
 		for(uint32_t j = 0; j < height; ++j){
-			image[j][i] = white;
+			image[j][i] = pixel_;
 		}
 	}
 	for(uint32_t i = 0; i < height; ++i){
-		image[i][width - 1] = white;
+		image[i][width - 1] = pixel_;
 	}
 
 	const double slope = static_cast<double>(height)/width;
 	for(uint32_t i = 0; i < width; ++i){
-		image[std::min(height - 1, static_cast<unsigned int>(         slope*i))][i] = white;
-		image[std::min(height - 1, static_cast<unsigned int>(height - slope*i))][i] = white;
+		image[std::min(height - 1, static_cast<unsigned int>(         slope*i))][i] = pixel_;
+		image[std::min(height - 1, static_cast<unsigned int>(height - slope*i))][i] = pixel_;
 	}
 
 	const uint32_t radius = height/2;
@@ -177,7 +177,7 @@ Image& CrossHatch::generate(Image& image)const
 	for(double theta = 0; theta < 2*M_PI; theta += 2.0*M_PI/5000.0){
 		uint32_t row    = std::min(height - 1, static_cast<uint32_t>(shift_v + radius*std::sin(theta)));
 		uint32_t column = std::min(width  - 1, static_cast<uint32_t>(shift_h + radius*std::cos(theta)));
-		image[row][column] = white;
+		image[row][column] = pixel_;
 	}
 	return image;
 }

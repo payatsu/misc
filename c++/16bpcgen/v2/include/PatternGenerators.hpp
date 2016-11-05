@@ -54,11 +54,13 @@ public:
 
 class CrossHatch: public PatternGenerator{
 public:
-	CrossHatch(uint32_t width, uint32_t height): lattice_width_(width), lattice_height_(height){}
+	CrossHatch(uint32_t width, uint32_t height, const Pixel<uint16_t>& pixel = white):
+		lattice_width_(width), lattice_height_(height), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
 	const uint32_t lattice_width_;
 	const uint32_t lattice_height_;
+	const Pixel<uint16_t> pixel_;
 };
 
 #if 201103L <= __cplusplus
