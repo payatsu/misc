@@ -1,4 +1,4 @@
-.PHONY: all gtags clean
+.PHONY: all gtags tags clean
 
 incdir := include/
 
