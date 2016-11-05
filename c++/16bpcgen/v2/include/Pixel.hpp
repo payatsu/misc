@@ -157,7 +157,7 @@ private:
 	value_type B_;
 };
 template <typename T = uint16_t>
-std::ostream& operator<<(std::ostream& os, const Pixel<>& p)
+std::ostream& operator<<(std::ostream& os, const Pixel<T>& p)
 {
 	return p.print(os);
 }

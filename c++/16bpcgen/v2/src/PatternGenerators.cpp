@@ -174,7 +174,7 @@ Image& CrossHatch::generate(Image& image)const
 	const uint32_t radius = height/2;
 	const uint32_t shift_v = height/2;
 	const uint32_t shift_h = width/2;
-	for(double theta = 0; theta < 2*M_PI; theta += 2.0*M_PI/5000.0){
+	for(double theta = 0; theta < 2.0*M_PI; theta += 2.0*M_PI/5000.0){
 		uint32_t row    = std::min(height - 1, static_cast<uint32_t>(shift_v + radius*std::sin(theta)));
 		uint32_t column = std::min(width  - 1, static_cast<uint32_t>(shift_h + radius*std::cos(theta)));
 		image[row][column] = pixel_;
@@ -1423,3 +1423,26 @@ TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& p
 }
 
 Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_, pixel_);}
+
+Image& Circle::generate(Image& image)const
+{
+	if(image.width() <= column_ || image.height() <= row_){
+		throw std::range_error(__func__);
+	}
+	image[row_][column_] = pixel_;
+	for(double theta = 0.0; theta < 2.0*M_PI; theta += 2.0*M_PI/5000.0){
+		uint32_t row    = std::min(image.height() - 1, static_cast<uint32_t>(row_    + radius_*std::sin(theta)));
+		uint32_t column = std::min(image.width()  - 1, static_cast<uint32_t>(column_ + radius_*std::cos(theta)));
+		image[row][column] = pixel_;
+	}
+	if(fill_enabled_){
+		for(uint32_t c = column_ - radius_; c < image.width() && c <= column_ + radius_; ++c){
+			for(uint32_t r = row_ - radius_; r < image.height() && r <= row_ + radius_; ++r){
+				if((c - column_)*(c - column_) + (r - row_)*(r - row_) <= radius_*radius_){
+					image[r][c] = pixel_;
+				}
+			}
+		}
+	}
+	return image;
+}
