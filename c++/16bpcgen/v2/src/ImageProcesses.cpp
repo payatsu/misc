@@ -330,26 +330,64 @@ Image& KeyStone::process(Image& image)const
 {
 	Image phase1 = Image(image.width(), image.height());
 	Image phase2 = Image(image.width(), image.height());
+	phase1 >>= Luster(black);
+	phase2 >>= Luster(black);
 	switch(vertex_){
 	case TOP_LEFT:
 		for(uint32_t h = 0; h < image.height(); ++h){
 			const uint32_t current_offset = width_offset_*(image.height() - h)/image.height();
 			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
-				phase1[h][w + current_offset] = image[h][w * image.width() / (image.width() - current_offset)];
+				phase1[h][w + current_offset] = image[h][w*image.width()/(image.width() - current_offset)];
 			}
 		}
 		for(uint32_t w = 0; w < image.width(); ++w){
 			const uint32_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
 			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
-				phase2[h + current_offset][w] = phase1[h * image.height() / (image.height() - current_offset)][w];
+				phase2[h + current_offset][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
 			}
 		}
 		break;
 	case TOP_RIGHT:
+		for(uint32_t h = 0; h < image.height(); ++h){
+			const uint32_t current_offset = width_offset_*(image.height() - h)/image.height();
+			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+				phase1[h][w] = image[h][w*image.width()/(image.width() - current_offset)];
+			}
+		}
+		for(uint32_t w = 0; w < image.width(); ++w){
+			const uint32_t current_offset = height_offset_*w/(image.width() - width_offset_);
+			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+				phase2[h + current_offset][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
+			}
+		}
 		break;
 	case BOTTOM_LEFT:
+		for(uint32_t h = 0; h < image.height(); ++h){
+			const uint32_t current_offset = width_offset_*h/image.height();
+			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+				phase1[h][w + current_offset] = image[h][w*image.width()/(image.width() - current_offset)];
+			}
+		}
+		for(uint32_t w = 0; w < image.width(); ++w){
+			const uint32_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
+			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+				phase2[h][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
+			}
+		}
 		break;
 	case BOTTOM_RIGHT:
+		for(uint32_t h = 0; h < image.height(); ++h){
+			const uint32_t current_offset = width_offset_*h/image.height();
+			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+				phase1[h][w] = image[h][w*image.width()/(image.width() - current_offset)];
+			}
+		}
+		for(uint32_t w = 0; w < image.width(); ++w){
+			const uint32_t current_offset = height_offset_*w/(image.width() - width_offset_);
+			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+				phase2[h][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
+			}
+		}
 		break;
 	default:
 		break;
