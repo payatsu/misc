@@ -194,12 +194,12 @@ public:
 		return static_cast<double>(std::max(std::max(R_, G_), B_) - std::min(std::min(R_, G_), B_))/max;
 	}
 	double V()const{return static_cast<double>(std::max(std::max(R_, G_), B_))/max;}
-	value_type  Y601()const{return  0.257*R_ + 0.504*G_ + 0.098*B_ +  16.0*max/255;}
-	value_type Cb601()const{return -0.148*R_ - 0.291*G_ + 0.439*B_ + 128.0*max/255;}
-	value_type Cr601()const{return  0.439*R_ - 0.368*G_ - 0.071*B_ + 128.0*max/255;}
-	value_type  Y709()const{return  0.183*R_ + 0.614*G_ + 0.062*B_ +  16.0*max/255;}
-	value_type Cb709()const{return -0.101*R_ - 0.339*G_ + 0.439*B_ + 128.0*max/255;}
-	value_type Cr709()const{return  0.439*R_ - 0.399*G_ - 0.040*B_ + 128.0*max/255;}
+	value_type  Y601()const{return ( 0.2990*R_ + 0.5870*G_ + 0.1140*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type Cb601()const{return (-0.1687*R_ - 0.3312*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type Cr601()const{return ( 0.5000*R_ - 0.4186*G_ - 0.0813*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type  Y709()const{return ( 0.2126*R_ + 0.7152*G_ + 0.0722*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type Cb709()const{return (-0.1146*R_ - 0.3854*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type Cr709()const{return ( 0.5000*R_ - 0.4542*G_ - 0.0458*B_)*224.0/255.0 + 128.0*max/255.0;}
 private:
 	value_type R_;
 	value_type G_;
