@@ -178,12 +178,11 @@ public:
 	}
 	std::ostream& print(std::ostream& os)const
 	{
-		const int w = 4;
-		os << std::hex;
-		os << std::setw(w) << R_ << ','
-		   << std::setw(w) << G_ << ','
-		   << std::setw(w) << B_;
-		os << resetiosflags(std::ios::hex);
+		const int decw = 5;
+		const int hexw = 4;
+		os << std::setw(decw) << R_ << "R=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << R_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
+		   << std::setw(decw) << G_ << "G=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << G_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
+		   << std::setw(decw) << B_ << "B=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << B_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << ")";
 		return os;
 	}
 	value_type R()const{return R_;}
