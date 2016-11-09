@@ -20,18 +20,36 @@ public:
 		switch(cs){
 		case CS_RGB:
 			break;
-		case CS_YCBCR601:
-			R_ = 1.164*(r_y - 16.0*max/255)                                + 1.596*(b_cr - 128.0*max/255);
-			G_ = 1.164*(r_y - 16.0*max/255) - 0.391*(g_cb - 128.0*max/255) - 0.813*(b_cr - 128.0*max/255);
-			B_ = 1.164*(r_y - 16.0*max/255) + 2.018*(g_cb - 128.0*max/255);
+		case CS_YCBCR601:{
+			if( r_y < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
+			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
+			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
+				throw std::range_error(__func__ + std::string(": range violation"));
+			}
+			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
+			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
+			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
+			R_ = std::min(std::max(Ytmp               + 1.402*Crtmp, 0.0), static_cast<double>(max));
+			G_ = std::min(std::max(Ytmp - 0.344*Cbtmp - 0.714*Crtmp, 0.0), static_cast<double>(max));
+			B_ = std::min(std::max(Ytmp + 1.772*Cbtmp,               0.0), static_cast<double>(max));
 			break;
-		case CS_YCBCR709:
-			R_ = 1.164*(r_y - 16.0*max/255)                                + 1.793*(b_cr - 128.0*max/255);
-			G_ = 1.164*(r_y - 16.0*max/255) - 0.213*(g_cb - 128.0*max/255) - 0.533*(b_cr - 128.0*max/255);
-			B_ = 1.164*(r_y - 16.0*max/255) + 2.112*(g_cb - 128.0*max/255);
+		}
+		case CS_YCBCR709:{
+			if( r_y < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
+			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
+			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
+				throw std::range_error(__func__ + std::string(": range violation"));
+			}
+			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
+			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
+			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
+			R_ = std::min(std::max(Ytmp                + 1.5748*Crtmp, 0.0), static_cast<double>(max));
+			G_ = std::min(std::max(Ytmp - 0.1873*Cbtmp - 0.4681*Crtmp, 0.0), static_cast<double>(max));
+			B_ = std::min(std::max(Ytmp + 1.8556*Cbtmp,                0.0), static_cast<double>(max));
 			break;
+		}
 		default:
-			throw std::runtime_error(__func__);
+			throw std::runtime_error(__func__ + std::string(": unknown color space"));
 		}
 	}
 	template <typename U>
