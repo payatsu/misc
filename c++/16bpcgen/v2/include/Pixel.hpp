@@ -13,7 +13,8 @@ public:
 	enum ColorSpace{
 		CS_RGB,
 		CS_YCBCR601,
-		CS_YCBCR709
+		CS_YCBCR709,
+		CS_HSV,
 	};
 	Pixel(value_type r_y = 0x0, value_type g_cb = 0x0, value_type b_cr = 0x0, ColorSpace cs = CS_RGB): R_(r_y), G_(g_cb), B_(b_cr)
 	{
@@ -46,6 +47,47 @@ public:
 			R_ = std::min(std::max(Ytmp                + 1.5748*Crtmp, 0.0), static_cast<double>(max));
 			G_ = std::min(std::max(Ytmp - 0.1873*Cbtmp - 0.4681*Crtmp, 0.0), static_cast<double>(max));
 			B_ = std::min(std::max(Ytmp + 1.8556*Cbtmp,                0.0), static_cast<double>(max));
+			break;
+		}
+		case CS_HSV:{
+			const value_type maximum = b_cr;
+			const value_type minimum = maximum - ( g_cb / max * maximum);
+			switch(static_cast<int>(r_y / 60.0)){
+			case 0:
+				R_ = maximum;
+				G_ = (r_y / 60.0) * (maximum - minimum) + minimum;
+				B_ = minimum;
+				break;
+			case 1:
+				R_ = ((120.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				G_ = maximum;
+				B_ = minimum;
+				break;
+			case 2:
+				R_ = minimum;
+				G_ = maximum;
+				B_ = ((r_y - 120.0) / 60.0) * (maximum - minimum) + minimum;
+				break;
+			case 3:
+				R_ = minimum;
+				G_ = ((240.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				B_ = maximum;
+				break;
+			case 4:
+				R_ = ((r_y - 240.0) / 60.0) * (maximum - minimum) + minimum;
+				G_ = minimum;
+				B_ = maximum;
+				break;
+			case 5:
+			case 6:
+				R_ = maximum;
+				G_ = minimum;
+				B_ = ((360.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				break;
+			default:
+				throw std::range_error(__func__ + std::string(": range violation"));
+				break;
+			}
 			break;
 		}
 		default:
@@ -179,10 +221,10 @@ public:
 	std::ostream& print(std::ostream& os)const
 	{
 		const int decw = 5;
-		const int hexw = 4;
-		os << std::setw(decw) << R_ << "R=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << R_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
-		   << std::setw(decw) << G_ << "G=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << G_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
-		   << std::setw(decw) << B_ << "B=(0x" << std::hex << std::setw(hexw) << std::setfill('0') << B_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << ")";
+		const int hexw = sizeof(value_type);
+		os << "R=" << std::setw(decw) << R_ << "(0x" << std::hex << std::setw(hexw) << std::setfill('0') << R_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
+		   << "G=" << std::setw(decw) << G_ << "(0x" << std::hex << std::setw(hexw) << std::setfill('0') << G_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << "), "
+		   << "B=" << std::setw(decw) << B_ << "(0x" << std::hex << std::setw(hexw) << std::setfill('0') << B_ << std::resetiosflags(std::ios::hex) << std::setfill(' ') << ")";
 		return os;
 	}
 	value_type R()const{return R_;}
@@ -199,11 +241,11 @@ public:
 		if(minimum == maximum){
 			throw std::runtime_error(__func__ + std::string(": Hue undefined."));
 		}else if(minimum == B_){
-			return 60 * (static_cast<double>(G_) - R_) / max / diff + 60;
+			return 60.0 * (static_cast<double>(G_) - R_) / max / diff +  60.0;
 		}else if(minimum == R_){
-			return 60 * (static_cast<double>(B_) - G_) / max / diff + 180;
+			return 60.0 * (static_cast<double>(B_) - G_) / max / diff + 180.0;
 		}else{
-			return 60 * (static_cast<double>(R_) - B_) / max / diff + 300;
+			return 60.0 * (static_cast<double>(R_) - B_) / max / diff + 300.0;
 		}
 	}
 	double S()const
