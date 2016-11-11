@@ -3,8 +3,6 @@
 
 #include <vector>
 #include "ImageProcess.hpp"
-#include "Pixel.hpp"
-#include "typedef.hpp"
 class PixelConverter;
 
 class Area{

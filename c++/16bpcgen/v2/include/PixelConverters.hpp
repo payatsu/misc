@@ -4,7 +4,6 @@
 #include <vector>
 #include "Pixel.hpp"
 #include "PixelConverter.hpp"
-#include "typedef.hpp"
 
 class Channel: public PixelConverter{
 public:

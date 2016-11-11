@@ -40,7 +40,7 @@ Pixel<uint16_t>& Threshold::convert(Pixel<uint16_t>& pixel)const
 		return pixel = pixel.B() < threshold_ ? black : white;
 		break;
 	default:
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": invalid channel"));
 	}
 }
 
@@ -80,7 +80,7 @@ Gamma::Gamma(const std::vector<Pixel<uint16_t>::value_type>& lut, Ch ch):
 	Channel(ch), lut_(lut)
 {
 	if(lut_.size() != static_cast<std::size_t>(Pixel<uint16_t>::max + 1)){
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": too short lut"));
 	}
 }
 

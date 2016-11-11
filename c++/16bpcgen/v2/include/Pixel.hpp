@@ -14,7 +14,7 @@ public:
 		CS_RGB,
 		CS_YCBCR601,
 		CS_YCBCR709,
-		CS_HSV,
+		CS_HSV
 	};
 	Pixel(value_type r_y = 0x0, value_type g_cb = 0x0, value_type b_cr = 0x0, ColorSpace cs = CS_RGB): R_(r_y), G_(g_cb), B_(b_cr)
 	{
@@ -239,7 +239,7 @@ public:
 		const value_type minimum = std::min(std::min(R_, G_), B_);
 		const double diff = maximum - minimum;
 		if(minimum == maximum){
-			throw std::runtime_error(__func__ + std::string(": Hue undefined."));
+			throw std::runtime_error(__func__ + std::string(": hue undefined"));
 		}else if(minimum == B_){
 			return 60.0 * (static_cast<double>(G_) - R_) / max / diff +  60.0;
 		}else if(minimum == R_){

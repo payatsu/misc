@@ -11,10 +11,10 @@ public:
 
 class Luster: public PatternGenerator{
 public:
-	Luster(const Pixel<uint16_t>& pixel): pixel_(pixel){}
+	Luster(const Pixel<>& pixel): pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 };
 
 class Checker: public PatternGenerator{
@@ -54,13 +54,13 @@ public:
 
 class CrossHatch: public PatternGenerator{
 public:
-	CrossHatch(uint32_t width, uint32_t height, const Pixel<uint16_t>& pixel = white):
+	CrossHatch(uint32_t width, uint32_t height, const Pixel<>& pixel = white):
 		lattice_width_(width), lattice_height_(height), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
 	const uint32_t lattice_width_;
 	const uint32_t lattice_height_;
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 };
 
 #if 201103L <= __cplusplus
@@ -78,18 +78,18 @@ extern const unsigned char characters[][8];
 
 class Character: public PatternGenerator{
 public:
-	Character(const std::string& text, const Pixel<uint16_t>& pixel = white,
+	Character(const std::string& text, const Pixel<>& pixel = white,
 			unsigned int scale = 1, uint32_t row = 0, uint32_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 	virtual Image& generate(Image& image)const;
 private:
 	void write(Image& image, uint32_t row, uint32_t column,
-			unsigned char c, const Pixel<uint16_t>& pixel, unsigned int scale)const;
+			unsigned char c, const Pixel<>& pixel, unsigned int scale)const;
 	void write(Image& image, uint32_t row, uint32_t column,
-			const std::string& str, const Pixel<uint16_t>& pixel, unsigned int scale)const;
+			const std::string& str, const Pixel<>& pixel, unsigned int scale)const;
 private:
 	const std::string text_;
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 	const unsigned int scale_;
 	const uint32_t row_;
 	const uint32_t column_;
@@ -97,7 +97,7 @@ private:
 
 class TypeWriter: public PatternGenerator{
 public:
-	TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& pixel = white);
+	TypeWriter(const std::string& textfilename, const Pixel<>& pixel = white);
 	virtual const uint32_t& width()const{return width_;}
 	virtual const uint32_t& height()const{return height_;}
 	virtual Image& generate(Image& image)const;
@@ -106,12 +106,12 @@ private:
 	uint32_t width_;
 	uint32_t height_;
 	std::string text_;
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 };
 
 class Line: public PatternGenerator{
 public:
-	Line(uint32_t from_col, uint32_t from_row, uint32_t to_col, uint32_t to_row, const Pixel<uint16_t>& pixel = white):
+	Line(uint32_t from_col, uint32_t from_row, uint32_t to_col, uint32_t to_row, const Pixel<>& pixel = white):
 		from_col_(from_col), from_row_(from_row), to_col_(to_col), to_row_(to_row), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
@@ -119,18 +119,18 @@ private:
 	const uint32_t from_row_;
 	const uint32_t to_col_;
 	const uint32_t to_row_;
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 };
 
 class Circle: public PatternGenerator{
 public:
-	Circle(uint32_t column, uint32_t row, const Pixel<uint16_t>& pixel = white, uint32_t radius = 0, bool fill_enabled = true):
+	Circle(uint32_t column, uint32_t row, const Pixel<>& pixel = white, uint32_t radius = 0, bool fill_enabled = true):
 		column_(column), row_(row), pixel_(pixel), radius_(radius), fill_enabled_(fill_enabled){}
 	virtual Image& generate(Image& image)const;
 private:
 	const uint32_t column_;
 	const uint32_t row_;
-	const Pixel<uint16_t> pixel_;
+	const Pixel<> pixel_;
 	const uint32_t radius_;
 	const bool fill_enabled_;
 };

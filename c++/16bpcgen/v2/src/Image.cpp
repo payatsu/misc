@@ -47,7 +47,7 @@ Image::Image(const std::string& filename): head_(NULL), width_(0), height_(0)
 		read_jpeg(filename);
 #endif
 	}else{
-		throw std::runtime_error(__func__ + std::string(": not supported file format"));
+		throw std::runtime_error(__func__ + std::string(": unsupported file format: ") + filename);
 	}
 }
 
@@ -125,6 +125,12 @@ Image Image::operator<<(uint8_t shift)const
 	return result;
 }
 
+Image& Image::operator<<=(uint8_t shift)
+{
+	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
+	return *this;
+}
+
 Image Image::operator>>(uint8_t shift)const
 {
 	Image result = Image(width(), height());
@@ -132,12 +138,6 @@ Image Image::operator>>(uint8_t shift)const
 					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
 					&result[0][0], rshifter(shift));
 	return result;
-}
-
-Image& Image::operator<<=(uint8_t shift)
-{
-	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
-	return *this;
 }
 
 Image& Image::operator>>=(uint8_t shift)
@@ -149,7 +149,7 @@ Image& Image::operator>>=(uint8_t shift)
 Image Image::operator+(const Image& image)const
 {
 	if(width() != image.width()){
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": image width unmatch"));
 	}
 	Image result = Image(width(), height() + image.height());
 	std::copy(head(), head() + data_size(), result.head());
@@ -160,7 +160,7 @@ Image Image::operator+(const Image& image)const
 Image Image::operator,(const Image& image)const
 {
 	if(height() != image.height()){
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": image height unmatch"));
 	}
 	Image result = Image(width() + image.width(), height());
 	for(uint32_t h = 0; h < height(); ++h){
@@ -173,7 +173,7 @@ Image Image::operator,(const Image& image)const
 Image Image::operator&(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
 	}
 	Image result = Image(width(), height());
 	for(uint32_t i = 0; i < data_size(); ++i){
@@ -197,20 +197,10 @@ Image& Image::operator&=(const Pixel<uint16_t>& pixel)
 	return *this;
 }
 
-Image Image::operator&(uint16_t value)const
-{
-	return *this & Pixel<uint16_t>(value, value, value);
-}
-
-Image& Image::operator&=(uint16_t value)
-{
-	return *this &= Pixel<uint16_t>(value, value, value);
-}
-
 Image Image::operator|(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
-		throw std::runtime_error(__func__);
+		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
 	}
 	Image result = Image(width(), height());
 	for(uint32_t i = 0; i < data_size(); ++i){
@@ -303,7 +293,7 @@ void Image::read_tiff(const std::string& filename)
 		throw std::runtime_error(__func__);
 	}
 	if(photometric != PHOTOMETRIC_RGB){
-		std::cerr << __func__ << ": not supported photometric: " << photometric << std::endl;
+		std::cerr << __func__ << ": unsupported photometric: " << photometric << std::endl;
 	}
 
 	width_  = image_width;
@@ -332,7 +322,7 @@ void Image::read_tiff(const std::string& filename)
 	case 16:
 		break;
 	default:
-		throw std::runtime_error(__func__ +  std::string("not supported bit depth"));
+		throw std::runtime_error(__func__ +  std::string("unsupported bit depth"));
 	}
 
 	TIFFClose(image);

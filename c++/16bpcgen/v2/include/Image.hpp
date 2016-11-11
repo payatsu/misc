@@ -1,7 +1,6 @@
 #ifndef _16BPCGEN_IMAGE_HPP_
 #define _16BPCGEN_IMAGE_HPP_
 
-#include <iosfwd>
 #include "typedef.hpp"
 class ImageProcess;
 class PatternGenerator;
@@ -38,7 +37,6 @@ public:
 	Row operator[](unsigned int row)const{return Row(head_ + row*width()*pixelsize, width());}
 	Image  operator<< (const PatternGenerator& generator)const;
 	Image& operator<<=(const PatternGenerator& generator);
-	Image  operator<< (std::istream& is)const;
 	Image& operator<<=(std::istream& is);
 	Image  operator>> (const ImageProcess& process)const;
 	Image& operator>>=(const ImageProcess& process);
@@ -46,16 +44,14 @@ public:
 	Image& operator>>=(const PixelConverter& converter);
 	Image& operator>>(const std::string& filename)const{return write(filename);}
 	Image  operator<< (uint8_t shift)const;
-	Image  operator>> (uint8_t shift)const;
 	Image& operator<<=(uint8_t shift);
+	Image  operator>> (uint8_t shift)const;
 	Image& operator>>=(uint8_t shift);
 	Image  operator+(const Image& image)const;
 	Image  operator,(const Image& image)const;
 	Image  operator& (const Image& image)const;
 	Image  operator& (const Pixel<uint16_t>& pixel)const;
 	Image& operator&=(const Pixel<uint16_t>& pixel);
-	Image  operator& (uint16_t value)const;
-	Image& operator&=(uint16_t value);
 	Image  operator| (const Image& image)const;
 	Image  operator| (const Pixel<uint16_t>& pixel)const;
 	Image& operator|=(const Pixel<uint16_t>& pixel);
