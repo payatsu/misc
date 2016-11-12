@@ -1381,6 +1381,9 @@ void Character::write(Image& image, row_t row, column_t column,
 			if(characters[c][i] & char_bitmask[j]){
 				for(byte_t k = 0; k < scale; ++k){
 					for(byte_t l = 0; l < scale; ++l){
+						if(image.height() <= row + i*scale + k || image.width() <= column + j*scale + l){
+							continue;
+						}
 						image[row + i*scale + k][column + j*scale + l] = pixel;
 					}
 				}

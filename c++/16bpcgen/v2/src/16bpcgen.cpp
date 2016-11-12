@@ -6,48 +6,8 @@
 #include "PatternGenerators.hpp"
 #include "PixelConverters.hpp"
 
-void generate_builtin_patterns(column_t width, row_t height);
-void generate_self(column_t width, row_t height);
 void demo(const Image& orig);
 void demo(column_t width, row_t height);
-
-void generate_builtin_patterns(column_t width, row_t height)
-{
-	Image image(width, height);
-
-	image << ColorBar()               >> "colorbar";
-	image << Luster(white)            >> "white100";
-	image << Luster(red)              >> "red100";
-	image << Luster(green)            >> "green100";
-	image << Luster(blue)             >> "blue100";
-	image << Luster(white/2)          >> "white50";
-	image << Luster(red/2)            >> "red50";
-	image << Luster(green/2)          >> "green50";
-	image << Luster(blue/2)           >> "blue50";
-	image << Checker()                >> "checker1";
-	image << Checker(true)            >> "checker2";
-	image << StairStepH()             >> "stairstepH1";
-	image << StairStepH(1, 20, false) >> "stairstepH2";
-	image << StairStepH(1, 20, true)  >> "stairstepH3";
-	image << StairStepV()             >> "stairstepV1";
-	image << StairStepV(1, 20, false) >> "stairstepV2";
-	image << StairStepV(1, 20, true)  >> "stairstepV3";
-	image << Ramp()                   >> "ramp";
-	image << Luster(black)
-			<< CrossHatch(width/10, height/10)   >> "crosshatch";
-	image << Luster(black)
-			<< Character(" !\"#$%&'()*+,-./\n"
-						"0123456789:;<=>?@\nABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_`\n"
-						"abcdefghijklmno\npqrstuvwxyz{|}~", red, 10) >> "character";
-#if 201103L <= __cplusplus
-	image << WhiteNoise() >> "whitenoise";
-#endif
-}
-
-void generate_self(column_t width, row_t height)
-{
-	Image(width, height) << Luster(white) << TypeWriter(__FILE__, black) >> "sourcecode";
-}
 
 void demo(const Image& orig)
 {
@@ -81,15 +41,6 @@ void demo(const Image& orig)
 		(prewitt(sobel)(laplacian1)(laplacian2), Image::ORI_VERT) >> "demo.png";
 }
 
-void demo(column_t width, row_t height)
-{
-	generate_builtin_patterns(width, height);
-	generate_self(width, height);
-
-	Image orig = Image(width/4, height/5) << Ramp();
-	demo(orig);
-}
-
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
@@ -100,8 +51,6 @@ int main(int argc, char* argv[])
 	chdir("./img");
 	if(input != "-"){
 		demo(Image(input));
-	}else{
-		demo(1920, 1200);
 	}
 
 	return 0;

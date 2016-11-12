@@ -11,7 +11,6 @@ int main(void)
 	Image image(width, height);
 
 	mkdir("./img", 0755);
-	chdir("./img");
 
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
@@ -23,7 +22,7 @@ int main(void)
 			}
 		}
 	}
-	image >> "./YCbCr601.png";
+	image >> "./img/YCbCr601.png";
 
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
@@ -35,7 +34,7 @@ int main(void)
 			}
 		}
 	}
-	image >> "./YCbCr709.png";
+	image >> "./img/YCbCr709.png";
 
 	image <<= Luster(black);
 	const column_t center_column = width/2;
@@ -48,6 +47,6 @@ int main(void)
 			image[center_row + r*std::sin(theta)][center_column + r*std::cos(theta)] = p;
 		}
 	}
-	image >> "./HSV.png";
+	image >> "./img/HSV.png";
 	return 0;
 }

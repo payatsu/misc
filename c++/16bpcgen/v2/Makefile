@@ -1,6 +1,6 @@
-.PHONY: all gtags tags clean
+.PHONY: all gtags tags test clean
 
-config := Debug
+config := Release
 
 #####################
 # Directories/Files
@@ -8,7 +8,7 @@ config := Debug
 incdir := include
 
 srcdir := src
-mains  := ${addprefix ${srcdir}/, 16bpcgen.cpp colorspace.cpp}
+mains  := ${addprefix ${srcdir}/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp colorspace.cpp}
 srcs   := ${addprefix ${srcdir}/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp} ${mains}
 
 depdir := .dep
@@ -57,6 +57,14 @@ GTAGS GRTAGS GPATH:
 tags:
 	ctags ${incdir}/*.hpp ${srcdir}/*.cpp
 
+test: clean
+	${MAKE} config=Debug all
+	for b in ${bins}; do \
+		echo -n "running $${b}... "; \
+		$${b}; \
+		echo done.; \
+	done
+
 clean:
 	${RM} GTAGS GRTAGS GPATH
 	${RM} tags
@@ -77,6 +85,6 @@ ${objdir}/%.o: ${srcdir}/%.cpp
 
 ${depdir}/%.d: ${srcdir}/%.cpp
 	@mkdir -p ${dir $@}
-	${CXX} ${CPPFLAGS} ${CXXFLAGS} -MM -MT '$@ ${patsubst ${depdir}/%.d, ${objdir}/%.o, $@}' -MF $@ $<
+	${CXX} ${CXXFLAGS} ${CPPFLAGS} -MM -MT '$@ ${patsubst ${depdir}/%.d, ${objdir}/%.o, $@}' -MF $@ $<
 
 -include ${deps}
