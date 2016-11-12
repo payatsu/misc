@@ -146,30 +146,6 @@ Image& Image::operator>>=(uint8_t shift)
 	return *this;
 }
 
-Image Image::operator+(const Image& image)const
-{
-	if(width() != image.width()){
-		throw std::invalid_argument(__func__ + std::string(": image width unmatch"));
-	}
-	Image result = Image(width(), height() + image.height());
-	std::copy(head(), head() + data_size(), result.head());
-	std::copy(image.head(), image.head() + image.data_size(), result.head() + data_size());
-	return result;
-}
-
-Image Image::operator,(const Image& image)const
-{
-	if(height() != image.height()){
-		throw std::invalid_argument(__func__ + std::string(": image height unmatch"));
-	}
-	Image result = Image(width() + image.width(), height());
-	for(uint32_t h = 0; h < height(); ++h){
-		std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);
-		std::copy(image.head() + h * image.width() * pixelsize, image.head() + (h + 1) * image.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
-	}
-	return result;
-}
-
 Image Image::operator&(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
@@ -222,6 +198,25 @@ Image& Image::operator|=(const Pixel<uint16_t>& pixel)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
 	return *this;
+}
+
+Image Image::operator()(const Image& image, uint8_t orientation)const
+{
+	if(orientation & ORI_HORI && height() == image.height()){
+		Image result = Image(width() + image.width(), height());
+		for(uint32_t h = 0; h < height(); ++h){
+			std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);
+			std::copy(image.head() + h * image.width() * pixelsize, image.head() + (h + 1) * image.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
+		}
+		return result;
+	}else if(orientation & ORI_VERT && width() == image.width()){
+		Image result = Image(width(), height() + image.height());
+		std::copy(head(), head() + data_size(), result.head());
+		std::copy(image.head(), image.head() + image.data_size(), result.head() + data_size());
+		return result;
+	}else{
+		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
+	}
 }
 
 Image& Image::swap(Image& rhs)

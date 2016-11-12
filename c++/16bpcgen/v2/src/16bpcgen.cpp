@@ -75,11 +75,10 @@ void demo(const Image& orig)
 	Image laplacian1 = orig >> 12 >> Laplacian3x3();
 	Image laplacian2 = orig >> 12 >> Laplacian5x5();
 
-	((orig, r, g, b) +
-	(gray, threshold, offset, reversal) +
-	(bit6, bit5, bit4, bit3) +
-	(normalize, median, smoothing, unsharp) +
-	(prewitt, sobel, laplacian1, laplacian2)) >> "demo.png";
+	orig(r)(g)(b)(gray(threshold)(offset)(reversal), Image::ORI_VERT)
+		(bit6(bit5)(bit4)(bit3), Image::ORI_VERT)
+		(normalize(median)(smoothing)(unsharp), Image::ORI_VERT)
+		(prewitt(sobel)(laplacian1)(laplacian2), Image::ORI_VERT) >> "demo.png";
 }
 
 void demo(uint32_t width, uint32_t height)

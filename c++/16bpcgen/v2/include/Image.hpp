@@ -28,6 +28,11 @@ private:
 
 class Image{
 public:
+	enum Orientation{
+		ORI_HORI = 0x01,
+		ORI_VERT = 0x02,
+		ORI_AUTO = 0xff
+	};
 	Image(const uint32_t& width, const uint32_t& height):
 		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
 	Image(const std::string& filename);
@@ -47,14 +52,13 @@ public:
 	Image& operator<<=(uint8_t shift);
 	Image  operator>> (uint8_t shift)const;
 	Image& operator>>=(uint8_t shift);
-	Image  operator+(const Image& image)const;
-	Image  operator,(const Image& image)const;
 	Image  operator& (const Image& image)const;
 	Image  operator& (const Pixel<uint16_t>& pixel)const;
 	Image& operator&=(const Pixel<uint16_t>& pixel);
 	Image  operator| (const Image& image)const;
 	Image  operator| (const Pixel<uint16_t>& pixel)const;
 	Image& operator|=(const Pixel<uint16_t>& pixel);
+	Image  operator()(const Image& image, uint8_t orientation = ORI_AUTO)const;
 	Image& write(const std::string& filename)const;
 	uint8_t* head()const{return head_;}
 	uint8_t* tail()const{return head_ + data_size();}
