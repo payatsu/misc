@@ -1,11 +1,11 @@
 #include "Pixel.hpp"
 
 template<>
-const Pixel<uint8_t>::value_type Pixel<uint8_t>::max = 0xff;
+const Pixel<uint8_t>::value_type Pixel<uint8_t>::max = 0xffu;
 template<>
-const Pixel<uint16_t>::value_type Pixel<uint16_t>::max = 0xffff;
+const Pixel<uint16_t>::value_type Pixel<uint16_t>::max = 0xffffu;
 template<>
-const Pixel<double>::value_type Pixel<double>::max = 0xffff;
+const Pixel<double>::value_type Pixel<double>::max = 0xffffu;
 
 const Pixel<> black  (0x0,          0x0,          0x0);
 const Pixel<> white  (Pixel<>::max, Pixel<>::max, Pixel<>::max);

@@ -1,29 +1,28 @@
 #ifndef _16BPCGEN_IMAGE_HPP_
 #define _16BPCGEN_IMAGE_HPP_
 
-#include "typedef.hpp"
+#include "Pixel.hpp"
 class ImageProcess;
 class PatternGenerator;
-template <typename T> class Pixel;
 class PixelConverter;
 
-extern const int bitdepth;
+extern const byte_t bitdepth;
 #ifdef ENABLE_PNG
 extern const int colortype;
 #endif
-extern const unsigned int pixelsize;
+extern const byte_t pixelsize;
 
 class Row{
 public:
-	Row(uint8_t* row, const uint32_t& width): row_(row), width_(width){}
-	const uint32_t& width()const{return width_;}
-	Pixel<uint16_t>& operator[](unsigned int column)const{return *reinterpret_cast<Pixel<uint16_t>*>(const_cast<uint8_t*>(row_) + column*pixelsize);}
+	Row(byte_t* row, const column_t& width): row_(row), width_(width){}
+	const column_t& width()const{return width_;}
+	Pixel<>& operator[](column_t column)const{return *reinterpret_cast<Pixel<>*>(const_cast<byte_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
 	bool operator!=(const Row& rhs)const{return this->row_ != rhs.row_;}
 	static void fill(Row first, Row last, const Row& row);
 private:
-	const uint8_t* row_;
-	const uint32_t& width_;
+	const byte_t* row_;
+	const column_t& width_;
 };
 
 class Image{
@@ -33,13 +32,13 @@ public:
 		ORI_VERT = 0x02,
 		ORI_AUTO = 0xff
 	};
-	Image(const uint32_t& width, const uint32_t& height):
-		head_(new uint8_t[height*width*pixelsize]), width_(width), height_(height){}
+	Image(const column_t& width, const row_t& height):
+		head_(new byte_t[height*width*pixelsize]), width_(width), height_(height){}
 	Image(const std::string& filename);
 	Image(const Image& image);
 	Image& operator=(const Image& image);
 	~Image(){delete[] head_;}
-	Row operator[](unsigned int row)const{return Row(head_ + row*width()*pixelsize, width());}
+	Row operator[](row_t row)const{return Row(head_ + row*width()*pixelsize, width());}
 	Image  operator<< (const PatternGenerator& generator)const;
 	Image& operator<<=(const PatternGenerator& generator);
 	Image& operator<<=(std::istream& is);
@@ -48,56 +47,56 @@ public:
 	Image  operator>> (const PixelConverter& converter)const;
 	Image& operator>>=(const PixelConverter& converter);
 	Image& operator>>(const std::string& filename)const{return write(filename);}
-	Image  operator<< (uint8_t shift)const;
-	Image& operator<<=(uint8_t shift);
-	Image  operator>> (uint8_t shift)const;
-	Image& operator>>=(uint8_t shift);
+	Image  operator<< (byte_t shift)const;
+	Image& operator<<=(byte_t shift);
+	Image  operator>> (byte_t shift)const;
+	Image& operator>>=(byte_t shift);
 	Image  operator& (const Image& image)const;
-	Image  operator& (const Pixel<uint16_t>& pixel)const;
-	Image& operator&=(const Pixel<uint16_t>& pixel);
+	Image  operator& (const Pixel<>& pixel)const;
+	Image& operator&=(const Pixel<>& pixel);
 	Image  operator| (const Image& image)const;
-	Image  operator| (const Pixel<uint16_t>& pixel)const;
-	Image& operator|=(const Pixel<uint16_t>& pixel);
-	Image  operator()(const Image& image, uint8_t orientation = ORI_AUTO)const;
+	Image  operator| (const Pixel<>& pixel)const;
+	Image& operator|=(const Pixel<>& pixel);
+	Image  operator()(const Image& image, byte_t orientation = ORI_AUTO)const;
 	Image& write(const std::string& filename)const;
-	uint8_t* head()const{return head_;}
-	uint8_t* tail()const{return head_ + data_size();}
-	const uint32_t& width()const{return width_;}
-	const uint32_t& height()const{return height_;}
-	uint32_t data_size()const{return height_*width_*pixelsize;}
+	byte_t* head()const{return head_;}
+	byte_t* tail()const{return head_ + data_size();}
+	const column_t& width()const{return width_;}
+	const row_t& height()const{return height_;}
+	std::size_t data_size()const{return height_*width_*pixelsize;}
 	Image& swap(Image& rhs);
 private:
 	class lshifter{
 	public:
-		lshifter(uint8_t shift): shift_(shift){}
-		void            operator()(      Pixel<uint16_t>& pixel)const;
-		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+		lshifter(byte_t shift): shift_(shift){}
+		void    operator()(      Pixel<>& pixel)const;
+		Pixel<> operator()(const Pixel<>& pixel)const;
 	private:
-		uint8_t shift_;
+		byte_t shift_;
 	};
 	class rshifter{
 	public:
-		rshifter(uint8_t shift): shift_(shift){}
-		void            operator()(      Pixel<uint16_t>& pixel)const;
-		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+		rshifter(byte_t shift): shift_(shift){}
+		void    operator()(      Pixel<>& pixel)const;
+		Pixel<> operator()(const Pixel<>& pixel)const;
 	private:
-		uint8_t shift_;
+		byte_t shift_;
 	};
 	class bit_and{
 	public:
-		bit_and(const Pixel<uint16_t>& pixel): pixel_(pixel){}
-		void            operator()(      Pixel<uint16_t>& pixel)const;
-		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+		bit_and(const Pixel<>& pixel): pixel_(pixel){}
+		void    operator()(      Pixel<>& pixel)const;
+		Pixel<> operator()(const Pixel<>& pixel)const;
 	private:
-		const Pixel<uint16_t>& pixel_;
+		const Pixel<>& pixel_;
 	};
 	class bit_or{
 	public:
-		bit_or(const Pixel<uint16_t>& pixel): pixel_(pixel){}
-		void            operator()(      Pixel<uint16_t>& pixel)const;
-		Pixel<uint16_t> operator()(const Pixel<uint16_t>& pixel)const;
+		bit_or(const Pixel<>& pixel): pixel_(pixel){}
+		void    operator()(      Pixel<>& pixel)const;
+		Pixel<> operator()(const Pixel<>& pixel)const;
 	private:
-		const Pixel<uint16_t>& pixel_;
+		const Pixel<>& pixel_;
 	};
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);
@@ -110,9 +109,9 @@ private:
 #ifdef ENABLE_JPEG
 	void read_jpeg(const std::string& filename);
 #endif
-	uint8_t* head_;
-	uint32_t width_;
-	uint32_t height_;
+	byte_t * head_;
+	column_t width_;
+	row_t height_;
 };
 
 bool have_ext(const std::string& filename, const std::string& ext);

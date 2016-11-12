@@ -19,15 +19,15 @@ Image& Tone::process(Image& image)const
 		throw std::range_error(__func__ + std::string(": invalid area specification"));
 	}
 
-	const uint32_t limit_w =
+	const column_t limit_w =
 		area_.width_  == 0 && area_.offset_x_ == 0
 						? image.width()  : area_.offset_x_ + area_.width_;
-	const uint32_t limit_h =
+	const row_t    limit_h =
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? image.height() : area_.offset_y_ + area_.height_;
 
-	for(uint32_t h = area_.offset_y_; h < limit_h; ++h){
-		for(uint32_t w = area_.offset_x_; w < limit_w; ++w){
+	for(row_t h = area_.offset_y_; h < limit_h; ++h){
+		for(column_t w = area_.offset_x_; w < limit_w; ++w){
 			converter_.convert(image[h][w]);
 		}
 	}
@@ -40,20 +40,20 @@ Image& Normalize::process(Image& image)const
 		throw std::range_error(__func__ + std::string(": invalid area specification"));
 	}
 
-	const uint32_t limit_w =
+	const column_t limit_w =
 		area_.width_  == 0 && area_.offset_x_ == 0
 						? image.width()  : area_.offset_x_ + area_.width_;
-	const uint32_t limit_h =
+	const row_t    limit_h =
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? image.height() : area_.offset_y_ + area_.height_;
 
-	const Pixel<uint16_t>::value_type max = *std::max_element(
-		reinterpret_cast<Pixel<uint16_t>::value_type*>(&image[0][0]),
-		reinterpret_cast<Pixel<uint16_t>::value_type*>(&image[image.height()][0]));
+	const Pixel<>::value_type max = *std::max_element(
+		reinterpret_cast<Pixel<>::value_type*>(&image[0][0]),
+		reinterpret_cast<Pixel<>::value_type*>(&image[image.height()][0]));
 
-	for(uint32_t h = area_.offset_y_; h < limit_h; ++h){
-		for(uint32_t w = area_.offset_x_; w < limit_w; ++w){
-			image[h][w] = Pixel<double>(image[h][w]) / (double)max * Pixel<uint16_t>::max;
+	for(row_t h = area_.offset_y_; h < limit_h; ++h){
+		for(column_t w = area_.offset_x_; w < limit_w; ++w){
+			image[h][w] = Pixel<double>(image[h][w]) / (double)max * Pixel<>::max;
 		}
 	}
 	return image;
@@ -65,26 +65,26 @@ Image& Median::process(Image& image)const
 		throw std::range_error(__func__ + std::string(": invalid area specification"));
 	}
 
-	const uint32_t limit_w =
+	const column_t limit_w =
 		area_.width_  == 0 && area_.offset_x_ == 0
 						? image.width()  : area_.offset_x_ + area_.width_;
-	const uint32_t limit_h =
+	const row_t limit_h =
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? image.height() : area_.offset_y_ + area_.height_;
 
 	Image result = Image(image.width(), image.height());
 
-	for(uint32_t h = area_.offset_y_; h < limit_h; ++h){
-		const uint32_t h_lowerbound = h - 1 < image.height() ? h - 1 : 0 ;
-		const uint32_t h_upperbound = std::min(h + 1, image.height());
-		for(uint32_t w = area_.offset_x_; w < limit_w; ++w){
-			const uint32_t w_lowerbound = w - 1 < image.width() ? w - 1 : 0 ;
-			const uint32_t w_upperbound = std::min(w + 1, image.width());
-			std::vector<Pixel<uint16_t>::value_type> values1;
-			std::vector<Pixel<uint16_t>::value_type> values2;
-			std::vector<Pixel<uint16_t>::value_type> values3;
-			for(uint32_t i = h_lowerbound; i < h_upperbound; ++i){
-				for(uint32_t j = w_lowerbound; j < w_upperbound; ++j){
+	for(row_t h = area_.offset_y_; h < limit_h; ++h){
+		const row_t h_lowerbound = h - 1 < image.height() ? h - 1 : 0 ;
+		const row_t h_upperbound = std::min(h + 1, image.height());
+		for(column_t w = area_.offset_x_; w < limit_w; ++w){
+			const column_t w_lowerbound = w - 1 < image.width() ? w - 1 : 0 ;
+			const column_t w_upperbound = std::min(w + 1, image.width());
+			std::vector<Pixel<>::value_type> values1;
+			std::vector<Pixel<>::value_type> values2;
+			std::vector<Pixel<>::value_type> values3;
+			for(row_t i = h_lowerbound; i < h_upperbound; ++i){
+				for(column_t j = w_lowerbound; j < w_upperbound; ++j){
 					values1.push_back(image[i][j].R());
 					values2.push_back(image[i][j].G());
 					values3.push_back(image[i][j].B());
@@ -93,7 +93,7 @@ Image& Median::process(Image& image)const
 			std::sort(values1.begin(), values1.end());
 			std::sort(values2.begin(), values2.end());
 			std::sort(values3.begin(), values3.end());
-			result[h][w] = Pixel<uint16_t>(
+			result[h][w] = Pixel<>(
 					values1[values1.size()/2],
 					values2[values2.size()/2],
 					values3[values3.size()/2]);
@@ -108,11 +108,11 @@ Image& Crop::process(Image& image)const
 		throw std::range_error(__func__ + std::string(": invalid area specification"));
 	}
 
-	const uint32_t limit_w = area_.offset_x_ + area_.width_;
-	const uint32_t limit_h = area_.offset_y_ + area_.height_;
+	const column_t limit_w = area_.offset_x_ + area_.width_;
+	const row_t limit_h = area_.offset_y_ + area_.height_;
 	Image result = Image(area_.width_, area_.height_);
-	for(uint32_t h = area_.offset_y_, i = 0; h < limit_h; ++h, ++i){
-		for(uint32_t w = area_.offset_x_, j = 0; w < limit_w; ++w, ++j){
+	for(row_t h = area_.offset_y_, i = 0; h < limit_h; ++h, ++i){
+		for(column_t w = area_.offset_x_, j = 0; w < limit_w; ++w, ++j){
 			result[i][j] = image[h][w];
 		}
 	}
@@ -132,19 +132,19 @@ Image& Filter::process(Image& image)const
 	}
 
 	Image result = Image(image.width(), image.height());
-	for(uint32_t h = 0; h < image.height(); ++h){
-		const uint32_t h_lowerbound =
+	for(row_t h = 0; h < image.height(); ++h){
+		const row_t h_lowerbound =
 			h - kernel_.size()/2 < image.height() ? h - kernel_.size()/2 : 0 ;
-		const uint32_t h_upperbound = std::min(
-			static_cast<uint32_t>(h + kernel_.size()/2 + 1), image.height());
-		for(uint32_t w = 0; w < image.width(); ++w){
-			const uint32_t w_lowerbound =
+		const row_t h_upperbound = std::min(
+			static_cast<row_t>(h + kernel_.size()/2 + 1), image.height());
+		for(column_t w = 0; w < image.width(); ++w){
+			const column_t w_lowerbound =
 				w - kernel_[0].size()/2 < image.width() ? w - kernel_[0].size()/2 : 0 ;
-			const uint32_t w_upperbound = std::min(
-				static_cast<uint32_t>(w + kernel_[0].size()/2 + 1), image.width());
+			const column_t w_upperbound = std::min(
+				static_cast<column_t>(w + kernel_[0].size()/2 + 1), image.width());
 			Pixel<double> pixel = black;
-			for(uint32_t hh = h_lowerbound, i = 0; hh < h_upperbound; ++hh, ++i){
-				for(uint32_t ww = w_lowerbound, j = 0; ww < w_upperbound; ++ww, ++j){
+			for(row_t hh = h_lowerbound, i = 0; hh < h_upperbound; ++hh, ++i){
+				for(column_t ww = w_lowerbound, j = 0; ww < w_upperbound; ++ww, ++j){
 					pixel = pixel + Pixel<double>(image[hh][ww]) * kernel_[i][j];
 				}
 			}
@@ -304,8 +304,8 @@ Filter::Kernel Laplacian5x5::init()
 Image& HScale::process(Image& image)const
 {
 	Image result(width_, image.height());
-	for(uint32_t h = 0; h < image.height(); ++h){
-		for(uint32_t w = 0; w < width_; ++w){
+	for(row_t h = 0; h < image.height(); ++h){
+		for(column_t w = 0; w < width_; ++w){
 			result[h][w] = image[h][w * image.width() / width_];
 		}
 	}
@@ -318,8 +318,8 @@ Image& HScale::process(Image& image)const
 Image& VScale::process(Image& image)const
 {
 	Image result(image.width(), height_);
-	for(uint32_t w = 0; w < image.width(); ++w){
-		for(uint32_t h = 0; h < height_; ++h){
+	for(column_t w = 0; w < image.width(); ++w){
+		for(row_t h = 0; h < height_; ++h){
 			result[h][w] = image[h * image.height() / height_][w];
 		}
 	}
@@ -334,57 +334,57 @@ Image& KeyStone::process(Image& image)const
 	phase2 >>= Luster(black);
 	switch(vertex_){
 	case TOP_LEFT:
-		for(uint32_t h = 0; h < image.height(); ++h){
-			const uint32_t current_offset = width_offset_*(image.height() - h)/image.height();
-			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+		for(row_t h = 0; h < image.height(); ++h){
+			const column_t current_offset = width_offset_*(image.height() - h)/image.height();
+			for(column_t w = 0; w < image.width() - current_offset; ++w){
 				phase1[h][w + current_offset] = image[h][w*image.width()/(image.width() - current_offset)];
 			}
 		}
-		for(uint32_t w = 0; w < image.width(); ++w){
-			const uint32_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
-			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+		for(column_t w = 0; w < image.width(); ++w){
+			const row_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
+			for(row_t h = 0; h < image.height() - current_offset; ++h){
 				phase2[h + current_offset][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
 			}
 		}
 		break;
 	case TOP_RIGHT:
-		for(uint32_t h = 0; h < image.height(); ++h){
-			const uint32_t current_offset = width_offset_*(image.height() - h)/image.height();
-			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+		for(row_t h = 0; h < image.height(); ++h){
+			const column_t current_offset = width_offset_*(image.height() - h)/image.height();
+			for(column_t w = 0; w < image.width() - current_offset; ++w){
 				phase1[h][w] = image[h][w*image.width()/(image.width() - current_offset)];
 			}
 		}
-		for(uint32_t w = 0; w < image.width(); ++w){
-			const uint32_t current_offset = height_offset_*w/(image.width() - width_offset_);
-			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+		for(column_t w = 0; w < image.width(); ++w){
+			const row_t current_offset = height_offset_*w/(image.width() - width_offset_);
+			for(row_t h = 0; h < image.height() - current_offset; ++h){
 				phase2[h + current_offset][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
 			}
 		}
 		break;
 	case BOTTOM_LEFT:
-		for(uint32_t h = 0; h < image.height(); ++h){
-			const uint32_t current_offset = width_offset_*h/image.height();
-			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+		for(row_t h = 0; h < image.height(); ++h){
+			const column_t current_offset = width_offset_*h/image.height();
+			for(column_t w = 0; w < image.width() - current_offset; ++w){
 				phase1[h][w + current_offset] = image[h][w*image.width()/(image.width() - current_offset)];
 			}
 		}
-		for(uint32_t w = 0; w < image.width(); ++w){
-			const uint32_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
-			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+		for(column_t w = 0; w < image.width(); ++w){
+			const row_t current_offset = height_offset_*(image.width() - w)/(image.width() - width_offset_);
+			for(row_t h = 0; h < image.height() - current_offset; ++h){
 				phase2[h][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
 			}
 		}
 		break;
 	case BOTTOM_RIGHT:
-		for(uint32_t h = 0; h < image.height(); ++h){
-			const uint32_t current_offset = width_offset_*h/image.height();
-			for(uint32_t w = 0; w < image.width() - current_offset; ++w){
+		for(row_t h = 0; h < image.height(); ++h){
+			const column_t current_offset = width_offset_*h/image.height();
+			for(column_t w = 0; w < image.width() - current_offset; ++w){
 				phase1[h][w] = image[h][w*image.width()/(image.width() - current_offset)];
 			}
 		}
-		for(uint32_t w = 0; w < image.width(); ++w){
-			const uint32_t current_offset = height_offset_*w/(image.width() - width_offset_);
-			for(uint32_t h = 0; h < image.height() - current_offset; ++h){
+		for(column_t w = 0; w < image.width(); ++w){
+			const row_t current_offset = height_offset_*w/(image.width() - width_offset_);
+			for(row_t h = 0; h < image.height() - current_offset; ++h){
 				phase2[h][w] = phase1[h*image.height()/(image.height() - current_offset)][w];
 			}
 		}

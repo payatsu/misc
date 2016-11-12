@@ -12,7 +12,7 @@ public:
 		G = 0x2,
 		B = 0x4
 	};
-	typedef uint8_t Ch;
+	typedef byte_t Ch;
 	Channel(Ch ch = R | G | B): ch_(ch){}
 	virtual Pixel<>& convert(Pixel<>& pixel)const;
 	Ch ch()const{return ch_;}

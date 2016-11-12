@@ -7,12 +7,12 @@ class PixelConverter;
 
 class Area{
 public:
-	Area(uint32_t w = 0, uint32_t h = 0, uint32_t x = 0, uint32_t y = 0):
+	Area(column_t w = 0, row_t h = 0, column_t x = 0, row_t y = 0):
 		width_(w), height_(h), offset_x_(x), offset_y_(y){}
-	const uint32_t width_;
-	const uint32_t height_;
-	const uint32_t offset_x_;
-	const uint32_t offset_y_;
+	const column_t width_;
+	const row_t height_;
+	const column_t offset_x_;
+	const row_t offset_y_;
 };
 
 class AreaSpecifier: public ImageProcess{
@@ -105,18 +105,18 @@ private:
 
 class HScale: public ImageProcess{
 public:
-	HScale(uint32_t width): width_(width){}
+	HScale(column_t width): width_(width){}
 	virtual Image& process(Image& image)const;
 private:
-	uint32_t width_;
+	column_t width_;
 };
 
 class VScale: public ImageProcess{
 public:
-	VScale(uint32_t height): height_(height){}
+	VScale(row_t height): height_(height){}
 	virtual Image& process(Image& image)const;
 private:
-	uint32_t height_;
+	row_t height_;
 };
 
 class KeyStone: public ImageProcess{
@@ -127,13 +127,13 @@ public:
 		BOTTOM_LEFT,
 		BOTTOM_RIGHT
 	};
-	KeyStone(Vertex vertex, uint32_t width_offset, uint32_t height_offset):
+	KeyStone(Vertex vertex, column_t width_offset, row_t height_offset):
 		vertex_(vertex), width_offset_(width_offset), height_offset_(height_offset){}
 	virtual Image& process(Image& image)const;
 private:
 	Vertex vertex_;
-	uint32_t width_offset_;
-	uint32_t height_offset_;
+	column_t width_offset_;
+	row_t height_offset_;
 };
 
 #endif

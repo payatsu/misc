@@ -187,28 +187,28 @@ public:
 		B_ /= rhs.B_;
 		return *this;
 	}
-	Pixel operator<<(uint8_t rhs)const
+	Pixel operator<<(byte_t rhs)const
 	{
 		return Pixel(
 			static_cast<value_type>(R_ << rhs),
 			static_cast<value_type>(G_ << rhs),
 			static_cast<value_type>(B_ << rhs));
 	}
-	Pixel& operator<<=(uint8_t rhs)
+	Pixel& operator<<=(byte_t rhs)
 	{
 		R_ <<= rhs;
 		G_ <<= rhs;
 		B_ <<= rhs;
 		return *this;
 	}
-	Pixel operator>>(uint8_t rhs)const
+	Pixel operator>>(byte_t rhs)const
 	{
 		return Pixel(
 			static_cast<value_type>(R_ >> rhs),
 			static_cast<value_type>(G_ >> rhs),
 			static_cast<value_type>(B_ >> rhs));
 	}
-	Pixel& operator>>=(uint8_t rhs)
+	Pixel& operator>>=(byte_t rhs)
 	{
 		R_ >>= rhs;
 		G_ >>= rhs;

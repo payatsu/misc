@@ -6,12 +6,12 @@
 #include "PatternGenerators.hpp"
 #include "PixelConverters.hpp"
 
-void generate_builtin_patterns(uint32_t width, uint32_t height);
-void generate_self(uint32_t width, uint32_t height);
+void generate_builtin_patterns(column_t width, row_t height);
+void generate_self(column_t width, row_t height);
 void demo(const Image& orig);
-void demo(uint32_t width, uint32_t height);
+void demo(column_t width, row_t height);
 
-void generate_builtin_patterns(uint32_t width, uint32_t height)
+void generate_builtin_patterns(column_t width, row_t height)
 {
 	Image image(width, height);
 
@@ -44,7 +44,7 @@ void generate_builtin_patterns(uint32_t width, uint32_t height)
 #endif
 }
 
-void generate_self(uint32_t width, uint32_t height)
+void generate_self(column_t width, row_t height)
 {
 	Image(width, height) << Luster(white) << TypeWriter(__FILE__, black) >> "sourcecode";
 }
@@ -81,7 +81,7 @@ void demo(const Image& orig)
 		(prewitt(sobel)(laplacian1)(laplacian2), Image::ORI_VERT) >> "demo.png";
 }
 
-void demo(uint32_t width, uint32_t height)
+void demo(column_t width, row_t height)
 {
 	generate_builtin_patterns(width, height);
 	generate_self(width, height);

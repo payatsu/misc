@@ -4,8 +4,8 @@
 int main(int argc, char* argv[])
 {
 	Store store = getopt(argc, argv);
-	const uint32_t height = store["height"] == "" ? 1080 : atoi(store["height"].c_str());
-	const uint32_t width  = store["width"]  == "" ? 1920 : atoi(store["width"].c_str());
+	const row_t    height = store["height"] == "" ? 1080 : atoi(store["height"].c_str());
+	const column_t width  = store["width"]  == "" ? 1920 : atoi(store["width"].c_str());
 
 	if(store["builtins"] != ""){
 		generate_builtin_patterns(width, height);

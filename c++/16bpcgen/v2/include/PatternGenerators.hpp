@@ -27,23 +27,23 @@ private:
 
 class StairStepH: public PatternGenerator{
 public:
-	StairStepH(unsigned int stairs = 2, unsigned int steps = 20, bool invert = false):
+	StairStepH(byte_t stairs = 2, byte_t steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
 	virtual Image& generate(Image& image)const;
 private:
-	const unsigned int stairs_;
-	const unsigned int steps_;
+	const byte_t stairs_;
+	const byte_t steps_;
 	const bool invert_;
 };
 
 class StairStepV: public PatternGenerator{
 public:
-	StairStepV(unsigned int stairs = 2, unsigned int steps = 20, bool invert = false):
+	StairStepV(byte_t stairs = 2, byte_t steps = 20, bool invert = false):
 		stairs_(stairs), steps_(steps), invert_(invert){}
 	virtual Image& generate(Image& image)const;
 private:
-	const unsigned int stairs_;
-	const unsigned int steps_;
+	const byte_t stairs_;
+	const byte_t steps_;
 	const bool invert_;
 };
 
@@ -54,12 +54,12 @@ public:
 
 class CrossHatch: public PatternGenerator{
 public:
-	CrossHatch(uint32_t width, uint32_t height, const Pixel<>& pixel = white):
+	CrossHatch(column_t width, row_t height, const Pixel<>& pixel = white):
 		lattice_width_(width), lattice_height_(height), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
-	const uint32_t lattice_width_;
-	const uint32_t lattice_height_;
+	const column_t lattice_width_;
+	const row_t lattice_height_;
 	const Pixel<> pixel_;
 };
 
@@ -70,68 +70,69 @@ public:
 };
 #endif
 
-extern const unsigned char char_width;
-extern const unsigned char char_height;
-extern const unsigned char char_tab_width;
-extern const unsigned char char_bitmask[];
-extern const unsigned char characters[][8];
+extern const byte_t char_width;
+extern const byte_t char_height;
+extern const byte_t char_tab_width;
+extern const byte_t char_bitmask[];
+extern const byte_t characters[][8];
 
 class Character: public PatternGenerator{
 public:
 	Character(const std::string& text, const Pixel<>& pixel = white,
-			unsigned int scale = 1, uint32_t row = 0, uint32_t column = 0):
+			byte_t scale = 1, row_t row = 0, column_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 	virtual Image& generate(Image& image)const;
 private:
-	void write(Image& image, uint32_t row, uint32_t column,
-			unsigned char c, const Pixel<>& pixel, unsigned int scale)const;
-	void write(Image& image, uint32_t row, uint32_t column,
-			const std::string& str, const Pixel<>& pixel, unsigned int scale)const;
+	void write(Image& image, row_t row, column_t column,
+			unsigned char c, const Pixel<>& pixel, byte_t scale)const;
+	void write(Image& image, row_t row, column_t column,
+			const std::string& str, const Pixel<>& pixel, byte_t scale)const;
 private:
 	const std::string text_;
 	const Pixel<> pixel_;
-	const unsigned int scale_;
-	const uint32_t row_;
-	const uint32_t column_;
+	const byte_t scale_;
+	const row_t row_;
+	const column_t column_;
 };
 
 class TypeWriter: public PatternGenerator{
 public:
 	TypeWriter(const std::string& textfilename, const Pixel<>& pixel = white);
-	virtual const uint32_t& width()const{return width_;}
-	virtual const uint32_t& height()const{return height_;}
+	virtual const column_t& width()const{return width_;}
+	virtual const row_t& height()const{return height_;}
 	virtual Image& generate(Image& image)const;
 private:
-	static bool is_tab(char c){return c == '\t';}
-	uint32_t width_;
-	uint32_t height_;
+	static bool is_tab(unsigned char c){return c == '\t';}
+	column_t width_;
+	row_t height_;
 	std::string text_;
 	const Pixel<> pixel_;
 };
 
 class Line: public PatternGenerator{
 public:
-	Line(uint32_t from_col, uint32_t from_row, uint32_t to_col, uint32_t to_row, const Pixel<>& pixel = white):
+	Line(column_t from_col, row_t from_row, column_t to_col, row_t to_row, const Pixel<>& pixel = white):
 		from_col_(from_col), from_row_(from_row), to_col_(to_col), to_row_(to_row), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
-	const uint32_t from_col_;
-	const uint32_t from_row_;
-	const uint32_t to_col_;
-	const uint32_t to_row_;
+	const column_t from_col_;
+	const row_t from_row_;
+	const column_t to_col_;
+	const row_t to_row_;
 	const Pixel<> pixel_;
 };
 
 class Circle: public PatternGenerator{
 public:
-	Circle(uint32_t column, uint32_t row, const Pixel<>& pixel = white, uint32_t radius = 0, bool fill_enabled = true):
+	typedef column_t radius_t;
+	Circle(column_t column, row_t row, const Pixel<>& pixel = white, radius_t radius = 0, bool fill_enabled = true):
 		column_(column), row_(row), pixel_(pixel), radius_(radius), fill_enabled_(fill_enabled){}
 	virtual Image& generate(Image& image)const;
 private:
-	const uint32_t column_;
-	const uint32_t row_;
+	const column_t column_;
+	const row_t row_;
 	const Pixel<> pixel_;
-	const uint32_t radius_;
+	const radius_t radius_;
 	const bool fill_enabled_;
 };
 

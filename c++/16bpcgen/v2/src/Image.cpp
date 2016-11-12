@@ -16,13 +16,12 @@
 #include "Image.hpp"
 #include "ImageProcesses.hpp"
 #include "PatternGenerator.hpp"
-#include "Pixel.hpp"
 
-const int bitdepth  = 16;
+const byte_t bitdepth  = 16;
 #ifdef ENABLE_PNG
 const int colortype = PNG_COLOR_TYPE_RGB;
 #endif
-const unsigned int pixelsize = 6;
+const byte_t pixelsize = 6;
 
 void Row::fill(Row first, Row last, const Row& row)
 {
@@ -52,7 +51,7 @@ Image::Image(const std::string& filename): head_(NULL), width_(0), height_(0)
 }
 
 Image::Image(const Image& image):
-	head_(new uint8_t[image.data_size()]), width_(image.width_), height_(image.height_)
+	head_(new byte_t[image.data_size()]), width_(image.width_), height_(image.height_)
 {
 	std::copy(image.head(), image.tail(), head());
 }
@@ -65,7 +64,7 @@ Image& Image::operator=(const Image& image)
 	delete[] head_;
 	width_  = image.width();
 	height_ = image.height();
-	head_   = new uint8_t[data_size()];
+	head_   = new byte_t[data_size()];
 	std::copy(image.head(), image.tail(), head());
 	return *this;
 }
@@ -83,8 +82,8 @@ Image& Image::operator<<=(const PatternGenerator& generator)
 
 Image& Image::operator<<=(std::istream& is)
 {
-	const uint32_t size = data_size();
-	for(uint32_t i = 0; i < size; ++i){
+	const std::size_t size = data_size();
+	for(std::size_t i = 0; i < size; ++i){
 		int c = is.get();
 		if(is.eof()){
 			break;
@@ -116,31 +115,31 @@ Image& Image::operator>>=(const PixelConverter& converter)
 	return Tone(converter).process(*this);
 }
 
-Image Image::operator<<(uint8_t shift)const
+Image Image::operator<<(byte_t shift)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
-					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
+					const_cast<const Pixel<>*>(&(*this)[height()][0]),
 					&result[0][0], lshifter(shift));
 	return result;
 }
 
-Image& Image::operator<<=(uint8_t shift)
+Image& Image::operator<<=(byte_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], lshifter(shift));
 	return *this;
 }
 
-Image Image::operator>>(uint8_t shift)const
+Image Image::operator>>(byte_t shift)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
-					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
+					const_cast<const Pixel<>*>(&(*this)[height()][0]),
 					&result[0][0], rshifter(shift));
 	return result;
 }
 
-Image& Image::operator>>=(uint8_t shift)
+Image& Image::operator>>=(byte_t shift)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], rshifter(shift));
 	return *this;
@@ -152,22 +151,22 @@ Image Image::operator&(const Image& image)const
 		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
 	}
 	Image result = Image(width(), height());
-	for(uint32_t i = 0; i < data_size(); ++i){
+	for(std::size_t i = 0; i < data_size(); ++i){
 		result.head()[i] = head()[i] & image.head()[i];
 	}
 	return result;
 }
 
-Image Image::operator&(const Pixel<uint16_t>& pixel)const
+Image Image::operator&(const Pixel<>& pixel)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
-					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
+					const_cast<const Pixel<>*>(&(*this)[height()][0]),
 					&result[0][0], bit_and(pixel));
 	return result;
 }
 
-Image& Image::operator&=(const Pixel<uint16_t>& pixel)
+Image& Image::operator&=(const Pixel<>& pixel)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_and(pixel));
 	return *this;
@@ -179,32 +178,32 @@ Image Image::operator|(const Image& image)const
 		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
 	}
 	Image result = Image(width(), height());
-	for(uint32_t i = 0; i < data_size(); ++i){
+	for(std::size_t i = 0; i < data_size(); ++i){
 		result.head()[i] = head()[i] | image.head()[i];
 	}
 	return result;
 }
 
-Image Image::operator|(const Pixel<uint16_t>& pixel)const
+Image Image::operator|(const Pixel<>& pixel)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<uint16_t>*>(&(*this)[0][0]),
-					const_cast<const Pixel<uint16_t>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
+					const_cast<const Pixel<>*>(&(*this)[height()][0]),
 					&result[0][0], bit_or(pixel));
 	return result;
 }
 
-Image& Image::operator|=(const Pixel<uint16_t>& pixel)
+Image& Image::operator|=(const Pixel<>& pixel)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
 	return *this;
 }
 
-Image Image::operator()(const Image& image, uint8_t orientation)const
+Image Image::operator()(const Image& image, byte_t orientation)const
 {
 	if(orientation & ORI_HORI && height() == image.height()){
 		Image result = Image(width() + image.width(), height());
-		for(uint32_t h = 0; h < height(); ++h){
+		for(column_t h = 0; h < height(); ++h){
 			std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);
 			std::copy(image.head() + h * image.width() * pixelsize, image.head() + (h + 1) * image.width() * pixelsize, result.head() + width() * pixelsize + h * result.width() * pixelsize);
 		}
@@ -224,9 +223,9 @@ Image& Image::swap(Image& rhs)
 	if(this == &rhs){
 		return *this;
 	}
-	uint8_t* const tmp_head   = head_;
-	const uint32_t tmp_width  = width_;
-	const uint32_t tmp_height = height_;
+	byte_t* const  tmp_head   = head_;
+	const column_t tmp_width  = width_;
+	const row_t    tmp_height = height_;
 	head_   = rhs.head_;
 	width_  = rhs.width_;
 	height_ = rhs.height_;
@@ -257,14 +256,14 @@ Image& Image::write(const std::string& filename)const
 	}
 }
 
-void            Image::lshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel <<= shift_;}
-Pixel<uint16_t> Image::lshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel << shift_;}
-void            Image::rshifter::operator()(      Pixel<uint16_t>& pixel)const{pixel >>= shift_;}
-Pixel<uint16_t> Image::rshifter::operator()(const Pixel<uint16_t>& pixel)const{return pixel >> shift_;}
-void            Image::bit_and::operator()(      Pixel<uint16_t>& pixel)const{pixel &= pixel_;}
-Pixel<uint16_t> Image::bit_and::operator()(const Pixel<uint16_t>& pixel)const{return pixel & pixel_;}
-void            Image::bit_or::operator()(      Pixel<uint16_t>& pixel)const{pixel |= pixel_;}
-Pixel<uint16_t> Image::bit_or::operator()(const Pixel<uint16_t>& pixel)const{return pixel | pixel_;}
+void    Image::lshifter::operator()(      Pixel<>& pixel)const{pixel <<= shift_;}
+Pixel<> Image::lshifter::operator()(const Pixel<>& pixel)const{return pixel << shift_;}
+void    Image::rshifter::operator()(      Pixel<>& pixel)const{pixel >>= shift_;}
+Pixel<> Image::rshifter::operator()(const Pixel<>& pixel)const{return pixel >> shift_;}
+void    Image::bit_and:: operator()(      Pixel<>& pixel)const{pixel &= pixel_;}
+Pixel<> Image::bit_and:: operator()(const Pixel<>& pixel)const{return pixel & pixel_;}
+void    Image::bit_or::  operator()(      Pixel<>& pixel)const{pixel |= pixel_;}
+Pixel<> Image::bit_or::  operator()(const Pixel<>& pixel)const{return pixel | pixel_;}
 
 #ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)
@@ -293,7 +292,7 @@ void Image::read_tiff(const std::string& filename)
 
 	width_  = image_width;
 	height_ = image_length;
-	head_   = new uint8_t[data_size()];
+	head_   = new byte_t[data_size()];
 
 	const tmsize_t strip_size = TIFFStripSize(image);
 	const uint32_t num_strips = TIFFNumberOfStrips(image);
@@ -310,7 +309,7 @@ void Image::read_tiff(const std::string& filename)
 
 	switch(bits_per_sample){
 	case 8:
-		for(uint8_t *p = head_ + offset - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
+		for(byte_t *p = head_ + offset - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
 			*last = *p;
 		}
 		break;
@@ -356,9 +355,9 @@ void Image::read_png(const std::string& filename)
 		throw std::runtime_error(__func__);
 	}
 
-	const int number = 8;
-	unsigned char signature[number];
-	if(std::fread(signature, sizeof(unsigned char), number, fp) != number){
+	const byte_t number = 8;
+	byte_t signature[number];
+	if(std::fread(signature, sizeof(byte_t), number, fp) != number){
 		std::perror(__func__);
 		std::fclose(fp);
 		throw std::runtime_error(__func__);
@@ -389,14 +388,14 @@ void Image::read_png(const std::string& filename)
 				PNG_TRANSFORM_GRAY_TO_RGB |
 				PNG_TRANSFORM_EXPAND_16,
 				NULL);
-	uint8_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
+	byte_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
 
 	width_  = png_get_image_width(png_ptr, info_ptr);
 	height_ = png_get_image_height(png_ptr, info_ptr);
-	head_   = new uint8_t[data_size()];
+	head_   = new byte_t[data_size()];
 
-	for(uint32_t i = 0; i < height(); ++i){
-		std::copy(&row_ptrs[i][0], &row_ptrs[i][width()*pixelsize], reinterpret_cast<uint8_t*>(&this->operator[](i)[0]));
+	for(row_t i = 0; i < height(); ++i){
+		std::copy(&row_ptrs[i][0], &row_ptrs[i][width()*pixelsize], reinterpret_cast<byte_t*>(&this->operator[](i)[0]));
 	}
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	std::fclose(fp);
@@ -427,9 +426,9 @@ Image& Image::write_png(const std::string& filename)const
 			bitdepth, colortype, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-	uint8_t** row_ptrs = new uint8_t*[height()];
-	for(uint32_t i = 0; i < height(); ++i){
-		row_ptrs[i] = reinterpret_cast<uint8_t*>(&this->operator[](i)[0]);
+	byte_t** row_ptrs = new byte_t*[height()];
+	for(row_t i = 0; i < height(); ++i){
+		row_ptrs[i] = reinterpret_cast<byte_t*>(&this->operator[](i)[0]);
 	}
 	png_set_rows(png_ptr, info_ptr, row_ptrs);
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
@@ -462,10 +461,10 @@ void Image::read_jpeg(const std::string& filename)
 	jpeg_start_decompress(&cinfo);
 	width_  = cinfo.output_width;
 	height_ = cinfo.output_height;
-	head_   = new uint8_t[data_size()];
+	head_   = new byte_t[data_size()];
 
 	JSAMPARRAY img = new JSAMPROW[height()];
-	for(uint32_t i = 0; i < height(); ++i){
+	for(row_t i = 0; i < height(); ++i){
 		img[i] = head_ + i*width()*3;
 	}
 	while(cinfo.output_scanline < cinfo.output_height){
@@ -477,7 +476,7 @@ void Image::read_jpeg(const std::string& filename)
 	std::fclose(fp);
 	jpeg_destroy_decompress(&cinfo);
 
-	for(uint8_t *p = head_ + data_size()/2 - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
+	for(byte_t *p = head_ + data_size()/2 - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
 		*last = *p;
 	}
 }

@@ -13,9 +13,9 @@
 
 Image& ColorBar::generate(Image& image)const
 {
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
-	const uint32_t x = width*3/4;
+	const column_t width = image.width();
+	const row_t   height = image.height();
+	const column_t x = width*3/4;
 	std::fill(&image[0][0],               &image[0][width/8],         white  /100*40);
 	std::fill(&image[0][width/8],         &image[0][width/8 + x/7],   white  /100*75);
 	std::fill(&image[0][width/8 + x/7],   &image[0][width/8 + x/7*2], yellow /100*75);
@@ -25,20 +25,20 @@ Image& ColorBar::generate(Image& image)const
 	std::fill(&image[0][width/8 + x/7*5], &image[0][width/8 + x/7*6], red    /100*75);
 	std::fill(&image[0][width/8 + x/7*6], &image[0][width/8 + x],     blue   /100*75);
 	std::fill(&image[0][width/8 + x],     &image[0][width],           white  /100*40);
-	const uint32_t h1 = height*7/12;
+	const row_t h1 = height*7/12;
 	Row::fill(image[1], image[h1], image[0]);
 
 	std::fill(&image[h1][0],             &image[h1][width/8],       cyan);
 	std::fill(&image[h1][width/8],       &image[h1][width/8 + x/7], white);
 	std::fill(&image[h1][width/8 + x/7], &image[h1][width/8 + x],   white/100*75);
 	std::fill(&image[h1][width/8 + x],   &image[h1][width],         blue);
-	const uint32_t h2 = h1 + height/12;
+	const row_t h2 = h1 + height/12;
 	Row::fill(image[h1 + 1], image[h2], image[h1]);
 
 	std::fill(&image[h2][0],           &image[h2][width/8], yellow);
 	std::fill(&image[h2][width/8 + x], &image[h2][width],   red);
 	std::generate(&image[h2][width/8], &image[h2][width/8 + x], Gradator(white/x));
-	const uint32_t h3 = h2 + height/12;
+	const row_t h3 = h2 + height/12;
 	Row::fill(image[h2 + 1], image[h3], image[h2]);
 
 	std::fill(&image[h3][0],                         &image[h3][width/8],                   white/100*15);
@@ -54,10 +54,10 @@ Image& Luster::generate(Image& image)const{std::fill(&image[0][0], &image[image.
 
 Image& Checker::generate(Image& image)const
 {
-	const Pixel<uint16_t> pattern1 = invert_ ? black : white;
-	const Pixel<uint16_t> pattern2 = invert_ ? white : black;
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
+	const Pixel<> pattern1 = invert_ ? black : white;
+	const Pixel<> pattern2 = invert_ ? white : black;
+	const column_t width = image.width();
+	const row_t   height = image.height();
 	std::fill(&image[0][0],         &image[0][width/4],   pattern1);
 	std::fill(&image[0][width/4],   &image[0][width/4*2], pattern2);
 	std::fill(&image[0][width/4*2], &image[0][width/4*3], pattern1);
@@ -76,14 +76,14 @@ Image& Checker::generate(Image& image)const
 
 Image& StairStepH::generate(Image& image)const
 {
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
-	const uint32_t stair_height = height/stairs_;
-	const uint32_t step_width = width/steps_ + (width%steps_ ? 1 : 0);
+	const column_t width = image.width();
+	const row_t   height = image.height();
+	const row_t  stair_height = height/stairs_;
+	const column_t step_width = width/steps_ + (width%steps_ ? 1 : 0);
 	bool invert = invert_;
-	for(uint32_t row = 0; row < height; row += stair_height){
+	for(row_t row = 0; row < height; row += stair_height){
 		Gradator gradator(white/steps_, invert ? white : black, invert);
-		for(uint32_t column = 0; column < width; column += step_width){
+		for(column_t column = 0; column < width; column += step_width){
 			std::fill(&image[row][column], &image[row][std::min(width, column + step_width)],
 					gradator());
 		}
@@ -95,18 +95,18 @@ Image& StairStepH::generate(Image& image)const
 
 Image& StairStepV::generate(Image& image)const
 {
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
-	const uint32_t stair_width = width/stairs_;
-	const uint32_t step_height = height/steps_ + (height%steps_ ? 1 : 0);
+	const column_t width = image.width();
+	const row_t   height = image.height();
+	const column_t stair_width = width/stairs_;
+	const row_t    step_height = height/steps_ + (height%steps_ ? 1 : 0);
 	bool invert = invert_;
 	std::vector<Gradator> gradators;
-	for(unsigned int i = 0; i < stairs_; ++i){
+	for(byte_t i = 0; i < stairs_; ++i){
 		gradators.push_back(Gradator(white/steps_, invert ? white : black, invert));
 		invert = !invert;
 	}
-	for(uint32_t row = 0; row < height; row += step_height){
-		for(uint32_t column = 0; column < width; column += stair_width){
+	for(row_t row = 0; row < height; row += step_height){
+		for(column_t column = 0; column < width; column += stair_width){
 			std::fill(&image[row][column], &image[row][std::min(width, column + stair_width)],
 					gradators.at(column/stair_width)());
 		}
@@ -117,8 +117,8 @@ Image& StairStepV::generate(Image& image)const
 
 Image& Ramp::generate(Image& image)const
 {
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
+	const column_t width = image.width();
+	const row_t   height = image.height();
 	std::generate(&image[0][0],            &image[0][width],            Gradator(red    /width));
 	std::generate(&image[height/12][0],    &image[height/12][width],    Gradator(green  /width));
 	std::generate(&image[height/12*2][0],  &image[height/12*2][width],  Gradator(blue   /width));
@@ -149,34 +149,34 @@ Image& Ramp::generate(Image& image)const
 
 Image& CrossHatch::generate(Image& image)const
 {
-	const uint32_t width = image.width();
-	const uint32_t height = image.height();
-	for(uint32_t i = 0; i < height; i += lattice_height_){
+	const column_t width = image.width();
+	const row_t   height = image.height();
+	for(row_t i = 0; i < height; i += lattice_height_){
 		std::fill(&image[i][0], &image[i][width], pixel_);
 	}
 	std::fill(&image[height - 1][0], &image[height][0], pixel_);
 
-	for(uint32_t i = 0; i < width; i += lattice_width_){
-		for(uint32_t j = 0; j < height; ++j){
+	for(column_t i = 0; i < width; i += lattice_width_){
+		for(row_t j = 0; j < height; ++j){
 			image[j][i] = pixel_;
 		}
 	}
-	for(uint32_t i = 0; i < height; ++i){
+	for(row_t i = 0; i < height; ++i){
 		image[i][width - 1] = pixel_;
 	}
 
 	const double slope = static_cast<double>(height)/width;
-	for(uint32_t i = 0; i < width; ++i){
-		image[std::min(height - 1, static_cast<unsigned int>(         slope*i))][i] = pixel_;
-		image[std::min(height - 1, static_cast<unsigned int>(height - slope*i))][i] = pixel_;
+	for(column_t i = 0; i < width; ++i){
+		image[std::min(height - 1, static_cast<row_t>(         slope*i))][i] = pixel_;
+		image[std::min(height - 1, static_cast<row_t>(height - slope*i))][i] = pixel_;
 	}
 
-	const uint32_t radius = height/2;
-	const uint32_t shift_v = height/2;
-	const uint32_t shift_h = width/2;
+	const row_t radius     = height/2;
+	const row_t shift_v    = height/2;
+	const column_t shift_h = width/2;
 	for(double theta = 0; theta < 2.0*M_PI; theta += 2.0*M_PI/5000.0){
-		uint32_t row    = std::min(height - 1, static_cast<uint32_t>(shift_v + radius*std::sin(theta)));
-		uint32_t column = std::min(width  - 1, static_cast<uint32_t>(shift_h + radius*std::cos(theta)));
+		row_t    row    = std::min(height - 1, static_cast<row_t>   (shift_v + radius*std::sin(theta)));
+		column_t column = std::min(width  - 1, static_cast<column_t>(shift_h + radius*std::cos(theta)));
 		image[row][column] = pixel_;
 	}
 	return image;
@@ -186,8 +186,8 @@ Image& CrossHatch::generate(Image& image)const
 Image& WhiteNoise::generate(Image& image)const
 {
 	RandomColor random_color;
-	for(uint32_t row = 0; row < image.height(); ++row){
-		for(uint32_t column = 0; column < image.width(); ++column){
+	for(row_t row = 0; row < image.height(); ++row){
+		for(column_t column = 0; column < image.width(); ++column){
 			image[row][column] = random_color();
 		}
 	}
@@ -195,10 +195,10 @@ Image& WhiteNoise::generate(Image& image)const
 }
 #endif
 
-const unsigned char char_width  = 8; // dots
-const unsigned char char_height = 8; // dots
-const unsigned char char_tab_width = 4; // chars
-const unsigned char char_bitmask[8] = {
+const byte_t char_width  = 8; // dots
+const byte_t char_height = 8; // dots
+const byte_t char_tab_width = 4; // chars
+const byte_t char_bitmask[8] = {
 	0x80,
 	0x40,
 	0x20,
@@ -209,7 +209,7 @@ const unsigned char char_bitmask[8] = {
 	0x01
 };
 
-const unsigned char characters[][8] = {
+const byte_t characters[][8] = {
 	{ // NUL
 		0x00,
 		0x00,
@@ -1367,8 +1367,8 @@ const unsigned char characters[][8] = {
 
 Image& Character::generate(Image& image)const{write(image, row_, column_, text_, pixel_, scale_); return image;}
 
-void Character::write(Image& image, uint32_t row, uint32_t column,
-		unsigned char c, const Pixel<uint16_t>& pixel, unsigned int scale)const
+void Character::write(Image& image, row_t row, column_t column,
+		unsigned char c, const Pixel<>& pixel, byte_t scale)const
 {
 	if('~' < c || image.height() <= row || image.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
@@ -1376,11 +1376,11 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 			<< c << '(' << int(c) << ')' << std::endl;
 		return;
 	}
-	for(unsigned char i = 0; i < char_height; ++i){
-		for(unsigned char j = 0; j < char_width; ++j){
+	for(byte_t i = 0; i < char_height; ++i){
+		for(byte_t j = 0; j < char_width; ++j){
 			if(characters[c][i] & char_bitmask[j]){
-				for(unsigned int k = 0; k < scale; ++k){
-					for(unsigned int l = 0; l < scale; ++l){
+				for(byte_t k = 0; k < scale; ++k){
+					for(byte_t l = 0; l < scale; ++l){
 						image[row + i*scale + k][column + j*scale + l] = pixel;
 					}
 				}
@@ -1389,8 +1389,8 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 	}
 }
 
-void Character::write(Image& image, uint32_t row, uint32_t column,
-		const std::string& str, const Pixel<uint16_t>& pixel, unsigned int scale)const
+void Character::write(Image& image, row_t row, column_t column,
+		const std::string& str, const Pixel<>& pixel, byte_t scale)const
 {
 	for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
 		if(str[i] == '\n'){
@@ -1406,14 +1406,14 @@ void Character::write(Image& image, uint32_t row, uint32_t column,
 	}
 }
 
-TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<uint16_t>& pixel):
+TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<>& pixel):
 	width_(), height_(), text_(), pixel_(pixel)
 {
 	std::ifstream ifs(textfilename.c_str());
 	std::string line;
 	while(std::getline(ifs, line)){
 		width_ = std::max(width_,
-				static_cast<uint32_t>(line.size() +
+				static_cast<column_t>(line.size() +
 					(char_tab_width - 1)*std::count_if(line.begin(), line.end(), is_tab)));
 		text_ += line + '\n';
 		++height_;
@@ -1429,10 +1429,10 @@ Image& Line::generate(Image& image)const
 	if(image.width() <= from_col_ || image.width() <= to_col_ || image.height() <= from_row_ || image.height() <= to_row_){
 		throw std::range_error(__func__);
 	}
-	uint32_t start_col = from_col_;
-	uint32_t start_row = from_row_;
-	uint32_t end_col   = to_col_;
-	uint32_t end_row   = to_row_;
+	column_t start_col = from_col_;
+	row_t    start_row = from_row_;
+	column_t end_col   = to_col_;
+	row_t    end_row   = to_row_;
 	if(end_row < start_row){
 		std::swap(start_col, end_col);
 		std::swap(start_row, end_row);
@@ -1440,8 +1440,9 @@ Image& Line::generate(Image& image)const
 	if(start_row == end_row){
 		std::fill(&image[start_row][start_col], &image[start_row][end_col], pixel_);
 	}else{
-		const double slope = static_cast<double>(end_col - start_col)/(end_row - start_row);
-		for(uint32_t r = 0; r < end_row - start_row; ++r){
+		const row_t diff = end_row - start_row;
+		const double slope = static_cast<double>(end_col - start_col)/diff;
+		for(row_t r = 0; r < diff; ++r){
 			image[r + start_row][r*slope + start_col] = pixel_;
 		}
 	}
@@ -1455,13 +1456,13 @@ Image& Circle::generate(Image& image)const
 	}
 	image[row_][column_] = pixel_;
 	for(double theta = 0.0; theta < 2.0*M_PI; theta += 2.0*M_PI/5000.0){
-		uint32_t row    = std::min(image.height() - 1, static_cast<uint32_t>(row_    + radius_*std::sin(theta)));
-		uint32_t column = std::min(image.width()  - 1, static_cast<uint32_t>(column_ + radius_*std::cos(theta)));
+		row_t    row    = std::min(image.height() - 1, static_cast<row_t>   (row_    + radius_*std::sin(theta)));
+		column_t column = std::min(image.width()  - 1, static_cast<column_t>(column_ + radius_*std::cos(theta)));
 		image[row][column] = pixel_;
 	}
 	if(fill_enabled_){
-		for(uint32_t c = column_ - radius_; c < image.width() && c <= column_ + radius_; ++c){
-			for(uint32_t r = row_ - radius_; r < image.height() && r <= row_ + radius_; ++r){
+		for(column_t c = column_ - radius_; c < image.width() && c <= column_ + radius_; ++c){
+			for(radius_t r = row_ - radius_; r < image.height() && r <= row_ + radius_; ++r){
 				if((c - column_)*(c - column_) + (r - row_)*(r - row_) <= radius_*radius_){
 					image[r][c] = pixel_;
 				}
