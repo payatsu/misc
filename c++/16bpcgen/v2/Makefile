@@ -76,7 +76,7 @@ tags:
 test: build_test
 	for b in ${bins}; do \
 		echo -n "running $${b}... "; \
-		$${b}; \
+		LD_LIBRARY_PATH=${libdir} $${b}; \
 		echo done.; \
 		gcov -bdflmr -o ${objdir} ${srcdir}/`basename $${b}`.cpp; \
 	done
@@ -101,7 +101,6 @@ ifeq (${link}, static)
 else
 ifeq (${link}, shared)
 	${LINK.cc} --shared -o $@ $^
-else
 endif
 endif
 
