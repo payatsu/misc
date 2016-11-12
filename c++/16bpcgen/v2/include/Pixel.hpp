@@ -96,43 +96,40 @@ public:
 	}
 	template <typename U>
 	Pixel(const Pixel<U>& rhs):
-		R_(static_cast<value_type>(rhs.R())),
-		G_(static_cast<value_type>(rhs.G())),
-		B_(static_cast<value_type>(rhs.B())){}
+		R_(static_cast<value_type>(static_cast<double>(rhs.R())*max/Pixel<U>::max)),
+		G_(static_cast<value_type>(static_cast<double>(rhs.G())*max/Pixel<U>::max)),
+		B_(static_cast<value_type>(static_cast<double>(rhs.B())*max/Pixel<U>::max)){}
 	template <typename U>
 	Pixel& operator=(const Pixel<U>& rhs)
 	{
 		if(this == reinterpret_cast<const Pixel*>(&rhs)){
 			return *this;
 		}
-		R_ = static_cast<value_type>(rhs.R());
-		G_ = static_cast<value_type>(rhs.G());
-		B_ = static_cast<value_type>(rhs.B());
+		R_ = static_cast<value_type>(static_cast<double>(rhs.R())*max/Pixel<U>::max);
+		G_ = static_cast<value_type>(static_cast<double>(rhs.G())*max/Pixel<U>::max);
+		B_ = static_cast<value_type>(static_cast<double>(rhs.B())*max/Pixel<U>::max);
 		return *this;
 	}
 	template <typename U>
 	Pixel operator+(const Pixel<U>& rhs)const
 	{
-		return Pixel(
-			static_cast<value_type>(R_ + rhs.R()),
-			static_cast<value_type>(G_ + rhs.G()),
-			static_cast<value_type>(B_ + rhs.B()));
+		Pixel tmp(rhs);
+		return Pixel(R_ + tmp.R(), G_ + tmp.G(), B_ + tmp.B());
 	}
 	template <typename U>
 	Pixel operator+=(const Pixel<U>& rhs)
 	{
-		R_ += rhs.R();
-		G_ += rhs.G();
-		B_ += rhs.B();
+		Pixel tmp(rhs);
+		R_ += tmp.R();
+		G_ += tmp.G();
+		B_ += tmp.B();
 		return *this;
 	}
 	template <typename U>
 	Pixel operator-(const Pixel<U>& rhs)const
 	{
-		return Pixel(
-			static_cast<value_type>(R_ - rhs.R()),
-			static_cast<value_type>(G_ - rhs.G()),
-			static_cast<value_type>(B_ - rhs.B()));
+		Pixel tmp(rhs);
+		return Pixel(R_ - tmp.R(), G_ - tmp.G(), B_ - tmp.B());
 	}
 	Pixel operator&(const Pixel& rhs)const
 	{

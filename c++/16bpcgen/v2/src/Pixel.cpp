@@ -1,6 +1,8 @@
 #include "Pixel.hpp"
 
 template<>
+const Pixel<uint8_t>::value_type Pixel<uint8_t>::max = 0xff;
+template<>
 const Pixel<uint16_t>::value_type Pixel<uint16_t>::max = 0xffff;
 template<>
 const Pixel<double>::value_type Pixel<double>::max = 0xffff;
