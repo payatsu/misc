@@ -1,6 +1,7 @@
-.PHONY: all gtags tags test clean
+.PHONY: all gtags tags test build_test clean
 
 config := Release
+link   := static
 
 #####################
 # Directories/Files
@@ -18,7 +19,13 @@ objdir := .obj
 objs   := ${patsubst ${srcdir}/%.cpp, ${objdir}/%.o, ${srcs}}
 
 libdir := lib
-libs   := ${patsubst ${srcdir}/%.cpp, ${libdir}/lib%.a, ${firstword ${mains}}}
+ifeq (${link}, static)
+	libs := ${patsubst ${srcdir}/%.cpp, ${libdir}/lib%.a,  ${firstword ${mains}}}
+else
+ifeq (${link}, shared)
+	libs := ${patsubst ${srcdir}/%.cpp, ${libdir}/lib%.so, ${firstword ${mains}}}
+endif
+endif
 
 bindir := bin
 bins   := ${patsubst ${srcdir}/%.cpp,${bindir}/%, ${mains}}
@@ -29,16 +36,25 @@ imgdir := img
 # Flags
 ####################
 ifeq (${config}, Debug)
-CXXOPT   := -O0 -g3 -fprofile-arcs -ftest-coverage -fsanitize=address
+	CXXOPT := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
 else
 ifeq (${config}, Release)
-CXXOPT   := -O3
+	CXXOPT := -O3
+endif
+endif
+
+ifeq (${link}, static)
+	LDLIBS   := -l${patsubst ${libdir}/lib%.a,%,  ${libs}}
+else
+ifeq (${link}, shared)
+	LDLIBS   := -l${patsubst ${libdir}/lib%.so,%, ${libs}}
+	CXXFLAGS := -fPIC
 endif
 endif
 
 CXXVER   := -std=c++03
 CPPFLAGS += -I${incdir} -DENABLE_PNG -DENABLE_TIFF -DENABLE_JPEG
-CXXFLAGS += ${CXXVER} -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
+CXXFLAGS += ${CXXVER} -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
 LDFLAGS  += -L${libdir}
@@ -57,27 +73,37 @@ GTAGS GRTAGS GPATH:
 tags:
 	ctags ${incdir}/*.hpp ${srcdir}/*.cpp
 
-test: clean
-	${MAKE} config=Debug all
+test: build_test
 	for b in ${bins}; do \
 		echo -n "running $${b}... "; \
 		$${b}; \
 		echo done.; \
+		gcov -bdflmr -o ${objdir} ${srcdir}/`basename $${b}`.cpp; \
 	done
+
+build_test: clean
+	${MAKE} config=Debug all
 
 clean:
 	${RM} GTAGS GRTAGS GPATH
 	${RM} tags
-	${RM} -r ${depdir} ${objdir} ${libdir} ${bindir} ./*.gcov
+	${RM} -r ${depdir} ${objdir} ${libdir} ${bindir} ./gmon.out ./*.gcov
 	${RM} -r ${imgdir}
 
 ${bindir}/%: ${objdir}/%.o ${libs}
 	@mkdir -p ${dir $@}
-	${LINK.cc} -o $@ $< -l${patsubst ${libdir}/lib%.a,%, ${libs}} ${LDLIBS}
+	${LINK.cc} -o $@ $< ${LDLIBS}
 
 ${libs}: ${filter-out ${patsubst ${srcdir}/%.cpp, ${objdir}/%.o, ${mains}}, ${objs}}
 	@mkdir -p ${dir $@}
+ifeq (${link}, static)
 	${AR} ruv $@ $^
+else
+ifeq (${link}, shared)
+	${LINK.cc} --shared -o $@ $^
+else
+endif
+endif
 
 ${objdir}/%.o: ${srcdir}/%.cpp
 	@mkdir -p ${dir $@}
