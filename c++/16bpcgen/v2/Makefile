@@ -45,6 +45,8 @@ endif
 
 ifeq (${link}, static)
 	LDLIBS   := -l${patsubst ${libdir}/lib%.a,%,  ${libs}}
+	CXXFLAGS := --static
+	CXXOPT   := ${filter-out -fsanitize=address, ${CXXOPT}}
 else
 ifeq (${link}, shared)
 	LDLIBS   := -l${patsubst ${libdir}/lib%.so,%, ${libs}}
@@ -58,7 +60,7 @@ CXXFLAGS += ${CXXVER} -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wca
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow \
 			${CXXOPT}
 LDFLAGS  += -L${libdir}
-LDLIBS   += -ltiff -lpng -ljpeg # -lz -llzma
+LDLIBS   += -ltiff -lpng -ljpeg -lz -llzma
 
 ####################
 # Rules

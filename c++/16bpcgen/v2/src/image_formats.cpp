@@ -9,7 +9,7 @@ int main(void)
 	const column_t width  = 1920;
 	const row_t    height = 1080;
 	const std::string pngfile = "./img/PNG.png";
-	const std::string tiffile = "./img/TIF.tif";
+	const std::string tiffile = "./img/TIFF.tif";
 	Image(width, height) << Luster(white) << Character("PNG",  black, 60) >> pngfile;
 	Image(pngfile)       << Luster(white) << Character("TIFF", black, 60) >> tiffile;
 	return 0;
