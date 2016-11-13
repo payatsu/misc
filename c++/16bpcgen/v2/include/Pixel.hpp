@@ -16,7 +16,7 @@ public:
 		CS_YCBCR709,
 		CS_HSV
 	};
-	Pixel(value_type r_y = 0x0, value_type g_cb = 0x0, value_type b_cr = 0x0, ColorSpace cs = CS_RGB): R_(r_y), G_(g_cb), B_(b_cr)
+	explicit Pixel(value_type r_y = 0x0, value_type g_cb = 0x0, value_type b_cr = 0x0, ColorSpace cs = CS_RGB): R_(r_y), G_(g_cb), B_(b_cr)
 	{
 		switch(cs){
 		case CS_RGB:

@@ -14,9 +14,10 @@ extern const byte_t pixelsize;
 
 class Row{
 public:
+	typedef Pixel<> pixel_type;
 	Row(byte_t* row, const column_t& width): row_(row), width_(width){}
 	const column_t& width()const{return width_;}
-	Pixel<>& operator[](column_t column)const{return *reinterpret_cast<Pixel<>*>(const_cast<byte_t*>(row_) + column*pixelsize);}
+	pixel_type& operator[](column_t column)const{return *reinterpret_cast<pixel_type*>(const_cast<byte_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
 	bool operator!=(const Row& rhs)const{return this->row_ != rhs.row_;}
 	static void fill(Row first, Row last, const Row& row);
@@ -27,6 +28,7 @@ private:
 
 class Image{
 public:
+	typedef Row::pixel_type pixel_type;
 	enum Orientation{
 		ORI_HORI = 0x01,
 		ORI_VERT = 0x02,
@@ -52,11 +54,11 @@ public:
 	Image  operator>> (byte_t shift)const;
 	Image& operator>>=(byte_t shift);
 	Image  operator& (const Image& image)const;
-	Image  operator& (const Pixel<>& pixel)const;
-	Image& operator&=(const Pixel<>& pixel);
+	Image  operator& (const pixel_type& pixel)const;
+	Image& operator&=(const pixel_type& pixel);
 	Image  operator| (const Image& image)const;
-	Image  operator| (const Pixel<>& pixel)const;
-	Image& operator|=(const Pixel<>& pixel);
+	Image  operator| (const pixel_type& pixel)const;
+	Image& operator|=(const pixel_type& pixel);
 	Image  operator()(const Image& image, byte_t orientation = ORI_AUTO)const;
 	Image& write(const std::string& filename)const;
 	byte_t* head()const{return head_;}
@@ -69,34 +71,34 @@ private:
 	class lshifter{
 	public:
 		lshifter(byte_t shift): shift_(shift){}
-		void    operator()(      Pixel<>& pixel)const;
-		Pixel<> operator()(const Pixel<>& pixel)const;
+		void       operator()(      pixel_type& pixel)const;
+		pixel_type operator()(const pixel_type& pixel)const;
 	private:
 		byte_t shift_;
 	};
 	class rshifter{
 	public:
 		rshifter(byte_t shift): shift_(shift){}
-		void    operator()(      Pixel<>& pixel)const;
-		Pixel<> operator()(const Pixel<>& pixel)const;
+		void       operator()(      pixel_type& pixel)const;
+		pixel_type operator()(const pixel_type& pixel)const;
 	private:
 		byte_t shift_;
 	};
 	class bit_and{
 	public:
-		bit_and(const Pixel<>& pixel): pixel_(pixel){}
-		void    operator()(      Pixel<>& pixel)const;
-		Pixel<> operator()(const Pixel<>& pixel)const;
+		bit_and(const pixel_type& pixel): pixel_(pixel){}
+		void       operator()(      pixel_type& pixel)const;
+		pixel_type operator()(const pixel_type& pixel)const;
 	private:
-		const Pixel<>& pixel_;
+		const pixel_type& pixel_;
 	};
 	class bit_or{
 	public:
-		bit_or(const Pixel<>& pixel): pixel_(pixel){}
-		void    operator()(      Pixel<>& pixel)const;
-		Pixel<> operator()(const Pixel<>& pixel)const;
+		bit_or(const pixel_type& pixel): pixel_(pixel){}
+		void       operator()(      pixel_type& pixel)const;
+		pixel_type operator()(const pixel_type& pixel)const;
 	private:
-		const Pixel<>& pixel_;
+		const pixel_type& pixel_;
 	};
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);

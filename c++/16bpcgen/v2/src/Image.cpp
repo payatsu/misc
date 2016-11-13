@@ -118,8 +118,8 @@ Image& Image::operator>>=(const PixelConverter& converter)
 Image Image::operator<<(byte_t shift)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
-					const_cast<const Pixel<>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const pixel_type*>(&(*this)[0][0]),
+					const_cast<const pixel_type*>(&(*this)[height()][0]),
 					&result[0][0], lshifter(shift));
 	return result;
 }
@@ -133,8 +133,8 @@ Image& Image::operator<<=(byte_t shift)
 Image Image::operator>>(byte_t shift)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
-					const_cast<const Pixel<>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const pixel_type*>(&(*this)[0][0]),
+					const_cast<const pixel_type*>(&(*this)[height()][0]),
 					&result[0][0], rshifter(shift));
 	return result;
 }
@@ -157,16 +157,16 @@ Image Image::operator&(const Image& image)const
 	return result;
 }
 
-Image Image::operator&(const Pixel<>& pixel)const
+Image Image::operator&(const Image::pixel_type& pixel)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
-					const_cast<const Pixel<>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const pixel_type*>(&(*this)[0][0]),
+					const_cast<const pixel_type*>(&(*this)[height()][0]),
 					&result[0][0], bit_and(pixel));
 	return result;
 }
 
-Image& Image::operator&=(const Pixel<>& pixel)
+Image& Image::operator&=(const Image::pixel_type& pixel)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_and(pixel));
 	return *this;
@@ -184,16 +184,16 @@ Image Image::operator|(const Image& image)const
 	return result;
 }
 
-Image Image::operator|(const Pixel<>& pixel)const
+Image Image::operator|(const Image::pixel_type& pixel)const
 {
 	Image result = Image(width(), height());
-	std::transform(const_cast<const Pixel<>*>(&(*this)[0][0]),
-					const_cast<const Pixel<>*>(&(*this)[height()][0]),
+	std::transform(const_cast<const pixel_type*>(&(*this)[0][0]),
+					const_cast<const pixel_type*>(&(*this)[height()][0]),
 					&result[0][0], bit_or(pixel));
 	return result;
 }
 
-Image& Image::operator|=(const Pixel<>& pixel)
+Image& Image::operator|=(const Image::pixel_type& pixel)
 {
 	std::for_each(&(*this)[0][0], &(*this)[height()][0], bit_or(pixel));
 	return *this;
@@ -256,14 +256,14 @@ Image& Image::write(const std::string& filename)const
 	}
 }
 
-void    Image::lshifter::operator()(      Pixel<>& pixel)const{pixel <<= shift_;}
-Pixel<> Image::lshifter::operator()(const Pixel<>& pixel)const{return pixel << shift_;}
-void    Image::rshifter::operator()(      Pixel<>& pixel)const{pixel >>= shift_;}
-Pixel<> Image::rshifter::operator()(const Pixel<>& pixel)const{return pixel >> shift_;}
-void    Image::bit_and:: operator()(      Pixel<>& pixel)const{pixel &= pixel_;}
-Pixel<> Image::bit_and:: operator()(const Pixel<>& pixel)const{return pixel & pixel_;}
-void    Image::bit_or::  operator()(      Pixel<>& pixel)const{pixel |= pixel_;}
-Pixel<> Image::bit_or::  operator()(const Pixel<>& pixel)const{return pixel | pixel_;}
+void              Image::lshifter::operator()(      Image::pixel_type& pixel)const{pixel <<= shift_;}
+Image::pixel_type Image::lshifter::operator()(const Image::pixel_type& pixel)const{return pixel << shift_;}
+void              Image::rshifter::operator()(      Image::pixel_type& pixel)const{pixel >>= shift_;}
+Image::pixel_type Image::rshifter::operator()(const Image::pixel_type& pixel)const{return pixel >> shift_;}
+void              Image::bit_and:: operator()(      Image::pixel_type& pixel)const{pixel &= pixel_;}
+Image::pixel_type Image::bit_and:: operator()(const Image::pixel_type& pixel)const{return pixel & pixel_;}
+void              Image::bit_or::  operator()(      Image::pixel_type& pixel)const{pixel |= pixel_;}
+Image::pixel_type Image::bit_or::  operator()(const Image::pixel_type& pixel)const{return pixel | pixel_;}
 
 #ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)

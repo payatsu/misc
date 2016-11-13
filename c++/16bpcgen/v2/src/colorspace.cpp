@@ -15,7 +15,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Pixel<> p(Pixel<>::max/2, c*Pixel<>::max/width, r*Pixel<>::max/height, Pixel<>::CS_YCBCR601);
+				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR601);
 				image[height - 1 - r][c] = p;
 			}catch(const std::range_error& err){
 				image[height - 1 - r][c] = black;
@@ -27,7 +27,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Pixel<> p(Pixel<>::max/2, c*Pixel<>::max/width, r*Pixel<>::max/height, Pixel<>::CS_YCBCR709);
+				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR709);
 				image[height - 1 - r][c] = p;
 			}catch(const std::range_error& err){
 				image[height - 1 - r][c] = black;

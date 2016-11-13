@@ -2,7 +2,7 @@
 #define _16BPCGEN_PATTERN_GENERATORS_HPP_
 
 #include "PatternGenerator.hpp"
-#include "Pixel.hpp"
+#include "Image.hpp"
 
 class ColorBar: public PatternGenerator{
 public:
@@ -11,10 +11,10 @@ public:
 
 class Luster: public PatternGenerator{
 public:
-	Luster(const Pixel<>& pixel): pixel_(pixel){}
+	Luster(const Image::pixel_type& pixel): pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 };
 
 class Checker: public PatternGenerator{
@@ -54,13 +54,13 @@ public:
 
 class CrossHatch: public PatternGenerator{
 public:
-	CrossHatch(column_t width, row_t height, const Pixel<>& pixel = white):
+	CrossHatch(column_t width, row_t height, const Image::pixel_type& pixel = white):
 		lattice_width_(width), lattice_height_(height), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
 	const column_t lattice_width_;
 	const row_t lattice_height_;
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 };
 
 #if 201103L <= __cplusplus
@@ -78,18 +78,18 @@ extern const byte_t characters[][8];
 
 class Character: public PatternGenerator{
 public:
-	Character(const std::string& text, const Pixel<>& pixel = white,
+	Character(const std::string& text, const Image::pixel_type& pixel = white,
 			byte_t scale = 1, row_t row = 0, column_t column = 0):
 		text_(text), pixel_(pixel), scale_(scale), row_(row), column_(column){}
 	virtual Image& generate(Image& image)const;
 private:
 	void write(Image& image, row_t row, column_t column,
-			unsigned char c, const Pixel<>& pixel, byte_t scale)const;
+			unsigned char c, const Image::pixel_type& pixel, byte_t scale)const;
 	void write(Image& image, row_t row, column_t column,
-			const std::string& str, const Pixel<>& pixel, byte_t scale)const;
+			const std::string& str, const Image::pixel_type& pixel, byte_t scale)const;
 private:
 	const std::string text_;
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 	const byte_t scale_;
 	const row_t row_;
 	const column_t column_;
@@ -97,7 +97,7 @@ private:
 
 class TypeWriter: public PatternGenerator{
 public:
-	TypeWriter(const std::string& textfilename, const Pixel<>& pixel = white);
+	TypeWriter(const std::string& textfilename, const Image::pixel_type& pixel = white);
 	virtual const column_t& width()const{return width_;}
 	virtual const row_t& height()const{return height_;}
 	virtual Image& generate(Image& image)const;
@@ -106,12 +106,12 @@ private:
 	column_t width_;
 	row_t height_;
 	std::string text_;
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 };
 
 class Line: public PatternGenerator{
 public:
-	Line(column_t from_col, row_t from_row, column_t to_col, row_t to_row, const Pixel<>& pixel = white):
+	Line(column_t from_col, row_t from_row, column_t to_col, row_t to_row, const Image::pixel_type& pixel = white):
 		from_col_(from_col), from_row_(from_row), to_col_(to_col), to_row_(to_row), pixel_(pixel){}
 	virtual Image& generate(Image& image)const;
 private:
@@ -119,19 +119,19 @@ private:
 	const row_t from_row_;
 	const column_t to_col_;
 	const row_t to_row_;
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 };
 
 class Circle: public PatternGenerator{
 public:
 	typedef column_t radius_t;
-	Circle(column_t column, row_t row, const Pixel<>& pixel = white, radius_t radius = 0, bool fill_enabled = true):
+	Circle(column_t column, row_t row, const Image::pixel_type& pixel = white, radius_t radius = 0, bool fill_enabled = true):
 		column_(column), row_(row), pixel_(pixel), radius_(radius), fill_enabled_(fill_enabled){}
 	virtual Image& generate(Image& image)const;
 private:
 	const column_t column_;
 	const row_t row_;
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 	const radius_t radius_;
 	const bool fill_enabled_;
 };

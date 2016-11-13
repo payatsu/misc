@@ -47,13 +47,13 @@ Image& Normalize::process(Image& image)const
 		area_.height_ == 0 && area_.offset_y_ == 0
 						? image.height() : area_.offset_y_ + area_.height_;
 
-	const Pixel<>::value_type max = *std::max_element(
-		reinterpret_cast<Pixel<>::value_type*>(&image[0][0]),
-		reinterpret_cast<Pixel<>::value_type*>(&image[image.height()][0]));
+	const Image::pixel_type::value_type max = *std::max_element(
+		reinterpret_cast<Image::pixel_type::value_type*>(&image[0][0]),
+		reinterpret_cast<Image::pixel_type::value_type*>(&image[image.height()][0]));
 
 	for(row_t h = area_.offset_y_; h < limit_h; ++h){
 		for(column_t w = area_.offset_x_; w < limit_w; ++w){
-			image[h][w] = Pixel<double>(image[h][w]) / (double)max * Pixel<>::max;
+			image[h][w] = Pixel<double>(image[h][w]) / (double)max * Image::pixel_type::max;
 		}
 	}
 	return image;
@@ -80,9 +80,9 @@ Image& Median::process(Image& image)const
 		for(column_t w = area_.offset_x_; w < limit_w; ++w){
 			const column_t w_lowerbound = w - 1 < image.width() ? w - 1 : 0 ;
 			const column_t w_upperbound = std::min(w + 1, image.width());
-			std::vector<Pixel<>::value_type> values1;
-			std::vector<Pixel<>::value_type> values2;
-			std::vector<Pixel<>::value_type> values3;
+			std::vector<Image::pixel_type::value_type> values1;
+			std::vector<Image::pixel_type::value_type> values2;
+			std::vector<Image::pixel_type::value_type> values3;
 			for(row_t i = h_lowerbound; i < h_upperbound; ++i){
 				for(column_t j = w_lowerbound; j < w_upperbound; ++j){
 					values1.push_back(image[i][j].R());
@@ -93,7 +93,7 @@ Image& Median::process(Image& image)const
 			std::sort(values1.begin(), values1.end());
 			std::sort(values2.begin(), values2.end());
 			std::sort(values3.begin(), values3.end());
-			result[h][w] = Pixel<>(
+			result[h][w] = Image::pixel_type(
 					values1[values1.size()/2],
 					values2[values2.size()/2],
 					values3[values3.size()/2]);

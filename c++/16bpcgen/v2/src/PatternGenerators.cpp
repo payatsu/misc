@@ -54,8 +54,8 @@ Image& Luster::generate(Image& image)const{std::fill(&image[0][0], &image[image.
 
 Image& Checker::generate(Image& image)const
 {
-	const Pixel<> pattern1 = invert_ ? black : white;
-	const Pixel<> pattern2 = invert_ ? white : black;
+	const Image::pixel_type pattern1 = invert_ ? black : white;
+	const Image::pixel_type pattern2 = invert_ ? white : black;
 	const column_t width = image.width();
 	const row_t   height = image.height();
 	std::fill(&image[0][0],         &image[0][width/4],   pattern1);
@@ -1368,7 +1368,7 @@ const byte_t characters[][8] = {
 Image& Character::generate(Image& image)const{write(image, row_, column_, text_, pixel_, scale_); return image;}
 
 void Character::write(Image& image, row_t row, column_t column,
-		unsigned char c, const Pixel<>& pixel, byte_t scale)const
+		unsigned char c, const Image::pixel_type& pixel, byte_t scale)const
 {
 	if('~' < c || image.height() <= row || image.width() <= column){
 		std::cerr << "warning: not supported: row: " << row
@@ -1393,7 +1393,7 @@ void Character::write(Image& image, row_t row, column_t column,
 }
 
 void Character::write(Image& image, row_t row, column_t column,
-		const std::string& str, const Pixel<>& pixel, byte_t scale)const
+		const std::string& str, const Image::pixel_type& pixel, byte_t scale)const
 {
 	for(std::string::size_type i = 0, j = 0; i < str.size(); ++i){
 		if(str[i] == '\n'){
@@ -1409,7 +1409,7 @@ void Character::write(Image& image, row_t row, column_t column,
 	}
 }
 
-TypeWriter::TypeWriter(const std::string& textfilename, const Pixel<>& pixel):
+TypeWriter::TypeWriter(const std::string& textfilename, const Image::pixel_type& pixel):
 	width_(), height_(), text_(), pixel_(pixel)
 {
 	std::ifstream ifs(textfilename.c_str());

@@ -9,7 +9,7 @@ link   := static
 incdir := include
 
 srcdir := src
-mains  := ${addprefix ${srcdir}/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp colorspace.cpp}
+mains  := ${addprefix ${srcdir}/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp image_processes.cpp colorspace.cpp}
 srcs   := ${addprefix ${srcdir}/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp} ${mains}
 
 depdir := .dep

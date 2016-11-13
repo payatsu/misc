@@ -4,35 +4,35 @@
 #if 201103L <= __cplusplus
 #	include <random>
 #endif
-#include "Pixel.hpp"
+#include "Image.hpp"
 
 class Painter{
 public:
 	virtual ~Painter(){}
-	virtual Pixel<> operator()() = 0;
+	virtual Image::pixel_type operator()() = 0;
 };
 
 class UniColor: public Painter{
 public:
-	UniColor(const Pixel<>& pixel): pixel_(pixel){}
-	virtual Pixel<> operator()(){return pixel_;}
+	UniColor(const Image::pixel_type& pixel): pixel_(pixel){}
+	virtual Image::pixel_type operator()(){return pixel_;}
 private:
-	const Pixel<> pixel_;
+	const Image::pixel_type pixel_;
 };
 
 class Gradator: public Painter{
 public:
-	Gradator(const Pixel<>& step, const Pixel<>& initial = black, bool invert = false):
+	Gradator(const Image::pixel_type& step, const Image::pixel_type& initial = black, bool invert = false):
 		step_(step), state_(initial), invert_(invert){}
-	virtual Pixel<> operator()()
+	virtual Image::pixel_type operator()()
 	{
-		Pixel<> tmp = state_;
+		Image::pixel_type tmp = state_;
 		state_ = invert_ ? state_ - step_ : state_ + step_;
 		return tmp;
 	}
 private:
-	Pixel<> step_;
-	Pixel<> state_;
+	Image::pixel_type step_;
+	Image::pixel_type state_;
 	bool invert_;
 };
 
@@ -40,10 +40,10 @@ private:
 class RandomColor: public Painter{
 public:
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
-	virtual Pixel<> operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+	virtual Image::pixel_type operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 private:
 	std::mt19937 engine_;
-	std::uniform_int_distribution<Pixel<>::value_type> distribution_;
+	std::uniform_int_distribution<Image::pixel_type::value_type> distribution_;
 };
 #endif
 
