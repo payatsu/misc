@@ -15,7 +15,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR601);
+				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT601);
 				image[height - 1 - r][c] = p;
 			}catch(const std::range_error& err){
 				image[height - 1 - r][c] = black;
@@ -27,7 +27,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR709);
+				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT709);
 				image[height - 1 - r][c] = p;
 			}catch(const std::range_error& err){
 				image[height - 1 - r][c] = black;
@@ -35,6 +35,18 @@ int main(void)
 		}
 	}
 	image >> "./img/YCbCr709.png";
+
+	for(row_t r = 0; r < height; ++r){
+		for(column_t c = 0; c < width; ++c){
+			try{
+				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT2020);
+				image[height - 1 - r][c] = p;
+			}catch(const std::range_error& err){
+				image[height - 1 - r][c] = black;
+			}
+		}
+	}
+	image >> "./img/YCbCr2020.png";
 
 	image <<= Luster(black);
 	const column_t center_column = width/2;
