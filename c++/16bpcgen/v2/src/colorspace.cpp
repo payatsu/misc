@@ -47,6 +47,17 @@ int main(void)
 			image[center_row + r*std::sin(theta)][center_column + r*std::cos(theta)] = p;
 		}
 	}
-	image >> "./img/HSV.png";
+	image >> "./img/HSV1.png";
+
+	const column_t width2  = 1920u;
+	const row_t    height2 = 1080u;
+	Image image2(width2, height2);
+	for(row_t r = 0; r < height2; ++r){
+		for(column_t c = 0; c < width2; ++c){
+			Pixel<double> p(c*360.0/width2, Pixel<double>::max*(height2 - r)/height2, (height2 - r)*Pixel<double>::max/height2, Pixel<double>::CS_HSV);
+			image2[r][c] = p;
+		}
+	}
+	image2 >> "./img/HSV2.png";
 	return 0;
 }

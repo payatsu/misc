@@ -14,7 +14,8 @@ public:
 		CS_RGB,
 		CS_YCBCR601,
 		CS_YCBCR709,
-		CS_HSV
+		CS_HSV,
+		CS_XYZ
 	};
 	explicit Pixel(value_type r_y = 0x0, value_type g_cb = 0x0, value_type b_cr = 0x0, ColorSpace cs = CS_RGB): R_(r_y), G_(g_cb), B_(b_cr)
 	{
@@ -88,6 +89,12 @@ public:
 				throw std::range_error(__func__ + std::string(": range violation"));
 				break;
 			}
+			break;
+		}
+		case CS_XYZ:{
+			R_ =  0.418452000*r_y - 0.15865200*g_cb - 0.0828342*b_cr;
+			G_ = -0.091164200*r_y + 0.25242400*g_cb + 0.0157058*b_cr;
+			B_ =  0.000920718*r_y - 0.00254938*g_cb + 0.1785950*b_cr;
 			break;
 		}
 		default:
@@ -230,6 +237,12 @@ public:
 	void R(value_type r){R_ = r;}
 	void G(value_type g){G_ = g;}
 	void B(value_type b){B_ = b;}
+	value_type  Y601()const{return ( 0.2990*R_ + 0.5870*G_ + 0.1140*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type Cb601()const{return (-0.1687*R_ - 0.3312*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type Cr601()const{return ( 0.5000*R_ - 0.4186*G_ - 0.0813*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type  Y709()const{return ( 0.2126*R_ + 0.7152*G_ + 0.0722*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type Cb709()const{return (-0.1146*R_ - 0.3854*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type Cr709()const{return ( 0.5000*R_ - 0.4542*G_ - 0.0458*B_)*224.0/255.0 + 128.0*max/255.0;}
 	double H()const
 	{
 		const value_type maximum = std::max(std::max(R_, G_), B_);
@@ -250,12 +263,9 @@ public:
 		return static_cast<double>(std::max(std::max(R_, G_), B_) - std::min(std::min(R_, G_), B_))/max;
 	}
 	double V()const{return static_cast<double>(std::max(std::max(R_, G_), B_))/max;}
-	value_type  Y601()const{return ( 0.2990*R_ + 0.5870*G_ + 0.1140*B_)*219.0/255.0 +  16.0*max/255.0;}
-	value_type Cb601()const{return (-0.1687*R_ - 0.3312*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
-	value_type Cr601()const{return ( 0.5000*R_ - 0.4186*G_ - 0.0813*B_)*224.0/255.0 + 128.0*max/255.0;}
-	value_type  Y709()const{return ( 0.2126*R_ + 0.7152*G_ + 0.0722*B_)*219.0/255.0 +  16.0*max/255.0;}
-	value_type Cb709()const{return (-0.1146*R_ - 0.3854*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
-	value_type Cr709()const{return ( 0.5000*R_ - 0.4542*G_ - 0.0458*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type X()const{return 2.7689*R_ + 1.7517*G_ + 1.1302*B_;}
+	value_type Y()const{return 1.0000*R_ + 4.5907*G_ + 0.0601*B_;}
+	value_type Z()const{return 0.0000*R_ + 0.0565*G_ + 5.5943*B_;}
 private:
 	value_type R_;
 	value_type G_;
