@@ -52,14 +52,14 @@ public:
 			break;
 		}
 		case CS_YCBCR_BT2020:{
-			if(r_y  < 64.0*max/1023.0 || 940.0*max/1023.0 < r_y  ||
-			   g_cb < 64.0*max/1023.0 || 940.0*max/1023.0 < g_cb ||
-			   b_cr < 64.0*max/1023.0 || 940.0*max/1023.0 < b_cr){
+			if(r_y  < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
+			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
+			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
 				throw std::range_error(__func__ + std::string(": range violation"));
 			}
-			const double  Ytmp = (r_y  - 64.0*max/1023.0)*1023.0/876.0;
-			const double Cbtmp = (g_cb - 64.0*max/1023.0)*1023.0/876.0;
-			const double Crtmp = (b_cr - 64.0*max/1023.0)*1023.0/876.0;
+			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
+			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
+			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
 			R_ = std::min(std::max(Ytmp                + 1.4746*Crtmp, 0.0), static_cast<double>(max));
 			G_ = std::min(std::max(Ytmp - 0.1645*Cbtmp - 0.5713*Crtmp, 0.0), static_cast<double>(max));
 			B_ = std::min(std::max(Ytmp + 1.8814*Cbtmp,                0.0), static_cast<double>(max));
@@ -251,15 +251,15 @@ public:
 	void R(value_type r){R_ = r;}
 	void G(value_type g){G_ = g;}
 	void B(value_type b){B_ = b;}
-	value_type   Y601()const{return ( 0.2990*R_ + 0.5870*G_ + 0.1140*B_)*219.0/ 255.0 +  16.0*max/ 255.0;}
-	value_type  Cb601()const{return (-0.1687*R_ - 0.3312*G_ + 0.5000*B_)*224.0/ 255.0 + 128.0*max/ 255.0;}
-	value_type  Cr601()const{return ( 0.5000*R_ - 0.4186*G_ - 0.0813*B_)*224.0/ 255.0 + 128.0*max/ 255.0;}
-	value_type   Y709()const{return ( 0.2126*R_ + 0.7152*G_ + 0.0722*B_)*219.0/ 255.0 +  16.0*max/ 255.0;}
-	value_type  Cb709()const{return (-0.1146*R_ - 0.3854*G_ + 0.5000*B_)*224.0/ 255.0 + 128.0*max/ 255.0;}
-	value_type  Cr709()const{return ( 0.5000*R_ - 0.4542*G_ - 0.0458*B_)*224.0/ 255.0 + 128.0*max/ 255.0;}
-	value_type  Y2020()const{return ( 0.2627*R_ + 0.6780*G_ + 0.0593*B_)*876.0/1023.0 +  64.0*max/1023.0;}
-	value_type Cb2020()const{return (-0.1396*R_ - 0.3603*G_ + 0.5000*B_)*876.0/1023.0 +  64.0*max/1023.0;}
-	value_type Cr2020()const{return ( 0.5000*R_ - 0.4597*G_ - 0.0402*B_)*876.0/1023.0 +  64.0*max/1023.0;}
+	value_type   Y601()const{return ( 0.2990*R_ + 0.5870*G_ + 0.1140*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type  Cb601()const{return (-0.1687*R_ - 0.3312*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type  Cr601()const{return ( 0.5000*R_ - 0.4186*G_ - 0.0813*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type   Y709()const{return ( 0.2126*R_ + 0.7152*G_ + 0.0722*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type  Cb709()const{return (-0.1146*R_ - 0.3854*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type  Cr709()const{return ( 0.5000*R_ - 0.4542*G_ - 0.0458*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type  Y2020()const{return ( 0.2627*R_ + 0.6780*G_ + 0.0593*B_)*219.0/255.0 +  16.0*max/255.0;}
+	value_type Cb2020()const{return (-0.1396*R_ - 0.3603*G_ + 0.5000*B_)*224.0/255.0 + 128.0*max/255.0;}
+	value_type Cr2020()const{return ( 0.5000*R_ - 0.4597*G_ - 0.0402*B_)*224.0/255.0 + 128.0*max/255.0;}
 	double H()const
 	{
 		const value_type maximum = std::max(std::max(R_, G_), B_);
