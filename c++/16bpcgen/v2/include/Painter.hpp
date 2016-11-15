@@ -40,7 +40,7 @@ private:
 class RandomColor: public Painter{
 public:
 	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
-	virtual Image::pixel_type operator()(){return {distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
+	virtual Image::pixel_type operator()(){return Image::pixel_type{distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 private:
 	std::mt19937 engine_;
 	std::uniform_int_distribution<Image::pixel_type::value_type> distribution_;
