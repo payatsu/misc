@@ -3,6 +3,7 @@
 
 #include <iomanip>
 #include <ostream>
+#include <stdexcept>
 #include "typedef.hpp"
 
 template <typename T = uint16_t>

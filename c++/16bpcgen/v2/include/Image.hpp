@@ -15,7 +15,7 @@ extern const byte_t pixelsize;
 class Row{
 public:
 	typedef Pixel<> pixel_type;
-	Row(byte_t* row, const column_t& width): row_(row), width_(width){}
+	Row(byte_t* row, const column_t& a_width): row_(row), width_(a_width){}
 	const column_t& width()const{return width_;}
 	pixel_type& operator[](column_t column)const{return *reinterpret_cast<pixel_type*>(const_cast<byte_t*>(row_) + column*pixelsize);}
 	Row& operator++(){row_ += width()*pixelsize; return *this;}
@@ -34,8 +34,8 @@ public:
 		ORI_VERT = 0x02,
 		ORI_AUTO = 0xff
 	};
-	Image(const column_t& width, const row_t& height):
-		head_(new byte_t[height*width*pixelsize]), width_(width), height_(height){}
+	Image(const column_t& a_width, const row_t& a_height):
+		head_(new byte_t[a_height*a_width*pixelsize]), width_(a_width), height_(a_height){}
 	Image(const std::string& filename);
 	Image(const Image& image);
 	Image& operator=(const Image& image);

@@ -12,7 +12,7 @@ public:
 		B = 0x4
 	};
 	typedef byte_t Ch;
-	Channel(Ch ch = R | G | B): ch_(ch){}
+	Channel(Ch c = R | G | B): ch_(c){}
 	virtual Image::pixel_type& convert(Image::pixel_type& pixel)const;
 	Ch ch()const{return ch_;}
 private:
@@ -26,8 +26,8 @@ public:
 
 class Threshold: public Channel{
 public:
-	Threshold(Image::pixel_type::value_type threshold, Ch ch):
-		Channel(ch), threshold_(threshold){}
+	Threshold(Image::pixel_type::value_type threshold, Ch c):
+		Channel(c), threshold_(threshold){}
 	virtual Image::pixel_type& convert(Image::pixel_type& pixel)const;
 private:
 	const Image::pixel_type::value_type threshold_;
@@ -35,8 +35,8 @@ private:
 
 class Offset: public Channel{
 public:
-	Offset(Image::pixel_type::value_type offset, bool invert = false, Ch ch = R | G | B):
-		Channel(ch), offset_(offset), invert_(invert){}
+	Offset(Image::pixel_type::value_type offset, bool invert = false, Ch c = R | G | B):
+		Channel(c), offset_(offset), invert_(invert){}
 	virtual Image::pixel_type& convert(Image::pixel_type& pixel)const;
 private:
 	const Image::pixel_type::value_type offset_;
@@ -45,13 +45,13 @@ private:
 
 class Reversal: public Channel{
 public:
-	Reversal(Ch ch = R | G | B): Channel(ch){}
+	Reversal(Ch c = R | G | B): Channel(c){}
 	virtual Image::pixel_type& convert(Image::pixel_type& pixel)const;
 };
 
 class Gamma: public Channel{
 public:
-	Gamma(const std::vector<Image::pixel_type::value_type>& lut, Ch ch = R | G | B);
+	Gamma(const std::vector<Image::pixel_type::value_type>& lut, Ch c = R | G | B);
 	virtual Image::pixel_type& convert(Image::pixel_type& pixel)const;
 private:
 	std::vector<Image::pixel_type::value_type> lut_;

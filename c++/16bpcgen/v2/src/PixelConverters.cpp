@@ -76,8 +76,8 @@ Image::pixel_type& Reversal::convert(Image::pixel_type& pixel)const
 	return pixel;
 }
 
-Gamma::Gamma(const std::vector<Image::pixel_type::value_type>& lut, Ch ch):
-	Channel(ch), lut_(lut)
+Gamma::Gamma(const std::vector<Image::pixel_type::value_type>& lut, Ch c):
+	Channel(c), lut_(lut)
 {
 	if(lut_.size() != static_cast<std::size_t>(Image::pixel_type::max + 1)){
 		throw std::invalid_argument(__func__ + std::string(": too short lut"));
