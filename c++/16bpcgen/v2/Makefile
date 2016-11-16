@@ -78,7 +78,7 @@ tags:
 test: build_test
 	for b in ${bins}; do \
 		echo -n "running $${b}... "; \
-		LD_LIBRARY_PATH=${libdir} $${b}; \
+		LD_LIBRARY_PATH=${libdir}:${LD_LIBRARY_PATH} $${b}; \
 		echo done.; \
 		gcov -bdflmr -o ${objdir} ${srcdir}/`basename $${b}`.cpp; \
 	done
