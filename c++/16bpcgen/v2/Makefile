@@ -11,6 +11,7 @@ incdir := include
 srcdir := src
 mains  := ${addprefix ${srcdir}/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp image_processes.cpp colorspace.cpp}
 srcs   := ${addprefix ${srcdir}/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp} ${mains}
+assets := ${addprefix ${srcdir}/, color_matching_functions.tar.gz}
 
 depdir := .dep
 deps   := ${patsubst ${srcdir}/%.cpp, ${depdir}/%.d, ${srcs}}
@@ -105,6 +106,9 @@ ifeq (${link}, shared)
 	${LINK.cc} --shared -o $@ $^
 endif
 endif
+
+${srcdir}/%.txt: ${srcdir}/%.tar.gz
+	tar xzvf $<
 
 ${objdir}/%.o: ${srcdir}/%.cpp
 	@mkdir -p ${dir $@}
