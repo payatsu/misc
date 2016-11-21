@@ -240,10 +240,14 @@ Image& Image::write(const std::string& filename)const
 	if(have_ext(filename, ".tif")){
 #ifdef ENABLE_TIFF
 		return write_tiff(filename);
+#else
+		throw std::runtime_error(__func__ + std::string(": unsupported file format: ") + filename);
 #endif
 	}else if(have_ext(filename, ".png")){
 #ifdef ENABLE_PNG
 		return write_png(filename);
+#else
+		throw std::runtime_error(__func__ + std::string(": unsupported file format: ") + filename);
 #endif
 	}else{
 #ifdef ENABLE_TIFF
@@ -252,7 +256,11 @@ Image& Image::write(const std::string& filename)const
 #ifdef ENABLE_PNG
 		write_png(filename + ".png");
 #endif
+#if defined(ENABLE_TIFF) || defined(ENABLE_PNG)
 		return const_cast<Image&>(*this);
+#else
+		throw std::runtime_error(__func__ + std::string(": no available file format: ") + filename);
+#endif
 	}
 }
 
