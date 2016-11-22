@@ -50,8 +50,8 @@ sed -e "s%datafile_placeholder%${tmp_data}%" << 'EOF' > ${tmp_gnuplot}
 	set ticslevel 0
 	set border 4095
 	set view 60, 120
-	max(a, b) = a < b ? b : a;
-	min(a, b) = a < b ? a : b;
+	max(a, b) = a < b ? b : a
+	min(a, b) = a < b ? a : b
 	Y = 1.0
 	X(x, y) = x*Y/y
 	Z(z, y) = z*Y/y
