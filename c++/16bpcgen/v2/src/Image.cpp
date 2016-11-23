@@ -8,7 +8,7 @@
 #endif
 #ifdef ENABLE_PNG
 #define PNG_NO_SETJMP
-#include <libpng16/png.h>
+#include <png.h>
 #endif
 #ifdef ENABLE_JPEG
 #include <jpeglib.h>
@@ -218,7 +218,7 @@ Image& Image::swap(Image& rhs)
 
 Image& Image::read(const std::string& filename)
 {
-	if(has_ext(filename, ".tif")){
+	if(has_ext(filename, ".tif") || has_ext(filename, ".tiff")){
 #ifdef ENABLE_TIFF
 		read_tiff(filename);
 #else
@@ -244,7 +244,7 @@ Image& Image::read(const std::string& filename)
 
 Image& Image::write(const std::string& filename)const
 {
-	if(has_ext(filename, ".tif")){
+	if(has_ext(filename, ".tif") || has_ext(filename, ".tiff")){
 #ifdef ENABLE_TIFF
 		write_tiff(filename);
 #else
@@ -282,9 +282,9 @@ Image::pixel_type Image::bit_or::  operator()(const Image::pixel_type& pixel)con
 #ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)
 {
-	TIFF* image = TIFFOpen(filename.c_str(), "r");
-	if(!image){
-		throw std::runtime_error(__func__);
+	TIFF* tif = TIFFOpen(filename.c_str(), "r");
+	if(!tif){
+		throw std::invalid_argument(__func__);
 	}
 
 	uint16_t bits_per_sample   = 0;
@@ -292,17 +292,18 @@ void Image::read_tiff(const std::string& filename)
 	uint16_t photometric       = 0;
 	uint32_t image_length      = 0;
 	uint32_t image_width       = 0;
-	if(!TIFFGetField(image, TIFFTAG_BITSPERSAMPLE, &bits_per_sample) ||
-		!TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel) ||
-		!TIFFGetField(image, TIFFTAG_PHOTOMETRIC, &photometric) ||
-		!TIFFGetField(image, TIFFTAG_IMAGELENGTH, &image_length) ||
-		!TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &image_width)){
-		TIFFClose(image);
+	if( !TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE,   &bits_per_sample)   ||
+		!TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel) ||
+		!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC,     &photometric)       ||
+		!TIFFGetField(tif, TIFFTAG_IMAGELENGTH,     &image_length)      ||
+		!TIFFGetField(tif, TIFFTAG_IMAGEWIDTH,      &image_width)){
+		TIFFClose(tif);
 		throw std::runtime_error(__func__);
 	}
 	if(photometric != PHOTOMETRIC_RGB){
 		std::ostringstream oss;
 		oss << __func__ << ": can not read. unsupported photometric: " << std::hex << std::setw(4) << photometric;
+		TIFFClose(tif);
 		throw std::runtime_error(oss.str());
 	}
 
@@ -310,13 +311,13 @@ void Image::read_tiff(const std::string& filename)
 	height_ = image_length;
 	head_   = new byte_t[data_size()];
 
-	const tmsize_t strip_size = TIFFStripSize(image);
-	const uint32_t num_strips = TIFFNumberOfStrips(image);
+	const tmsize_t strip_size = TIFFStripSize(tif);
+	const uint32_t num_strips = TIFFNumberOfStrips(tif);
 	tmsize_t offset = 0;
 	for(uint32_t i = 0; i < num_strips; ++i){
 		tmsize_t read_result = 0;
-		if((read_result = TIFFReadEncodedStrip(image, i, head_ + offset, strip_size)) == -1){
-			TIFFClose(image);
+		if((read_result = TIFFReadEncodedStrip(tif, i, head_ + offset, strip_size)) == -1){
+			TIFFClose(tif);
 			throw std::runtime_error(__func__);
 		}
 		offset += read_result;
@@ -331,32 +332,35 @@ void Image::read_tiff(const std::string& filename)
 	case 16:
 		break;
 	default:
-		throw std::runtime_error(__func__ +  std::string("unsupported bit depth"));
+		std::ostringstream oss;
+		oss << __func__ << ": can not read. unsupported bit depth: " << bits_per_sample;
+		throw std::runtime_error(oss.str());
 	}
 
-	TIFFClose(image);
+	TIFFClose(tif);
 }
 
 Image& Image::write_tiff(const std::string& filename)const
 {
-	TIFF* image = TIFFOpen(filename.c_str(), "w");
-	if(!image){
+	TIFF* tif = TIFFOpen(filename.c_str(), "w");
+	if(!tif){
 		throw std::runtime_error(__func__);
 	}
-	TIFFSetField(image, TIFFTAG_IMAGEWIDTH, width());
-	TIFFSetField(image, TIFFTAG_IMAGELENGTH, height());
-	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, bitdepth);
-	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 3);
-	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, height());
-	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-	TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
-	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-	TIFFSetField(image, TIFFTAG_XRESOLUTION, 150.0);
-	TIFFSetField(image, TIFFTAG_YRESOLUTION, 150.0);
-	TIFFSetField(image, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFWriteEncodedStrip(image, 0, head(), data_size());
-	TIFFClose(image);
+	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width());
+	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height());
+	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bitdepth);
+	TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 3);
+	TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, height());
+	TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	TIFFSetField(tif, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
+	TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(tif, TIFFTAG_XRESOLUTION, 163.44);
+	TIFFSetField(tif, TIFFTAG_YRESOLUTION, 163.44);
+	TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
+	TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, "powered by " PROGRAM_NAME);
+	TIFFWriteEncodedStrip(tif, 0, head(), data_size());
+	TIFFClose(tif);
 	return const_cast<Image&>(*this);
 }
 #endif

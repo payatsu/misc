@@ -54,7 +54,7 @@ else ifeq ($(link), shared)
 endif
 
 cxxver   := -std=c++03
-CPPFLAGS := -I$(incdir)
+CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
 CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
 override LDFLAGS += -L$(libdir)
