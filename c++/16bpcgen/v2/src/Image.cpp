@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <cerrno>
 #include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -342,6 +345,8 @@ void Image::read_tiff(const std::string& filename)
 
 Image& Image::write_tiff(const std::string& filename)const
 {
+	char buf[20];
+	get_current_time(buf);
 	TIFF* tif = TIFFOpen(filename.c_str(), "w");
 	if(!tif){
 		throw std::runtime_error(__func__);
@@ -358,7 +363,9 @@ Image& Image::write_tiff(const std::string& filename)const
 	TIFFSetField(tif, TIFFTAG_XRESOLUTION, 163.44);
 	TIFFSetField(tif, TIFFTAG_YRESOLUTION, 163.44);
 	TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-	TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, "powered by " PROGRAM_NAME);
+	TIFFSetField(tif, TIFFTAG_SOFTWARE, PROGRAM_NAME);
+	TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, "powered by " PROGRAM_NAME ".");
+	TIFFSetField(tif, TIFFTAG_DATETIME, buf);
 	TIFFWriteEncodedStrip(tif, 0, head(), data_size());
 	TIFFClose(tif);
 	return const_cast<Image&>(*this);
@@ -500,3 +507,15 @@ void Image::read_jpeg(const std::string& filename)
 	}
 }
 #endif
+
+void get_current_time(char* buf)
+{
+	std::time_t t = std::time(NULL);
+	std::tm* tmp = NULL;
+	if(!(tmp = localtime(&t))){
+		throw std::runtime_error(__func__ + std::string(": ") + std::strerror(errno));
+	}
+	if(!std::strftime(buf, 20, "%Y:%m:%d %T", tmp)){
+		throw std::runtime_error(__func__ + std::string(": can not get current time."));
+	}
+}

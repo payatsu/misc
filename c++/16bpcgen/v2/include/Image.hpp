@@ -121,5 +121,6 @@ private:
 inline std::istream& operator>>(std::istream& is, Image& image){image <<= is; return is;}
 inline bool has_ext(const std::string& filename, const std::string& ext){const std::string::size_type idx = filename.find(ext); return !(idx == std::string::npos || idx + ext.size() != filename.size());}
 inline std::string append_ext(const std::string& filename, const std::string& ext){return has_ext(filename, ext) ? filename : filename + ext;}
+void get_current_time(char* buf);
 
 #endif
