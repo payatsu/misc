@@ -36,7 +36,7 @@ public:
 	};
 	Image(const column_t& a_width, const row_t& a_height):
 		head_(new byte_t[a_height*a_width*pixelsize]), width_(a_width), height_(a_height){}
-	Image(const std::string& filename);
+	Image(const std::string& filename): head_(NULL), width_(0), height_(0){read(filename);}
 	Image(const Image& image);
 	Image& operator=(const Image& image);
 	~Image(){delete[] head_;}
@@ -48,6 +48,7 @@ public:
 	Image& operator>>=(const ImageProcess& process);
 	Image  operator>> (const PixelConverter& converter)const;
 	Image& operator>>=(const PixelConverter& converter);
+	Image& operator<<(const std::string& filename){return read(filename);}
 	Image& operator>>(const std::string& filename)const{return write(filename);}
 	Image  operator<< (byte_t shift)const;
 	Image& operator<<=(byte_t shift);
@@ -60,6 +61,7 @@ public:
 	Image  operator| (const pixel_type& pixel)const;
 	Image& operator|=(const pixel_type& pixel);
 	Image  operator()(const Image& image, byte_t orientation = ORI_AUTO)const;
+	Image& read(const std::string& filename);
 	Image& write(const std::string& filename)const;
 	byte_t* head()const{return head_;}
 	byte_t* tail()const{return head_ + data_size();}
@@ -116,7 +118,8 @@ private:
 	row_t height_;
 };
 
-bool have_ext(const std::string& filename, const std::string& ext);
-std::string append_extension(const std::string& filename, const std::string& ext);
+inline std::istream& operator>>(std::istream& is, Image& image){image <<= is; return is;}
+inline bool has_ext(const std::string& filename, const std::string& ext){const std::string::size_type idx = filename.find(ext); return !(idx == std::string::npos || idx + ext.size() != filename.size());}
+inline std::string append_ext(const std::string& filename, const std::string& ext){return has_ext(filename, ext) ? filename : filename + ext;}
 
 #endif
