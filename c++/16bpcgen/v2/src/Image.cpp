@@ -452,6 +452,14 @@ Image& Image::write_png(const std::string& filename)const
 			bitdepth, colortype, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
+	png_text comments[3] = {};
+	construct_tEXt_chunk(comments);
+	png_set_text(png_ptr, info_ptr, comments, sizeof(comments)/sizeof(comments[0]));
+
+	png_time now;
+	png_convert_from_time_t(&now, std::time(NULL));
+	png_set_tIME(png_ptr, info_ptr, &now);
+
 	byte_t** row_ptrs = new byte_t*[height()];
 	for(row_t i = 0; i < height(); ++i){
 		row_ptrs[i] = reinterpret_cast<byte_t*>(&this->operator[](i)[0]);
@@ -463,6 +471,33 @@ Image& Image::write_png(const std::string& filename)const
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	std::fclose(fp);
 	return const_cast<Image&>(*this);
+}
+
+void Image::construct_tEXt_chunk(png_textp text_ptr)
+{
+	text_ptr[0].compression = PNG_TEXT_COMPRESSION_zTXt;
+	text_ptr[0].key         = const_cast<png_charp>("Description");
+	text_ptr[0].text        = const_cast<png_charp>("powered by " PROGRAM_NAME ".");
+	text_ptr[0].text_length = std::strlen(text_ptr[0].text);
+	text_ptr[0].itxt_length = 0;
+	text_ptr[0].lang        = NULL;
+	text_ptr[0].lang_key    = NULL;
+
+	text_ptr[1].compression = PNG_TEXT_COMPRESSION_zTXt;
+	text_ptr[1].key         = const_cast<png_charp>("Creation Time");
+	text_ptr[1].text        = const_cast<png_charp>(get_current_time_rfc1123());
+	text_ptr[1].text_length = std::strlen(text_ptr[1].text);
+	text_ptr[1].itxt_length = 0;
+	text_ptr[1].lang        = NULL;
+	text_ptr[1].lang_key    = NULL;
+
+	text_ptr[2].compression = PNG_TEXT_COMPRESSION_zTXt;
+	text_ptr[2].key         = const_cast<png_charp>("Software");
+	text_ptr[2].text        = const_cast<png_charp>(PROGRAM_NAME);
+	text_ptr[2].text_length = std::strlen(text_ptr[2].text);
+	text_ptr[2].itxt_length = 0;
+	text_ptr[2].lang        = NULL;
+	text_ptr[2].lang_key    = NULL;
 }
 #endif
 
@@ -519,3 +554,19 @@ void get_current_time(char* buf)
 		throw std::runtime_error(__func__ + std::string(": can not get current time."));
 	}
 }
+
+#ifdef ENABLE_PNG
+const char* get_current_time_rfc1123()
+{
+	static char buf[64] = {};
+	std::time_t t = std::time(NULL);
+	std::tm* tmp = NULL;
+	if(!(tmp = localtime(&t))){
+		throw std::runtime_error(__func__ + std::string(": ") + std::strerror(errno));
+	}
+	if(!std::strftime(buf, 64, "%a, %d %b %y %T %z", tmp)){
+		throw std::runtime_error(__func__ + std::string(": can not get current time."));
+	}
+	return buf;
+}
+#endif

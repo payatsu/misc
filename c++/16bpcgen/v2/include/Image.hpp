@@ -9,6 +9,7 @@ class PixelConverter;
 extern const byte_t bitdepth;
 #ifdef ENABLE_PNG
 extern const int colortype;
+struct png_text_struct;
 #endif
 extern const byte_t pixelsize;
 
@@ -109,11 +110,12 @@ private:
 #ifdef ENABLE_PNG
 	void read_png(const std::string& filename);
 	Image& write_png(const std::string& filename)const;
+	static void construct_tEXt_chunk(png_text_struct* text_ptr);
 #endif
 #ifdef ENABLE_JPEG
 	void read_jpeg(const std::string& filename);
 #endif
-	byte_t * head_;
+	byte_t* head_;
 	column_t width_;
 	row_t height_;
 };
@@ -122,5 +124,8 @@ inline std::istream& operator>>(std::istream& is, Image& image){image <<= is; re
 inline bool has_ext(const std::string& filename, const std::string& ext){const std::string::size_type idx = filename.find(ext); return !(idx == std::string::npos || idx + ext.size() != filename.size());}
 inline std::string append_ext(const std::string& filename, const std::string& ext){return has_ext(filename, ext) ? filename : filename + ext;}
 void get_current_time(char* buf);
+#ifdef ENABLE_PNG
+const char* get_current_time_rfc1123();
+#endif
 
 #endif
