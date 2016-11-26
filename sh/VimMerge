@@ -10,6 +10,7 @@ case ${parent_process} in
 svn)
 	target1=`readlink -m $6`
 	target2=`readlink -m $7`
+	sleep=1
 	;;
 git)
 	target1=`readlink -m $2`
