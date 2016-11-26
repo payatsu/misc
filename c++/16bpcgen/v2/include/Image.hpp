@@ -1,12 +1,16 @@
 #ifndef _16BPCGEN_IMAGE_HPP_
 #define _16BPCGEN_IMAGE_HPP_
 
+#include <cstdarg>
 #include "Pixel.hpp"
 class ImageProcess;
 class PatternGenerator;
 class PixelConverter;
 
 extern const byte_t bitdepth;
+#ifdef ENABLE_TIFF
+struct tiff;
+#endif
 #ifdef ENABLE_PNG
 extern const int colortype;
 struct png_text_struct;
@@ -103,6 +107,19 @@ private:
 	private:
 		const pixel_type& pixel_;
 	};
+#ifdef ENABLE_TIFF
+	class Tiff{
+	public:
+		Tiff(const std::string& filename, const char* mode);
+		~Tiff();
+		operator tiff*(){return tif_;}
+		static void error(const char* module, const char* fmt, std::va_list ap);
+	private:
+		Tiff(const Tiff&);
+		Tiff& operator=(const Tiff&);
+		tiff* tif_;
+	};
+#endif
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);
 	Image& write_tiff(const std::string& filename)const;

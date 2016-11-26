@@ -132,7 +132,7 @@ Image& Image::operator>>=(byte_t shift)
 Image Image::operator&(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
-		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply bit and. image width/height unmatch."));
 	}
 	Image result = Image(width(), height());
 	for(std::size_t i = 0; i < data_size(); ++i){
@@ -159,7 +159,7 @@ Image& Image::operator&=(const Image::pixel_type& pixel)
 Image Image::operator|(const Image& image)const
 {
 	if(width() != image.width() || height() != image.height()){
-		throw std::invalid_argument(__func__ + std::string(": image width/height unmatch"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply bit or. image width/height unmatch."));
 	}
 	Image result = Image(width(), height());
 	for(std::size_t i = 0; i < data_size(); ++i){
@@ -198,7 +198,7 @@ Image Image::operator()(const Image& image, byte_t orientation)const
 		std::copy(image.head(), image.head() + image.data_size(), result.head() + data_size());
 		return result;
 	}else{
-		throw std::invalid_argument(__func__ + std::string(": can not join. image width/height unmatch"));
+		throw std::invalid_argument(__func__ + std::string(": can not join images. image width/height unmatch."));
 	}
 }
 
@@ -225,22 +225,22 @@ Image& Image::read(const std::string& filename)
 #ifdef ENABLE_TIFF
 		read_tiff(filename);
 #else
-		throw std::runtime_error(__func__ + std::string(": can not read. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not read. unsupported file format: ") + filename);
 #endif
 	}else if(has_ext(filename, ".png")){
 #ifdef ENABLE_PNG
 		read_png(filename);
 #else
-		throw std::runtime_error(__func__ + std::string(": can not read. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not read. unsupported file format: ") + filename);
 #endif
 	}else if(has_ext(filename, ".jpg") || has_ext(filename, ".jpeg")){
 #ifdef ENABLE_JPEG
 		read_jpeg(filename);
 #else
-		throw std::runtime_error(__func__ + std::string(": can not read. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not read. unsupported file format: ") + filename);
 #endif
 	}else{
-		throw std::runtime_error(__func__ + std::string(": can not read. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not read. unsupported file format: ") + filename);
 	}
 	return *this;
 }
@@ -251,13 +251,13 @@ Image& Image::write(const std::string& filename)const
 #ifdef ENABLE_TIFF
 		write_tiff(filename);
 #else
-		throw std::runtime_error(__func__ + std::string(": can not write. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not write. unsupported file format: ") + filename);
 #endif
 	}else if(has_ext(filename, ".png")){
 #ifdef ENABLE_PNG
 		write_png(filename);
 #else
-		throw std::runtime_error(__func__ + std::string(": can not write. unsupported file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not write. unsupported file format: ") + filename);
 #endif
 	}else{
 #ifdef ENABLE_TIFF
@@ -267,7 +267,7 @@ Image& Image::write(const std::string& filename)const
 		write_png(filename + ".png");
 #endif
 #if !defined(ENABLE_TIFF) && !defined(ENABLE_PNG)
-		throw std::runtime_error(__func__ + std::string(": can not write. no available file format: ") + filename);
+		throw std::invalid_argument(__func__ + std::string(": can not write. no available file format: ") + filename);
 #endif
 	}
 	return const_cast<Image&>(*this);
@@ -283,12 +283,33 @@ void              Image::bit_or::  operator()(      Image::pixel_type& pixel)con
 Image::pixel_type Image::bit_or::  operator()(const Image::pixel_type& pixel)const{return pixel | pixel_;}
 
 #ifdef ENABLE_TIFF
+Image::Tiff::Tiff(const std::string& filename, const char* mode): tif_(NULL)
+{
+	TIFFSetErrorHandler(error);
+	TIFF* tif = TIFFOpen(filename.c_str(), mode);
+	tif_ = tif;
+}
+Image::Tiff::~Tiff(){TIFFClose(tif_);}
+
+void Image::Tiff::error(const char* module, const char* fmt, std::va_list ap)
+{
+	char buffer[1024] = {};
+	if(module){
+		int n = std::snprintf(buffer, sizeof(buffer), "%s: ", module);
+		if(0 <= n && static_cast<std::size_t>(n) < sizeof(buffer)){
+			std::vsnprintf(buffer + n, sizeof(buffer) - n, fmt, ap);
+		}
+	}else{
+		std::vsnprintf(buffer, sizeof(buffer), fmt, ap);
+	}
+	throw std::invalid_argument(buffer);
+}
+#endif
+
+#ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)
 {
-	TIFF* tif = TIFFOpen(filename.c_str(), "r");
-	if(!tif){
-		throw std::invalid_argument(__func__);
-	}
+	Tiff tif(filename, "r");
 
 	uint16_t bits_per_sample   = 0;
 	uint16_t samples_per_pixel = 0;
@@ -300,13 +321,11 @@ void Image::read_tiff(const std::string& filename)
 		!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC,     &photometric)       ||
 		!TIFFGetField(tif, TIFFTAG_IMAGELENGTH,     &image_length)      ||
 		!TIFFGetField(tif, TIFFTAG_IMAGEWIDTH,      &image_width)){
-		TIFFClose(tif);
-		throw std::runtime_error(__func__);
+		throw std::runtime_error(__func__ + std::string(": can not read tags."));
 	}
 	if(photometric != PHOTOMETRIC_RGB){
 		std::ostringstream oss;
 		oss << __func__ << ": can not read. unsupported photometric: " << std::hex << std::setw(4) << photometric;
-		TIFFClose(tif);
 		throw std::runtime_error(oss.str());
 	}
 
@@ -320,8 +339,7 @@ void Image::read_tiff(const std::string& filename)
 	for(uint32_t i = 0; i < num_strips; ++i){
 		tmsize_t read_result = 0;
 		if((read_result = TIFFReadEncodedStrip(tif, i, head_ + offset, strip_size)) == -1){
-			TIFFClose(tif);
-			throw std::runtime_error(__func__);
+			throw std::runtime_error(__func__ + std::string(": TIFFReadEncodedStrip: can not read."));
 		}
 		offset += read_result;
 	}
@@ -339,18 +357,13 @@ void Image::read_tiff(const std::string& filename)
 		oss << __func__ << ": can not read. unsupported bit depth: " << bits_per_sample;
 		throw std::runtime_error(oss.str());
 	}
-
-	TIFFClose(tif);
 }
 
 Image& Image::write_tiff(const std::string& filename)const
 {
 	char buf[20];
 	get_current_time(buf);
-	TIFF* tif = TIFFOpen(filename.c_str(), "w");
-	if(!tif){
-		throw std::runtime_error(__func__);
-	}
+	Tiff tif(filename, "w");
 	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width());
 	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height());
 	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bitdepth);
@@ -367,7 +380,6 @@ Image& Image::write_tiff(const std::string& filename)const
 	TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, "powered by " PROGRAM_NAME ".");
 	TIFFSetField(tif, TIFFTAG_DATETIME, buf);
 	TIFFWriteEncodedStrip(tif, 0, head(), data_size());
-	TIFFClose(tif);
 	return const_cast<Image&>(*this);
 }
 #endif
