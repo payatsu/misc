@@ -28,7 +28,7 @@ public:
 			if(r_y  < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
 			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
 			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
-				throw std::range_error(__func__ + std::string(": range violation"));
+				throw std::invalid_argument(__func__ + std::string(": can not set pixel color. color range violation."));
 			}
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
@@ -42,7 +42,7 @@ public:
 			if(r_y  < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
 			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
 			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
-				throw std::range_error(__func__ + std::string(": range violation"));
+				throw std::invalid_argument(__func__ + std::string(": can not set pixel color. color range violation."));
 			}
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
@@ -56,7 +56,7 @@ public:
 			if(r_y  < 16.0*max/255.0 || 235.0*max/255.0 < r_y  ||
 			   g_cb < 16.0*max/255.0 || 240.0*max/255.0 < g_cb ||
 			   b_cr < 16.0*max/255.0 || 240.0*max/255.0 < b_cr){
-				throw std::range_error(__func__ + std::string(": range violation"));
+				throw std::invalid_argument(__func__ + std::string(": can not set pixel color. color range violation."));
 			}
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
@@ -102,7 +102,7 @@ public:
 				B_ = ((360.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
 				break;
 			default:
-				throw std::range_error(__func__ + std::string(": range violation"));
+				throw std::range_error(__func__ + std::string(": can not set pixel color. color range violation."));
 				break;
 			}
 			break;
@@ -113,7 +113,7 @@ public:
 			B_ =  0.000920718*r_y - 0.00254938*g_cb + 0.1785950*b_cr;
 			break;
 		default:
-			throw std::runtime_error(__func__ + std::string(": unknown color space"));
+			throw std::runtime_error(__func__ + std::string(": can not set pixel color. unknown color space."));
 		}
 	}
 	template <typename U>
@@ -267,7 +267,7 @@ public:
 		const value_type minimum = std::min(std::min(R_, G_), B_);
 		const double diff = maximum - minimum;
 		if(minimum == maximum){
-			throw std::runtime_error(__func__ + std::string(": hue undefined"));
+			throw std::runtime_error(__func__ + std::string(": can not calculate hue. hue undefined."));
 		}else if(minimum == B_){
 			return 60.0 * (static_cast<double>(G_) - R_) / max / diff +  60.0;
 		}else if(minimum == R_){

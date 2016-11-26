@@ -2,7 +2,7 @@
 #define _16BPCGEN_PAINTER_HPP_
 
 #if 201103L <= __cplusplus
-#	include <random>
+#include <random>
 #endif
 #include "Image.hpp"
 
@@ -39,7 +39,7 @@ private:
 #if 201103L <= __cplusplus
 class RandomColor: public Painter{
 public:
-	RandomColor(): engine_(), distribution_(0x0000, 0xffff){}
+	RandomColor(): engine_(), distribution_(0x0000, pixel_type::max){}
 	virtual Image::pixel_type operator()(){return Image::pixel_type{distribution_(engine_), distribution_(engine_), distribution_(engine_)};}
 private:
 	std::mt19937 engine_;

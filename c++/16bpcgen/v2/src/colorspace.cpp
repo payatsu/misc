@@ -17,7 +17,7 @@ int main(void)
 			try{
 				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT601);
 				image[height - 1 - r][c] = p;
-			}catch(const std::range_error& err){
+			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
 			}
 		}
@@ -29,7 +29,7 @@ int main(void)
 			try{
 				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT709);
 				image[height - 1 - r][c] = p;
-			}catch(const std::range_error& err){
+			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
 			}
 		}
@@ -41,7 +41,7 @@ int main(void)
 			try{
 				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT2020);
 				image[height - 1 - r][c] = p;
-			}catch(const std::range_error& err){
+			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
 			}
 		}

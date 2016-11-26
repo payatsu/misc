@@ -16,7 +16,7 @@ bool AreaSpecifier::within(const Image& image)const
 Image& Tone::process(Image& image)const
 {
 	if(!within(image)){
-		throw std::range_error(__func__ + std::string(": invalid area specification"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply Tone process. invalid area specification."));
 	}
 
 	const column_t limit_w =
@@ -37,7 +37,7 @@ Image& Tone::process(Image& image)const
 Image& Normalize::process(Image& image)const
 {
 	if(!within(image)){
-		throw std::range_error(__func__ + std::string(": invalid area specification"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply Normalize process. invalid area specification."));
 	}
 
 	const column_t limit_w =
@@ -62,7 +62,7 @@ Image& Normalize::process(Image& image)const
 Image& Median::process(Image& image)const
 {
 	if(!within(image)){
-		throw std::range_error(__func__ + std::string(": invalid area specification"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply Median filter. invalid area specification."));
 	}
 
 	const column_t limit_w =
@@ -105,7 +105,7 @@ Image& Median::process(Image& image)const
 Image& Crop::process(Image& image)const
 {
 	if(!within(image)){
-		throw std::range_error(__func__ + std::string(": invalid area specification"));
+		throw std::invalid_argument(__func__ + std::string(": can not apply Crop process. invalid area specification."));
 	}
 
 	const column_t limit_w = area_.offset_x_ + area_.width_;
@@ -122,12 +122,12 @@ Image& Crop::process(Image& image)const
 Image& Filter::process(Image& image)const
 {
 	if(!(kernel_.size() % 2) || kernel_.size() < 2){
-		throw std::runtime_error(__func__ + std::string(": filter kernel height must be odd more than 1"));
+		throw std::runtime_error(__func__ + std::string(": can not apply filter. filter kernel height must be odd number more than 1."));
 	}
 	const std::size_t kernel_width = kernel_[0].size();
 	for(std::size_t i = 0; i < kernel_.size(); ++i){
 		if(!(kernel_[i].size() % 2) || kernel_[i].size() < 2 || kernel_[i].size() != kernel_width){
-			throw std::runtime_error(__func__ + std::string(": fileter kernel width must be odd more than 1"));
+			throw std::runtime_error(__func__ + std::string(": can not apply filter. filter kernel width must be odd number more than 1."));
 		}
 	}
 

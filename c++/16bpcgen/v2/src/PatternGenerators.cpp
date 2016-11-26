@@ -2,10 +2,11 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #ifndef M_PI
-#	define M_PI 3.1415926535
+#define M_PI 3.1415926535
 #endif
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include "Image.hpp"
 #include "PatternGenerators.hpp"
@@ -1371,10 +1372,9 @@ void Character::write(Image& image, row_t row, column_t column,
 		unsigned char c, const Image::pixel_type& pixel, byte_t scale)const
 {
 	if('~' < c || image.height() <= row || image.width() <= column){
-		std::cerr << "warning: not supported: row: " << row
-			<< ", col: " << column << ", ascii: "
-			<< c << '(' << int(c) << ')' << std::endl;
-		return;
+		std::ostringstream oss;
+		oss << __func__ << ": out of range. can no write a character. ignored.: row = " << row << ", col = " << column << ", ascii = " << c << '(' << int(c) << ')';
+		throw std::runtime_error(oss.str());
 	}
 	for(byte_t i = 0; i < char_height; ++i){
 		for(byte_t j = 0; j < char_width; ++j){
@@ -1404,8 +1404,12 @@ void Character::write(Image& image, row_t row, column_t column,
 			j += char_tab_width;
 			continue;
 		}
-		write(image, row, column + j*scale*char_width, str[i], pixel, scale);
-		++j;
+		try{
+			write(image, row, column + j*scale*char_width, str[i], pixel, scale);
+			++j;
+		}catch(const std::runtime_error& err){
+			std::cerr << err.what() << std::endl;
+		}
 	}
 }
 
@@ -1430,7 +1434,9 @@ Image& TypeWriter::generate(Image& image)const{return image <<= Character(text_,
 Image& Line::generate(Image& image)const
 {
 	if(image.width() <= from_col_ || image.width() <= to_col_ || image.height() <= from_row_ || image.height() <= to_row_){
-		throw std::range_error(__func__);
+		std::ostringstream oss;
+		oss << __func__ << ": can not draw a line. out of range.: from(x, y) = (" << from_col_ << ", " << from_row_ << "), to(x, y) = (" << to_col_ << ", " << to_row_ << ')';
+		throw std::runtime_error(oss.str());
 	}
 	column_t start_col = from_col_;
 	row_t    start_row = from_row_;
@@ -1455,7 +1461,9 @@ Image& Line::generate(Image& image)const
 Image& Circle::generate(Image& image)const
 {
 	if(image.width() <= column_ || image.height() <= row_){
-		throw std::range_error(__func__);
+		std::ostringstream oss;
+		oss << __func__ << ": can not draw a circle. out of range.: center(x, y) = (" << column_ << ", " << row_ << ')';
+		throw std::runtime_error(oss.str());
 	}
 	image[row_][column_] = pixel_;
 	for(double theta = 0.0; theta < 2.0*M_PI; theta += 2.0*M_PI/5000.0){
