@@ -16,6 +16,8 @@ mains  := $(addprefix $(srcdir)/, 16bpcgen.cpp image_formats.cpp test_patterns.c
 srcs   := $(addprefix $(srcdir)/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp) $(mains)
 assdir := assets
 assets := $(addprefix $(srcdir)/$(assdir)/, color_matching_functions.tar.gz)
+tstdir := $(addprefix $(srcdir)/, test)
+tests  := $(wildcard $(tstdir)/*.cpp)
 
 depdir := .dep
 deps   := $(patsubst $(srcdir)/%.cpp, $(depdir)/%.d, $(srcs))
@@ -30,8 +32,9 @@ else ifeq ($(link), shared)
 	libs := $(patsubst $(srcdir)/%.cpp, $(libdir)/lib%.so, $(firstword $(mains)))
 endif
 
-bindir := bin
-bins   := $(patsubst $(srcdir)/%.cpp,$(bindir)/%, $(mains))
+bindir  := bin
+bins    := $(patsubst $(srcdir)/%.cpp,$(bindir)/%, $(mains))
+tstbins := $(patsubst $(srcdir)/%.cpp, $(bindir)/%, $(tests))
 
 imgdir := img
 
@@ -57,7 +60,7 @@ cxxver   := -std=c++03
 CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
 CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-override LDFLAGS += -L$(libdir)
+LDFLAGS  += -L$(libdir)
 ifeq ($(enable_tiff), yes)
 	CPPFLAGS += -DENABLE_TIFF
 	LDLIBS   += -ltiff -llzma
@@ -88,7 +91,7 @@ tags:
 	ctags $(incdir)/*.hpp $(srcdir)/*.cpp
 
 test: build_test
-	set -e; for b in $(bins); do \
+	set -e; for b in $(bins) $(tstbins); do \
 		echo -n "running '$${b}' ... "; \
 		LD_LIBRARY_PATH=$(libdir):${LD_LIBRARY_PATH} $${b}; \
 		echo done.; \
@@ -96,7 +99,7 @@ test: build_test
 	done
 
 build_test: clean
-	$(MAKE) config=Debug all
+	$(MAKE) config=Debug all $(tstbins)
 
 clean:
 	$(RM) GTAGS GRTAGS GPATH
@@ -116,9 +119,6 @@ else ifeq ($(link), shared)
 	$(LINK.cc) --shared -o $@ $^
 endif
 
-$(srcdir)/%.txt: $(srcdir)/%.tar.gz
-	tar xzvf $<
-
 $(objdir)/%.o: $(srcdir)/%.cpp
 	@mkdir -p $(dir $@)
 	$(COMPILE.cc) -o $@ $(realpath $<)
@@ -126,5 +126,8 @@ $(objdir)/%.o: $(srcdir)/%.cpp
 $(depdir)/%.d: $(srcdir)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$@ $(patsubst $(depdir)/%.d, $(objdir)/%.o, $@)' -MF $@ $<
+
+$(srcdir)/%.txt: $(srcdir)/%.tar.gz
+	tar xzvf $<
 
 -include $(deps)
