@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cerrno>
-#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <iomanip>
@@ -306,6 +305,19 @@ void Image::Tiff::error(const char* module, const char* fmt, std::va_list ap)
 }
 #endif
 
+#ifdef ENABLE_PNG
+Image::File::File(const std::string& filename, const char* mode): fp_(NULL)
+{
+	std::FILE* fp = std::fopen(filename.c_str(), mode);
+	if(!fp){
+		std::ostringstream oss;
+		oss << __func__ << ": can not open file.: " << filename << ": " << std::strerror(errno);
+		throw std::invalid_argument(oss.str());
+	}
+	fp_ = fp;
+}
+#endif
+
 #ifdef ENABLE_TIFF
 void Image::read_tiff(const std::string& filename)
 {
@@ -329,6 +341,9 @@ void Image::read_tiff(const std::string& filename)
 		throw std::runtime_error(oss.str());
 	}
 
+	if(head_){
+		delete[] head_;
+	}
 	width_  = image_width;
 	height_ = image_length;
 	head_   = new byte_t[data_size()];
@@ -387,34 +402,26 @@ Image& Image::write_tiff(const std::string& filename)const
 #ifdef ENABLE_PNG
 void Image::read_png(const std::string& filename)
 {
-	FILE* fp = fopen(filename.c_str(), "rb");
-	if(!fp){
-		std::perror(__func__);
-		throw std::runtime_error(__func__);
-	}
+	File fp(filename, "rb");
 
 	const byte_t number = 8;
 	byte_t signature[number];
 	if(std::fread(signature, sizeof(byte_t), number, fp) != number){
 		std::perror(__func__);
-		std::fclose(fp);
 		throw std::runtime_error(__func__);
 	}
 	if(png_sig_cmp(signature, 0, number)){
-		std::fclose(fp);
 		throw std::runtime_error(__func__);
 	}
 
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr){
-		std::fclose(fp);
 		throw std::runtime_error(__func__);
 	}
 
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr){
 		png_destroy_read_struct(&png_ptr, NULL, NULL);
-		std::fclose(fp);
 		throw std::runtime_error(__func__);
 	}
 
@@ -428,6 +435,9 @@ void Image::read_png(const std::string& filename)
 				NULL);
 	byte_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
 
+	if(head_){
+		delete[] head_;
+	}
 	width_  = png_get_image_width(png_ptr, info_ptr);
 	height_ = png_get_image_height(png_ptr, info_ptr);
 	head_   = new byte_t[data_size()];
@@ -436,11 +446,12 @@ void Image::read_png(const std::string& filename)
 		std::copy(&row_ptrs[i][0], &row_ptrs[i][width()*pixelsize], reinterpret_cast<byte_t*>(&this->operator[](i)[0]));
 	}
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	std::fclose(fp);
 }
 
 Image& Image::write_png(const std::string& filename)const
 {
+	File fp(filename, "wb");
+
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr){
 		throw std::runtime_error(__func__);
@@ -449,13 +460,6 @@ Image& Image::write_png(const std::string& filename)const
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr){
 		png_destroy_write_struct(&png_ptr, NULL);
-		throw std::runtime_error(__func__);
-	}
-
-	FILE* fp = std::fopen(filename.c_str(), "wb");
-	if(!fp){
-		std::perror(__func__);
-		png_destroy_write_struct(&png_ptr, &info_ptr);
 		throw std::runtime_error(__func__);
 	}
 
@@ -481,7 +485,6 @@ Image& Image::write_png(const std::string& filename)const
 
 	delete[] row_ptrs;
 	png_destroy_write_struct(&png_ptr, &info_ptr);
-	std::fclose(fp);
 	return const_cast<Image&>(*this);
 }
 
@@ -532,6 +535,9 @@ void Image::read_jpeg(const std::string& filename)
 	cinfo.out_color_space = JCS_RGB;
 
 	jpeg_start_decompress(&cinfo);
+	if(head_){
+		delete[] head_;
+	}
 	width_  = cinfo.output_width;
 	height_ = cinfo.output_height;
 	head_   = new byte_t[data_size()];

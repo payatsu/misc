@@ -2,6 +2,7 @@
 #define _16BPCGEN_IMAGE_HPP_
 
 #include <cstdarg>
+#include <cstdio>
 #include "Pixel.hpp"
 class ImageProcess;
 class PatternGenerator;
@@ -120,6 +121,19 @@ private:
 		tiff* tif_;
 	};
 #endif
+#ifdef ENABLE_PNG
+	class File{
+	public:
+		File(const std::string& filename, const char* mode);
+		~File(){std::fclose(fp_);}
+		operator std::FILE*(){return fp_;}
+	private:
+		File(const File& file);
+		File& operator=(const File& file);
+		std::FILE* fp_;
+	};
+#endif
+
 #ifdef ENABLE_TIFF
 	void read_tiff(const std::string& filename);
 	Image& write_tiff(const std::string& filename)const;
