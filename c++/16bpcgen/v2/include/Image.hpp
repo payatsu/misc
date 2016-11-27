@@ -120,7 +120,7 @@ private:
 	public:
 		Tiff(const std::string& filename, const char* mode);
 		~Tiff();
-		operator tiff*(){return tif_;}
+		operator tiff*()const{return tif_;}
 		static void error(const char* module, const char* fmt, std::va_list ap);
 	private:
 		Tiff(const Tiff&);
@@ -133,7 +133,7 @@ private:
 	public:
 		File(const std::string& filename, const char* mode);
 		~File(){std::fclose(fp_);}
-		operator std::FILE*(){return fp_;}
+		operator std::FILE*()const{return fp_;}
 	private:
 		File(const File& file);
 		File& operator=(const File& file);
@@ -147,8 +147,8 @@ private:
 		};
 		Png(RW rw);
 		~Png();
-		operator png_struct_def*(){return png_ptr_;}
-		operator png_info_def*(){return info_ptr_;}
+		operator png_struct_def*()const{return png_ptr_;}
+		operator png_info_def*()const{return info_ptr_;}
 	private:
 		Png(const Png& png);
 		Png& operator=(const Png& png);

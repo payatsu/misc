@@ -12,7 +12,7 @@ enable_jpeg := yes
 incdir := include
 
 srcdir := src
-mains  := $(addprefix $(srcdir)/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp image_processes.cpp colorspace.cpp)
+mains  := $(addprefix $(srcdir)/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp image_processes.cpp colorspace.cpp httpd.cpp)
 srcs   := $(addprefix $(srcdir)/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp) $(mains)
 assdir := assets
 assets := $(addprefix $(srcdir)/$(assdir)/, color_matching_functions.tar.gz)
