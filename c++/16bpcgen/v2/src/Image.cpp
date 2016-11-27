@@ -316,10 +316,60 @@ Image::File::File(const std::string& filename, const char* mode): fp_(NULL)
 	}
 	fp_ = fp;
 }
+
+Image::Png::Png(Image::Png::RW rw): rw_(rw), png_ptr_(NULL), info_ptr_(NULL)
+{
+	png_structp png_ptr = NULL;
+	png_infop info_ptr  = NULL;
+	switch(rw_){
+	case READ:
+		png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+		if(!png_ptr){
+			throw std::runtime_error(__func__ + std::string(": can not create png struct."));
+		}
+		info_ptr = png_create_info_struct(png_ptr);
+		if(!info_ptr){
+			png_destroy_read_struct(&png_ptr, NULL, NULL);
+			throw std::runtime_error(__func__ + std::string(": can not create png info struct."));
+		}
+		png_ptr_  = png_ptr;
+		info_ptr_ = info_ptr;
+		break;
+	case WRITE:
+		png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+		if(!png_ptr){
+			throw std::runtime_error(__func__ + std::string(": can not create png struct."));
+		}
+		info_ptr = png_create_info_struct(png_ptr);
+		if(!info_ptr){
+			png_destroy_write_struct(&png_ptr, NULL);
+			throw std::runtime_error(__func__ + std::string(": can not create png info struct."));
+		}
+		png_ptr_  = png_ptr;
+		info_ptr_ = info_ptr;
+		break;
+	default:
+		break;
+	}
+}
+
+Image::Png::~Png()
+{
+	switch(rw_){
+	case READ:
+		png_destroy_read_struct(&png_ptr_, &info_ptr_, NULL);
+		break;
+	case WRITE:
+		png_destroy_write_struct(&png_ptr_, &info_ptr_);
+		break;
+	default:
+		break;
+	}
+}
 #endif
 
 #ifdef ENABLE_TIFF
-void Image::read_tiff(const std::string& filename)
+Image& Image::read_tiff(const std::string& filename)
 {
 	Tiff tif(filename, "r");
 
@@ -372,6 +422,7 @@ void Image::read_tiff(const std::string& filename)
 		oss << __func__ << ": can not read. unsupported bit depth: " << bits_per_sample;
 		throw std::runtime_error(oss.str());
 	}
+	return *this;
 }
 
 Image& Image::write_tiff(const std::string& filename)const
@@ -400,7 +451,7 @@ Image& Image::write_tiff(const std::string& filename)const
 #endif
 
 #ifdef ENABLE_PNG
-void Image::read_png(const std::string& filename)
+Image& Image::read_png(const std::string& filename)
 {
 	File fp(filename, "rb");
 
@@ -414,77 +465,56 @@ void Image::read_png(const std::string& filename)
 		throw std::runtime_error(__func__);
 	}
 
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png_ptr){
-		throw std::runtime_error(__func__);
-	}
-
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if(!info_ptr){
-		png_destroy_read_struct(&png_ptr, NULL, NULL);
-		throw std::runtime_error(__func__);
-	}
-
-	png_init_io(png_ptr, fp);
-	png_set_sig_bytes(png_ptr, number);
-	png_read_png(png_ptr, info_ptr,
+	Png png(Png::READ);
+	png_init_io(png, fp);
+	png_set_sig_bytes(png, number);
+	png_read_png(png, png,
 				PNG_TRANSFORM_STRIP_ALPHA |
 				PNG_TRANSFORM_SWAP_ENDIAN |
 				PNG_TRANSFORM_GRAY_TO_RGB |
 				PNG_TRANSFORM_EXPAND_16,
 				NULL);
-	byte_t** row_ptrs = png_get_rows(png_ptr, info_ptr);
+	byte_t** row_ptrs = png_get_rows(png, png);
 
 	if(head_){
 		delete[] head_;
 	}
-	width_  = png_get_image_width(png_ptr, info_ptr);
-	height_ = png_get_image_height(png_ptr, info_ptr);
+	width_  = png_get_image_width(png, png);
+	height_ = png_get_image_height(png, png);
 	head_   = new byte_t[data_size()];
 
 	for(row_t i = 0; i < height(); ++i){
 		std::copy(&row_ptrs[i][0], &row_ptrs[i][width()*pixelsize], reinterpret_cast<byte_t*>(&this->operator[](i)[0]));
 	}
-	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	return *this;
 }
 
 Image& Image::write_png(const std::string& filename)const
 {
 	File fp(filename, "wb");
 
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png_ptr){
-		throw std::runtime_error(__func__);
-	}
-
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if(!info_ptr){
-		png_destroy_write_struct(&png_ptr, NULL);
-		throw std::runtime_error(__func__);
-	}
-
-	png_init_io(png_ptr, fp);
-	png_set_IHDR(png_ptr, info_ptr, width(), height(),
+	Png png(Png::WRITE);
+	png_init_io(png, fp);
+	png_set_IHDR(png, png, width(), height(),
 			bitdepth, colortype, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	png_text comments[3] = {};
 	construct_tEXt_chunk(comments);
-	png_set_text(png_ptr, info_ptr, comments, sizeof(comments)/sizeof(comments[0]));
+	png_set_text(png, png, comments, sizeof(comments)/sizeof(comments[0]));
 
 	png_time now;
 	png_convert_from_time_t(&now, std::time(NULL));
-	png_set_tIME(png_ptr, info_ptr, &now);
+	png_set_tIME(png, png, &now);
 
 	byte_t** row_ptrs = new byte_t*[height()];
 	for(row_t i = 0; i < height(); ++i){
 		row_ptrs[i] = reinterpret_cast<byte_t*>(&this->operator[](i)[0]);
 	}
-	png_set_rows(png_ptr, info_ptr, row_ptrs);
-	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
+	png_set_rows(png, png, row_ptrs);
+	png_write_png(png, png, PNG_TRANSFORM_SWAP_ENDIAN, NULL);
 
 	delete[] row_ptrs;
-	png_destroy_write_struct(&png_ptr, &info_ptr);
 	return const_cast<Image&>(*this);
 }
 
@@ -517,7 +547,7 @@ void Image::construct_tEXt_chunk(png_textp text_ptr)
 #endif
 
 #ifdef ENABLE_JPEG
-void Image::read_jpeg(const std::string& filename)
+Image& Image::read_jpeg(const std::string& filename)
 {
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -558,6 +588,7 @@ void Image::read_jpeg(const std::string& filename)
 	for(byte_t *p = head_ + data_size()/2 - 1, *last = tail() - 1; head_ <= p; --p, last -= 2){
 		*last = *p;
 	}
+	return *this;
 }
 #endif
 
@@ -582,7 +613,7 @@ const char* get_current_time_rfc1123()
 	if(!(tmp = localtime(&t))){
 		throw std::runtime_error(__func__ + std::string(": ") + std::strerror(errno));
 	}
-	if(!std::strftime(buf, 64, "%a, %d %b %y %T %z", tmp)){
+	if(!std::strftime(buf, sizeof(buf), "%a, %d %b %y %T %z", tmp)){
 		throw std::runtime_error(__func__ + std::string(": can not get current time."));
 	}
 	return buf;

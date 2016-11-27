@@ -14,6 +14,8 @@ struct tiff;
 #endif
 #ifdef ENABLE_PNG
 extern const int colortype;
+struct png_struct_def;
+struct png_info_def;
 struct png_text_struct;
 #endif
 extern const byte_t pixelsize;
@@ -132,19 +134,36 @@ private:
 		File& operator=(const File& file);
 		std::FILE* fp_;
 	};
+	class Png{
+	public:
+		enum RW{
+			READ,
+			WRITE
+		};
+		Png(RW rw);
+		~Png();
+		operator png_struct_def*(){return png_ptr_;}
+		operator png_info_def*(){return info_ptr_;}
+	private:
+		Png(const Png& png);
+		Png& operator=(const Png& png);
+		RW rw_;
+		png_struct_def* png_ptr_;
+		png_info_def* info_ptr_;
+	};
 #endif
 
 #ifdef ENABLE_TIFF
-	void read_tiff(const std::string& filename);
+	Image& read_tiff(const std::string& filename);
 	Image& write_tiff(const std::string& filename)const;
 #endif
 #ifdef ENABLE_PNG
-	void read_png(const std::string& filename);
+	Image& read_png(const std::string& filename);
 	Image& write_png(const std::string& filename)const;
 	static void construct_tEXt_chunk(png_text_struct* text_ptr);
 #endif
 #ifdef ENABLE_JPEG
-	void read_jpeg(const std::string& filename);
+	Image& read_jpeg(const std::string& filename);
 #endif
 	byte_t* head_;
 	column_t width_;
