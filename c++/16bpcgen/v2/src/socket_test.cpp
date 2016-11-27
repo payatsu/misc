@@ -8,7 +8,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "getopt.h"
+#include "getopt.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
 		AF_INET,
 		htons(5000),
 		INADDR_ANY,
+		{}
 	};
 	if(bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(sockaddr_in)) == -1){
 		perror(argv[0]);

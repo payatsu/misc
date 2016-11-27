@@ -244,15 +244,15 @@ Image& Image::read(const std::string& filename)
 	return *this;
 }
 
-Image& Image::write(const std::string& filename)const
+Image& Image::write(const std::string& filename, Image::FileFormat fmt)const
 {
-	if(has_ext(filename, ".tif") || has_ext(filename, ".tiff")){
+	if(has_ext(filename, ".tif") || has_ext(filename, ".tiff") || fmt & FMT_TIFF){
 #ifdef ENABLE_TIFF
 		write_tiff(filename);
 #else
 		throw std::invalid_argument(__func__ + std::string(": can not write. unsupported file format: ") + filename);
 #endif
-	}else if(has_ext(filename, ".png")){
+	}else if(has_ext(filename, ".png") || fmt & FMT_PNG){
 #ifdef ENABLE_PNG
 		write_png(filename);
 #else
@@ -322,7 +322,7 @@ Image::Png::Png(Image::Png::RW rw): rw_(rw), png_ptr_(NULL), info_ptr_(NULL)
 	png_structp png_ptr = NULL;
 	png_infop info_ptr  = NULL;
 	switch(rw_){
-	case READ:
+	case IO_READ:
 		png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 		if(!png_ptr){
 			throw std::runtime_error(__func__ + std::string(": can not create png struct."));
@@ -335,7 +335,7 @@ Image::Png::Png(Image::Png::RW rw): rw_(rw), png_ptr_(NULL), info_ptr_(NULL)
 		png_ptr_  = png_ptr;
 		info_ptr_ = info_ptr;
 		break;
-	case WRITE:
+	case IO_WRITE:
 		png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 		if(!png_ptr){
 			throw std::runtime_error(__func__ + std::string(": can not create png struct."));
@@ -356,10 +356,10 @@ Image::Png::Png(Image::Png::RW rw): rw_(rw), png_ptr_(NULL), info_ptr_(NULL)
 Image::Png::~Png()
 {
 	switch(rw_){
-	case READ:
+	case IO_READ:
 		png_destroy_read_struct(&png_ptr_, &info_ptr_, NULL);
 		break;
-	case WRITE:
+	case IO_WRITE:
 		png_destroy_write_struct(&png_ptr_, &info_ptr_);
 		break;
 	default:
@@ -465,7 +465,7 @@ Image& Image::read_png(const std::string& filename)
 		throw std::runtime_error(__func__);
 	}
 
-	Png png(Png::READ);
+	Png png(Png::IO_READ);
 	png_init_io(png, fp);
 	png_set_sig_bytes(png, number);
 	png_read_png(png, png,
@@ -493,7 +493,7 @@ Image& Image::write_png(const std::string& filename)const
 {
 	File fp(filename, "wb");
 
-	Png png(Png::WRITE);
+	Png png(Png::IO_WRITE);
 	png_init_io(png, fp);
 	png_set_IHDR(png, png, width(), height(),
 			bitdepth, colortype, PNG_INTERLACE_NONE,

@@ -42,6 +42,11 @@ public:
 		ORI_VERT = 0x02,
 		ORI_AUTO = 0xff
 	};
+	enum FileFormat{
+		FMT_NONE = 0x00,
+		FMT_TIFF = 0x01,
+		FMT_PNG  = 0x02
+	};
 	Image(const column_t& a_width, const row_t& a_height):
 		head_(new byte_t[a_height*a_width*pixelsize]), width_(a_width), height_(a_height){}
 	Image(const std::string& filename): head_(NULL), width_(0), height_(0){read(filename);}
@@ -70,7 +75,7 @@ public:
 	Image& operator|=(const pixel_type& pixel);
 	Image  operator()(const Image& image, byte_t orientation = ORI_AUTO)const;
 	Image& read(const std::string& filename);
-	Image& write(const std::string& filename)const;
+	Image& write(const std::string& filename, FileFormat fmt = FMT_NONE)const;
 	byte_t* head()const{return head_;}
 	byte_t* tail()const{return head_ + data_size();}
 	const column_t& width()const{return width_;}
@@ -137,8 +142,8 @@ private:
 	class Png{
 	public:
 		enum RW{
-			READ,
-			WRITE
+			IO_READ,
+			IO_WRITE
 		};
 		Png(RW rw);
 		~Png();
