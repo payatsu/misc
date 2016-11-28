@@ -1,6 +1,5 @@
 #include <cerrno>
 #include <cstring>
-#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -11,9 +10,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-typedef std::map<std::string, std::string> Fields;
-typedef std::map<int, std::string> StatusCodes;
-const char newline[] = {0x0d, 0x0a, 0x00};
+typedef std::map<std::string, std::string> Field;
+typedef std::map<int, std::string> StatusCode;
+const char crlf[] = {0x0d, 0x0a, 0x00};
 const char emptyline[] = {0x0d, 0x0a, 0x0d, 0x0a, 0x00};
 
 class Socket{
@@ -32,13 +31,13 @@ private:
 	int sock_;
 };
 
-Fields parse(const std::string& request)
+Field parse(const std::string& request)
 {
 	std::istringstream iss(request);
 	std::string line;
 	int total_lines = 0;
 	bool is_body = false;
-	Fields fields;
+	Field field;
 	while(std::getline(iss, line)){
 		if(is_body){
 		}else if(total_lines){
@@ -46,36 +45,24 @@ Fields parse(const std::string& request)
 				is_body = true;
 				continue;
 			}
-			std::string::size_type column_pos = line.find_first_of(':');
+			std::string::size_type column_pos = line.find_first_of(": ");
 			if(column_pos == std::string::npos){
-				std::cerr << "invalid request format: '" << line << '\'' << std::endl;
+				std::cerr << "no colon found. invalid request format.: '" << line << '\'' << std::endl;
 				continue;
 			}
-			std::string name  = line.substr(0, column_pos);
-			std::string param = line.substr(column_pos + 2);
-			fields[name] = param;
+			field[line.substr(0, column_pos)] = line.substr(column_pos + 2);
 		}else{
 			std::istringstream request_line(line);
-			std::string method;
-			std::string uri;
-			std::string http_version;
-			request_line >> method >> uri >> http_version;
-			fields["method"]       = method;
-			fields["uri"]          = uri;
-			fields["http_version"] = http_version;
+			request_line >> field["method"] >> field["uri"] >> field["http_version"];
 		}
 		total_lines++;
 	}
-	return fields;
+	return field;
 }
 
-std::string reply(const std::string& request)
+StatusCode initialize_status_code()
 {
-	Fields fields = parse(request);
-	for(Fields::iterator it = fields.begin(); it != fields.end(); ++it){
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
-	StatusCodes status_code;
+	StatusCode status_code;
 	status_code[100] = "Continue";
 	status_code[101] = "Switching Protocols";
 	status_code[200] = "OK";
@@ -107,22 +94,56 @@ std::string reply(const std::string& request)
 	status_code[503] = "Service Unavailable";
 	status_code[504] = "Gateway Time-out";
 	status_code[505] = "HTTP Version not supported";
-	std::ostringstream response;
-	response << fields["http_version"] << ' ' << 200 << ' ' << status_code[200] << newline;
-	response << "Content-Type: image/png" << newline;
-	std::ifstream img("./img/HSV1.png", std::ios::binary);
-	img.seekg(0, img.end);
-	int length = img.tellg();
-	img.seekg(0, img.beg);
-	response << "Content-Length: " << length << newline;
-	response << newline;
+	return status_code;
+}
 
-	char buffer[1024] = {};
+StatusCode status_code = initialize_status_code();
+
+void show(const Field& field)
+{
+	for(Field::const_iterator it = field.begin(); it != field.end(); ++it){
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
+}
+
+std::string reply(const std::string& request)
+{
+	Field field = parse(request);
+	std::ostringstream response;
+	response << field["http_version"] << ' ' << 200 << ' ' << status_code[200] << crlf;
+	response << "Content-Type: image/png" << crlf;
+	std::ifstream img("./img/HSV1.png", std::ios::binary | std::ios::ate);
+	response << "Content-Length: " << img.tellg() << crlf << crlf;
+	img.seekg(0, std::ios::beg);
+
+	char buffer[65536] = {};
 	while(!img.eof()){
 		img.read(buffer, sizeof(buffer));
 		response.write(buffer, img.gcount());
 	}
 	return response.str();
+}
+
+std::string receive(int conn)
+{
+	const int request_limit = 512;
+	char message[1024] = {};
+	int len = 0;
+	std::string request;
+	while(true){
+		if((len = recv(conn, message, sizeof(message), 0)) == -1){
+			throw std::domain_error(std::string("recv() failed.: ") + std::strerror(errno));
+		}
+		request += std::string(message, len);
+		if(request_limit < request.size()){
+			throw std::domain_error("too long http request.");
+		}
+		std::string::size_type pos = request.find(emptyline);
+		if(pos != std::string::npos){
+			break;
+		}
+	}
+	return request;
 }
 
 int main(int argc, char* argv[])
@@ -143,23 +164,7 @@ int main(int argc, char* argv[])
 	}
 	while(true){
 		Socket conn(accept(sock, NULL, NULL));
-		const int request_limit = 512;
-		char msg[1024] = {};
-		int len = 0;
-		std::string request;
-		while(true){
-			if((len = recv(conn, msg, sizeof(msg), 0)) == -1){
-				throw std::domain_error(std::string("recv() failed.: ") + std::strerror(errno));
-			}
-			request += std::string(msg, len);
-			if(request_limit < request.size()){
-				throw std::domain_error("too long http request.");
-			}
-			std::string::size_type pos = request.find(emptyline);
-			if(pos != std::string::npos){
-				break;
-			}
-		}
+		std::string request = receive(conn);
 		std::string response = reply(request);
 		send(conn, response.c_str(), response.size(), 0);
 	}
