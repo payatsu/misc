@@ -17,12 +17,7 @@ const char emptyline[] = {0x0d, 0x0a, 0x0d, 0x0a, 0x00};
 
 class Socket{
 public:
-	Socket(int sock): sock_(sock)
-	{
-		if(sock_ == -1){
-			throw std::runtime_error(std::strerror(errno));
-		}
-	}
+	Socket(int sock): sock_(sock){if(sock_ == -1){throw std::runtime_error(std::strerror(errno));}}
 	~Socket(){close(sock_);}
 	operator int()const{return sock_;}
 private:
@@ -115,12 +110,7 @@ std::string reply(const std::string& request)
 	std::ifstream img("./img/HSV1.png", std::ios::binary | std::ios::ate);
 	response << "Content-Length: " << img.tellg() << crlf << crlf;
 	img.seekg(0, std::ios::beg);
-
-	char buffer[65536] = {};
-	while(!img.eof()){
-		img.read(buffer, sizeof(buffer));
-		response.write(buffer, img.gcount());
-	}
+	response << std::string(std::istreambuf_iterator<char>(img), std::istreambuf_iterator<char>());
 	return response.str();
 }
 
@@ -138,8 +128,7 @@ std::string receive(int conn)
 		if(request_limit < request.size()){
 			throw std::domain_error("too long http request.");
 		}
-		std::string::size_type pos = request.find(emptyline);
-		if(pos != std::string::npos){
+		if(std::string::npos != request.find(emptyline)){
 			break;
 		}
 	}
@@ -150,12 +139,7 @@ int main(int argc, char* argv[])
 {
 	const int port = 1 < argc ? std::atoi(argv[1]) : 8080;
 	Socket sock(socket(AF_INET, SOCK_STREAM, 0));
-	sockaddr_in addr = {
-		AF_INET,
-		htons(port),
-		INADDR_ANY,
-		{}
-	};
+	sockaddr_in addr = {AF_INET, htons(port), INADDR_ANY, {}};
 	if(bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(sockaddr_in)) == -1){
 		throw std::runtime_error(std::string("bind() failed.: ") + std::strerror(errno));
 	}
