@@ -2,9 +2,6 @@
 
 config      := Release
 link        := static
-enable_tiff := yes
-enable_png  := yes
-enable_jpeg := yes
 
 #####################
 # Directories/Files
@@ -12,10 +9,8 @@ enable_jpeg := yes
 incdir := include
 
 srcdir := src
-mains  := $(addprefix $(srcdir)/, 16bpcgen.cpp image_formats.cpp test_patterns.cpp image_processes.cpp colorspace.cpp)
-srcs   := $(addprefix $(srcdir)/, Image.cpp Pixel.cpp PatternGenerators.cpp ImageProcesses.cpp PixelConverters.cpp) $(mains)
-assdir := assets
-assets := $(addprefix $(srcdir)/$(assdir)/, color_matching_functions.tar.gz)
+mains  := $(addprefix $(srcdir)/, tinyhttpd.cpp)
+srcs   := $(addprefix $(srcdir)/, Httpd.cpp) $(mains)
 tstdir := $(addprefix $(srcdir)/, test)
 tests  := $(wildcard $(tstdir)/*.cpp)
 
@@ -61,21 +56,6 @@ CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains
 CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
 LDFLAGS  += -L$(libdir)
-ifeq ($(enable_tiff), yes)
-	CPPFLAGS += -DENABLE_TIFF
-	LDLIBS   += -ltiff -llzma
-endif
-ifeq ($(enable_png), yes)
-	CPPFLAGS += -DENABLE_PNG
-	LDLIBS   += -lpng
-endif
-ifeq ($(enable_jpeg), yes)
-	CPPFLAGS += -DENABLE_JPEG
-	LDLIBS   += -ljpeg
-endif
-ifeq ($(findstring yes, $(enable_tiff) $(enable_png)), yes)
-	LDLIBS   += -lz
-endif
 
 ####################
 # Rules
@@ -126,8 +106,5 @@ $(objdir)/%.o: $(srcdir)/%.cpp
 $(depdir)/%.d: $(srcdir)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$@ $(patsubst $(depdir)/%.d, $(objdir)/%.o, $@)' -MF $@ $<
-
-$(srcdir)/%.txt: $(srcdir)/%.tar.gz
-	tar xzvf $<
 
 -include $(deps)

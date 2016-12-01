@@ -1,0 +1,11 @@
+img/
+.obj/
+.dep/
+bin/
+lib/
+GPATH
+GTAGS
+GRTAGS
+tags
+*.gcov
+gmon.out
