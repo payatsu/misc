@@ -1,5 +1,5 @@
-#ifndef _16BPCGEN_PAINTER_HPP_
-#define _16BPCGEN_PAINTER_HPP_
+#ifndef 16BPCGEN_PAINTER_HPP_
+#define 16BPCGEN_PAINTER_HPP_
 
 #if 201103L <= __cplusplus
 #include <random>
