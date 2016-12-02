@@ -10,7 +10,7 @@ incdir := include
 
 srcdir := src
 mains  := $(addprefix $(srcdir)/, tinyhttpd.cpp)
-srcs   := $(addprefix $(srcdir)/, Httpd.cpp) $(mains)
+srcs   := $(addprefix $(srcdir)/, Httpd.cpp Socket.cpp) $(mains)
 tstdir := $(addprefix $(srcdir)/, test)
 tests  := $(wildcard $(tstdir)/*.cpp)
 
