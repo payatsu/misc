@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_IMAGE_HPP_
-#define 16BPCGEN_IMAGE_HPP_
+#ifndef BPCGEN_IMAGE_HPP_
+#define BPCGEN_IMAGE_HPP_
 
 #include <cstdarg>
 #include <cstdio>

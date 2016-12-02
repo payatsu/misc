@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_PIXEL_HPP_
-#define 16BPCGEN_PIXEL_HPP_
+#ifndef BPCGEN_PIXEL_HPP_
+#define BPCGEN_PIXEL_HPP_
 
 #include <iomanip>
 #include <ostream>

@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_GETOPT_HPP_
-#define 16BPCGEN_GETOPT_HPP_
+#ifndef BPCGEN_GETOPT_HPP_
+#define BPCGEN_GETOPT_HPP_
 
 #include <algorithm>
 #include <cstring>

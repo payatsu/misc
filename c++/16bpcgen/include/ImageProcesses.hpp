@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_IMAGEPROCESSES_HPP_
-#define 16BPCGEN_IMAGEPROCESSES_HPP_
+#ifndef BPCGEN_IMAGEPROCESSES_HPP_
+#define BPCGEN_IMAGEPROCESSES_HPP_
 
 #include <vector>
 #include "ImageProcess.hpp"

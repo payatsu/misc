@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_LOG_HPP_
-#define 16BPCGEN_LOG_HPP_
+#ifndef BPCGEN_LOG_HPP_
+#define BPCGEN_LOG_HPP_
 
 #include <ostream>
 

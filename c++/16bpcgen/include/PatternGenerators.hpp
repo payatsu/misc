@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_PATTERN_GENERATORS_HPP_
-#define 16BPCGEN_PATTERN_GENERATORS_HPP_
+#ifndef BPCGEN_PATTERN_GENERATORS_HPP_
+#define BPCGEN_PATTERN_GENERATORS_HPP_
 
 #include "PatternGenerator.hpp"
 #include "Image.hpp"

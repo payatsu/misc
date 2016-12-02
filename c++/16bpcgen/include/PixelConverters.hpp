@@ -1,5 +1,5 @@
-#ifndef 16BPCGEN_PIXELCONVERTERS_HPP_
-#define 16BPCGEN_PIXELCONVERTERS_HPP_
+#ifndef BPCGEN_PIXELCONVERTERS_HPP_
+#define BPCGEN_PIXELCONVERTERS_HPP_
 
 #include <vector>
 #include "PixelConverter.hpp"
