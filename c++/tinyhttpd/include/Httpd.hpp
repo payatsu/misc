@@ -13,12 +13,15 @@ private:
 	typedef std::map<std::string, std::string> Field;
 	static const char crlf[];
 	static const char emptyline[];
-	Field parse(const std::string& request)const;
-	std::string process(const std::string& request)const;
+	static Field parse(const std::string& request);
+	static std::string process(const std::string& request);
 	std::string receive()const;
 	void send(const std::string& reply)const;
-	const char* get_status_code_string(unsigned int code)const;
-	void dump_request(const Field& field)const;
+	static const char* get_status_code_string(unsigned int code);
+	static const char* get_mime_type(const std::string& uri);
+	static void get_content(const std::string& uri, std::ostringstream& reply);
+	static void dump_request(const Field& field);
+	static void dump_reply(const std::string& reply);
 	Socket sock_;
 };
 

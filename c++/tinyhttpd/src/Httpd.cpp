@@ -15,7 +15,7 @@ void Httpd::run()const
 	send(reply);
 }
 
-Httpd::Field Httpd::parse(const std::string& request)const
+Httpd::Field Httpd::parse(const std::string& request)
 {
 	std::istringstream iss(request);
 	std::string line;
@@ -29,7 +29,7 @@ Httpd::Field Httpd::parse(const std::string& request)const
 				is_body = true;
 				continue;
 			}
-			std::string::size_type column_pos = line.find_first_of(": ");
+			const std::string::size_type column_pos = line.find_first_of(": ");
 			if(column_pos == std::string::npos){
 				std::cerr << "no colon found. invalid request format.: '" << line << '\'' << std::endl;
 				continue;
@@ -44,16 +44,14 @@ Httpd::Field Httpd::parse(const std::string& request)const
 	return field;
 }
 
-std::string Httpd::process(const std::string& request)const
+std::string Httpd::process(const std::string& request)
 {
 	Field field = parse(request);
+	dump_request(field);
 	std::ostringstream reply;
 	reply << field["http_version"] << ' ' << 200 << ' ' << get_status_code_string(200) << crlf;
-	reply << "Content-Type: image/png" << crlf;
-	std::ifstream img("./img/HSV1.png", std::ios::binary | std::ios::ate);
-	reply << "Content-Length: " << img.tellg() << crlf << crlf;
-	img.seekg(0, std::ios::beg);
-	reply << std::string(std::istreambuf_iterator<char>(img), std::istreambuf_iterator<char>());
+	reply << "Content-Type: " << get_mime_type(field["uri"]) << crlf;
+	get_content(field["uri"], reply);
 	return reply.str();
 }
 
@@ -83,7 +81,7 @@ void Httpd::send(const std::string& reply)const
 	sock_.send(reply.c_str(), reply.size(), 0);
 }
 
-const char* Httpd::get_status_code_string(unsigned int code)const
+const char* Httpd::get_status_code_string(unsigned int code)
 {
 	switch(code){
 	case 100: return "Continue";
@@ -121,9 +119,45 @@ const char* Httpd::get_status_code_string(unsigned int code)const
 	}
 }
 
-void Httpd::dump_request(const Field& field)const
+const char* Httpd::get_mime_type(const std::string& uri)
+{
+	const std::string::size_type pos = uri.find_last_of(".");
+	if(pos == std::string::npos || pos == uri.size() - 1){
+		return "";
+	}else{
+		const std::string suffix = uri.substr(pos + 1);
+		if(suffix == "html" || suffix == "htm"){
+			return "text/html";
+		}else if(suffix == "tif" || suffix == "tiff"){
+			return "image/tiff";
+		}else if(suffix == "png"){
+			return "image/png";
+		}else{
+			return "";
+		}
+	}
+}
+
+void Httpd::get_content(const std::string& uri, std::ostringstream& reply)
+{
+	const std::string filename = uri == "/" ? "/index.html" : uri;
+	std::ifstream content(("./res" + filename).c_str(), std::ios::binary | std::ios::ate);
+	if(!content.good()){
+		return;
+	}
+	reply << "Content-Length: " << content.tellg() << crlf << crlf;
+	content.seekg(0, std::ios::beg);
+	reply << std::string(std::istreambuf_iterator<char>(content), std::istreambuf_iterator<char>());
+}
+
+void Httpd::dump_request(const Field& field)
 {
 	for(Httpd::Field::const_iterator it = field.begin(); it != field.end(); ++it){
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
+}
+
+void Httpd::dump_reply(const std::string& reply)
+{
+	std::cout << reply << std::endl;
 }

@@ -11,9 +11,8 @@ Socket::Socket(int sock): sock_(sock)
 	}
 }
 
-Socket::Socket(int domain, int type, int protocol): sock_(-1)
+Socket::Socket(int domain, int type, int protocol): sock_(::socket(domain, type, protocol))
 {
-	sock_ = ::socket(domain, type, protocol);
 	if(sock_ == -1){
 		throw std::runtime_error(std::strerror(errno));
 	}
@@ -42,7 +41,7 @@ void Socket::listen(int backlog)const
 
 ssize_t Socket::recv(void* buf, std::size_t len, int flags)const
 {
-	ssize_t ret = ::recv(sock_, buf, len, flags);
+	const ssize_t ret = ::recv(sock_, buf, len, flags);
 	if(ret == -1){
 		throw std::domain_error(std::string("recv() failed.: ") + std::strerror(errno));
 	}
@@ -51,5 +50,9 @@ ssize_t Socket::recv(void* buf, std::size_t len, int flags)const
 
 ssize_t Socket::send(const void* buf, std::size_t len, int flags)const
 {
-	return ::send(sock_, buf, len, flags);
+	const ssize_t ret = ::send(sock_, buf, len, flags);
+	if(ret == -1){
+		throw std::domain_error(std::string("send() failed.: ") + std::strerror(errno));
+	}
+	return ret;
 }
