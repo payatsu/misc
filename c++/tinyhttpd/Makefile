@@ -37,25 +37,28 @@ imgdir := img
 # Flags
 ####################
 ifeq ($(config), Debug)
-	cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
+	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
 else ifeq ($(config), Release)
-	cxxopt := -O3
+	override cxxopt := -O3
 endif
 
 ifeq ($(link), static)
-	CXXFLAGS := --static
-	LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
-	cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
+	override CXXFLAGS := --static
+	override LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
+	override cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
 else ifeq ($(link), shared)
-	CXXFLAGS := -fPIC
-	LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
+	override CXXFLAGS := -fPIC
+	override LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
 endif
 
-cxxver   := -std=c++03
-CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
-CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
-			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-LDFLAGS  += -L$(libdir)
+override cxxver   := -std=c++03
+override CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
+override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
+						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
+override LDFLAGS  += -L$(libdir)
+
+override CPPFLAGS += -I../16bpcgen/include
+override LDLIBS   += -L../16bpcgen/lib -l16bpcgen -ltiff -llzma -lpng -lz -ljpeg
 
 ####################
 # Rules

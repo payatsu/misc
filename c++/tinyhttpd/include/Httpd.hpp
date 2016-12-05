@@ -19,7 +19,7 @@ private:
 	void send(const std::string& reply)const;
 	static const char* get_status_code_string(unsigned int code);
 	static const char* get_mime_type(const std::string& uri);
-	static void get_content(const std::string& uri, std::ostringstream& reply);
+	static void get_content(Field& field, std::ostringstream& reply);
 	static void dump_request(const Field& field);
 	static void dump_reply(const std::string& reply);
 	Socket sock_;
