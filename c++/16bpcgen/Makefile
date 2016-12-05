@@ -42,39 +42,39 @@ imgdir := img
 # Flags
 ####################
 ifeq ($(config), Debug)
-	cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
+	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
 else ifeq ($(config), Release)
-	cxxopt := -O3
+	override cxxopt := -O3
 endif
 
 ifeq ($(link), static)
-	CXXFLAGS := --static
-	LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
-	cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
+	override CXXFLAGS := --static
+	override LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
+	override cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
 else ifeq ($(link), shared)
-	CXXFLAGS := -fPIC
-	LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
+	override CXXFLAGS := -fPIC
+	override LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
 endif
 
-cxxver   := -std=c++03
-CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
-CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
-			-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-LDFLAGS  += -L$(libdir)
+override cxxver   := -std=c++03
+override CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
+override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
+						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
+override LDFLAGS  += -L$(libdir)
 ifeq ($(enable_tiff), yes)
-	CPPFLAGS += -DENABLE_TIFF
-	LDLIBS   += -ltiff -llzma
+	override CPPFLAGS += -DENABLE_TIFF
+	override LDLIBS   += -ltiff -llzma
 endif
 ifeq ($(enable_png), yes)
-	CPPFLAGS += -DENABLE_PNG
-	LDLIBS   += -lpng
+	override CPPFLAGS += -DENABLE_PNG
+	override LDLIBS   += -lpng
 endif
 ifeq ($(enable_jpeg), yes)
-	CPPFLAGS += -DENABLE_JPEG
-	LDLIBS   += -ljpeg
+	override CPPFLAGS += -DENABLE_JPEG
+	override LDLIBS   += -ljpeg
 endif
 ifeq ($(findstring yes, $(enable_tiff) $(enable_png)), yes)
-	LDLIBS   += -lz
+	override LDLIBS   += -lz
 endif
 
 ####################
