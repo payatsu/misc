@@ -44,7 +44,7 @@ imgdir := img
 ifeq ($(config), Debug)
 	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
 else ifeq ($(config), Release)
-	override cxxopt := -O3
+	override cxxopt := -O3 -s
 endif
 
 ifeq ($(link), static)
