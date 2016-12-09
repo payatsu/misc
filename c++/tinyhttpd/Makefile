@@ -10,7 +10,7 @@ incdir := include
 
 srcdir := src
 mains  := $(addprefix $(srcdir)/, tinyhttpd.cpp)
-srcs   := $(addprefix $(srcdir)/, Httpd.cpp Socket.cpp) $(mains)
+srcs   := $(addprefix $(srcdir)/, Httpd.cpp Socket.cpp misc.cpp) $(mains)
 tstdir := $(addprefix $(srcdir)/, test)
 tests  := $(wildcard $(tstdir)/*.cpp)
 
@@ -33,6 +33,8 @@ tstbins := $(patsubst $(srcdir)/%.cpp, $(bindir)/%, $(tests))
 
 imgdir := img
 
+external := ../16bpcgen
+
 ####################
 # Flags
 ####################
@@ -44,21 +46,20 @@ endif
 
 ifeq ($(link), static)
 	override CXXFLAGS := --static
-	override LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
+	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)) $(notdir $(external)))
 	override cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
 else ifeq ($(link), shared)
 	override CXXFLAGS := -fPIC
-	override LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
+	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%, $(libs)) $(notdir $(external)))
 endif
 
 override cxxver   := -std=c++03
-override CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
+override CPPFLAGS := $(addprefix -I, $(incdir) $(external)/include) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
 override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-override LDFLAGS  += -L$(libdir)
+override LDFLAGS  += $(addprefix -L, $(libdir) $(external)/lib)
 
-override CPPFLAGS += -I../16bpcgen/include
-override LDLIBS   += -L../16bpcgen/lib -l16bpcgen -ltiff -llzma -lpng -lz -ljpeg
+override LDLIBS   += -ltiff -llzma -lpng -lz -ljpeg
 
 ####################
 # Rules
@@ -76,7 +77,7 @@ tags:
 test: build_test
 	set -e; for b in $(bins) $(tstbins); do \
 		echo -n "running '$${b}' ... "; \
-		LD_LIBRARY_PATH=$(libdir):${LD_LIBRARY_PATH} $${b}; \
+		LD_LIBRARY_PATH=$(patsubst  ,:, $(libdir)):${LD_LIBRARY_PATH} $${b}; \
 		echo done.; \
 		gcov -bdflmr -o $(objdir) $(srcdir)/`basename $${b}`.cpp; \
 	done
@@ -92,6 +93,7 @@ clean:
 
 $(bindir)/%: $(objdir)/%.o $(libs)
 	@mkdir -p $(dir $@)
+	$(MAKE) -C $(external)
 	$(LINK.cc) -o $@ $< $(LDLIBS)
 
 $(libs): $(filter-out $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(mains)), $(objs))
