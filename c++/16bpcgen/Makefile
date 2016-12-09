@@ -1,4 +1,4 @@
-.PHONY: all gtags tags test build_test clean
+.PHONY: all gtags tags lib test build_test clean
 
 config      := Release
 link        := static
@@ -27,9 +27,9 @@ objs   := $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(srcs))
 
 libdir := lib
 ifeq ($(link), static)
-	libs := $(patsubst $(srcdir)/%.cpp, $(libdir)/lib%.a,  $(firstword $(mains)))
+	libs := $(patsubst %, $(libdir)/lib%.a,  $(notdir $(CURDIR)))
 else ifeq ($(link), shared)
-	libs := $(patsubst $(srcdir)/%.cpp, $(libdir)/lib%.so, $(firstword $(mains)))
+	libs := $(patsubst %, $(libdir)/lib%.so, $(notdir $(CURDIR)))
 endif
 
 bindir  := bin
@@ -49,18 +49,18 @@ endif
 
 ifeq ($(link), static)
 	override CXXFLAGS := --static
-	override LDLIBS   := -l$(patsubst $(libdir)/lib%.a,%,  $(libs))
+	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)))
 	override cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
 else ifeq ($(link), shared)
 	override CXXFLAGS := -fPIC
-	override LDLIBS   := -l$(patsubst $(libdir)/lib%.so,%, $(libs))
+	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%, $(libs)))
 endif
 
 override cxxver   := -std=c++03
-override CPPFLAGS := -I$(incdir) -DPROGRAM_NAME=\"$(basename $(notdir $(firstword $(mains))))\"
+override CPPFLAGS := $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
 override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-override LDFLAGS  += -L$(libdir)
+override LDFLAGS  += $(addprefix -L, $(libdir))
 ifeq ($(enable_tiff), yes)
 	override CPPFLAGS += -DENABLE_TIFF
 	override LDLIBS   += -ltiff -llzma
@@ -89,6 +89,8 @@ GTAGS GRTAGS GPATH:
 
 tags:
 	ctags $(incdir)/*.hpp $(srcdir)/*.cpp
+
+lib: $(libs)
 
 test: build_test
 	set -e; for b in $(bins) $(tstbins); do \
