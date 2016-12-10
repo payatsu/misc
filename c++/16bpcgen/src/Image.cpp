@@ -184,7 +184,9 @@ Image& Image::operator|=(const Image::pixel_type& pixel)
 
 Image Image::operator()(const Image& image, byte_t orientation)const
 {
-	if(orientation & ORI_HORI && height() == image.height()){
+	if( width() == 0 && height() == 0){
+		return image;
+	}else if(orientation & ORI_HORI && height() == image.height()){
 		Image result = Image(width() + image.width(), height());
 		for(column_t h = 0; h < height(); ++h){
 			std::copy(head() + h * width() * pixelsize, head() + (h + 1) * width() * pixelsize, result.head() + h * result.width() * pixelsize);

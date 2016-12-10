@@ -7,11 +7,11 @@
 
 class Httpd{
 public:
+	typedef std::map<std::string, std::string> Field;
 	explicit Httpd(int sock): sock_(sock){}
 	void run()const;
 	virtual ~Httpd(){}
 private:
-	typedef std::map<std::string, std::string> Field;
 	static const char crlf[];
 	static const char emptyline[];
 	Field parse(const std::string& request)const;
@@ -21,7 +21,7 @@ private:
 	const char* get_status_code_string(unsigned int code)const;
 	const char* get_mime_type(const std::string& uri)const;
 	void prepare_content(Field& field, std::ostringstream& reply)const;
-	virtual void process_post_data(const std::string& data)const{static_cast<void>(data);} // do nothing.
+	virtual void process_post_data(Field& field)const{static_cast<void>(field);} // do nothing.
 	void dump_request(const Field& field)const;
 	void dump_reply(const std::string& reply)const;
 	Socket sock_;

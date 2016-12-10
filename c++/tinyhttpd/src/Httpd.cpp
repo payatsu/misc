@@ -5,7 +5,6 @@
 #include <iostream>
 #include <sstream>
 #include "Httpd.hpp"
-#include "misc.hpp"
 
 void Httpd::run()const
 {
@@ -169,7 +168,7 @@ void Httpd::prepare_content(Httpd::Field& field, std::ostringstream& reply)const
 			post_field[post["Content-Disposition"].substr(std::strlen(param_name2), post["Content-Disposition"].find("\"", std::strlen(param_name2)) - std::strlen(param_name2))] = post["body"];
 			body.erase(0, body.find(crlf, next_pos) + std::strlen(crlf));
 		}
-		process_post_data(post_field["file"]);
+		process_post_data(post_field);
 	}
 }
 

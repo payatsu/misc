@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include <netinet/in.h>
-#include "Httpd.hpp"
+#include "HttpdExt.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 	sock.bind(reinterpret_cast<sockaddr*>(&addr), sizeof(sockaddr_in));
 	sock.listen(1);
 	while(true){
-		Httpd(sock.accept(NULL, NULL)).run();
+		HttpdExt(sock.accept(NULL, NULL)).run();
 	}
 	return 0;
 }

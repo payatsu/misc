@@ -13,7 +13,7 @@ incdir := include
 
 srcdir := src
 mains  := $(addprefix $(srcdir)/, tinyhttpd.cpp)
-srcs   := $(addprefix $(srcdir)/, Httpd.cpp Socket.cpp misc.cpp) $(mains)
+srcs   := $(addprefix $(srcdir)/, Httpd.cpp Socket.cpp HttpdExt.cpp) $(mains)
 assdir := assets
 assets := $(addprefix $(srcdir)/$(assdir)/, color_matching_functions.tar.gz)
 tstdir := $(addprefix $(srcdir)/, test)
