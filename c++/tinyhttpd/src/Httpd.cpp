@@ -7,9 +7,6 @@
 #include "Httpd.hpp"
 #include "misc.hpp"
 
-const char Httpd::crlf[] = {0x0d, 0x0a, 0x00};
-const char Httpd::emptyline[] = {0x0d, 0x0a, 0x0d, 0x0a, 0x00};
-
 void Httpd::run()const
 {
 	const std::string request = receive();
@@ -17,7 +14,10 @@ void Httpd::run()const
 	send(reply);
 }
 
-Httpd::Field Httpd::parse(const std::string& request)
+const char Httpd::crlf[] = {0x0d, 0x0a, 0x00};
+const char Httpd::emptyline[] = {0x0d, 0x0a, 0x0d, 0x0a, 0x00};
+
+Httpd::Field Httpd::parse(const std::string& request)const
 {
 	std::istringstream iss(request);
 	std::string line;
@@ -44,14 +44,14 @@ Httpd::Field Httpd::parse(const std::string& request)
 	return field;
 }
 
-std::string Httpd::process(const std::string& request)
+std::string Httpd::process(const std::string& request)const
 {
 	Field field = parse(request);
 	dump_request(field);
 	std::ostringstream reply;
 	reply << field["http_version"] << ' ' << 200 << ' ' << get_status_code_string(200) << crlf;
 	reply << "Content-Type: " << get_mime_type(field["uri"]) << crlf;
-	get_content(field, reply);
+	prepare_content(field, reply);
 	return reply.str();
 }
 
@@ -84,7 +84,7 @@ void Httpd::send(const std::string& reply)const
 	sock_.send(reply.c_str(), reply.size(), 0);
 }
 
-const char* Httpd::get_status_code_string(unsigned int code)
+const char* Httpd::get_status_code_string(unsigned int code)const
 {
 	switch(code){
 	case 100: return "Continue";
@@ -122,7 +122,7 @@ const char* Httpd::get_status_code_string(unsigned int code)
 	}
 }
 
-const char* Httpd::get_mime_type(const std::string& uri)
+const char* Httpd::get_mime_type(const std::string& uri)const
 {
 	const std::string::size_type pos = uri.find_last_of(".");
 	if(pos == std::string::npos || pos == uri.size() - 1){
@@ -141,7 +141,7 @@ const char* Httpd::get_mime_type(const std::string& uri)
 	}
 }
 
-void Httpd::get_content(Httpd::Field& field, std::ostringstream& reply)
+void Httpd::prepare_content(Httpd::Field& field, std::ostringstream& reply)const
 {
 	const std::string filename = field["uri"] == "/" ? "/index.html" : field["uri"];
 	std::ifstream content(("./res" + filename).c_str(), std::ios::binary | std::ios::ate);
@@ -169,18 +169,18 @@ void Httpd::get_content(Httpd::Field& field, std::ostringstream& reply)
 			post_field[post["Content-Disposition"].substr(std::strlen(param_name2), post["Content-Disposition"].find("\"", std::strlen(param_name2)) - std::strlen(param_name2))] = post["body"];
 			body.erase(0, body.find(crlf, next_pos) + std::strlen(crlf));
 		}
-		generate_image(post_field["file"]);
+		process_post_data(post_field["file"]);
 	}
 }
 
-void Httpd::dump_request(const Field& field)
+void Httpd::dump_request(const Field& field)const
 {
 	for(Httpd::Field::const_iterator it = field.begin(); it != field.end(); ++it){
 		std::cout << it->first << ": " << it->second << std::endl;
 	}
 }
 
-void Httpd::dump_reply(const std::string& reply)
+void Httpd::dump_reply(const std::string& reply)const
 {
 	std::cout << reply << std::endl;
 }

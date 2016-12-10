@@ -9,19 +9,21 @@ class Httpd{
 public:
 	explicit Httpd(int sock): sock_(sock){}
 	void run()const;
+	virtual ~Httpd(){}
 private:
 	typedef std::map<std::string, std::string> Field;
 	static const char crlf[];
 	static const char emptyline[];
-	static Field parse(const std::string& request);
-	static std::string process(const std::string& request);
+	Field parse(const std::string& request)const;
+	std::string process(const std::string& request)const;
 	std::string receive()const;
 	void send(const std::string& reply)const;
-	static const char* get_status_code_string(unsigned int code);
-	static const char* get_mime_type(const std::string& uri);
-	static void get_content(Field& field, std::ostringstream& reply);
-	static void dump_request(const Field& field);
-	static void dump_reply(const std::string& reply);
+	const char* get_status_code_string(unsigned int code)const;
+	const char* get_mime_type(const std::string& uri)const;
+	void prepare_content(Field& field, std::ostringstream& reply)const;
+	virtual void process_post_data(const std::string& data)const{static_cast<void>(data);} // do nothing.
+	void dump_request(const Field& field)const;
+	void dump_reply(const std::string& reply)const;
 	Socket sock_;
 };
 
