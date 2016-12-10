@@ -9,3 +9,4 @@ GRTAGS
 tags
 *.gcov
 gmon.out
+*.png
