@@ -2,12 +2,13 @@
   <head><meta charset="utf-8"><title>index.html</title></head>
   <body>
     <form action="index.html" method="post" enctype="multipart/form-data">
-      ファイル：<input type="file" name="file" size="80"><br>
-      x: <input type="number" name="x">
-      y: <input type="number" name="y">
-      <input type="submit" value="ぽちっ">
+<!--      x: <input type="number" name="x" min="1" value="1" placeholder="数を指定" required> -->
+<!--      y: <input type="number" name="y" min="1" value="1" placeholder="数を指定" required> -->
+      <table border>
+        <tr><td>ファイル：<input type="file" name="file" size="80" multiple required></td><td><input type="submit" value="ぽちっ"></td></tr>
+      </table>
     </form>
-    <img src="result.png">
+    <img src="result.png" border="1">
   </body>
 </html>
-<!-- vim: set expandtab tabstop=2 shiftwidth=2 : -->
+<!-- vim: set expandtab tabstop=2 softtabstop=2 shiftwidth=2 : -->
