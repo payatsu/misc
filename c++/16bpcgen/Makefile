@@ -116,7 +116,7 @@ $(bindir)/%: $(objdir)/%.o $(libs)
 $(libs): $(filter-out $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(mains)), $(objs))
 	@mkdir -p $(dir $@)
 ifeq ($(link), static)
-	$(AR) ruv $@ $^
+	$(AR) rsuv $@ $^
 else ifeq ($(link), shared)
 	$(LINK.cc) --shared -o $@ $^
 endif
