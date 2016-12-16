@@ -1,0 +1,55 @@
+.PHONY: all gtags tags lib test build_test clean
+
+all: $(bins)
+
+gtags: GTAGS GRTAGS GPATH
+
+GTAGS GRTAGS GPATH:
+	gtags -c
+
+tags:
+	ctags $(incdir)/*.hpp $(srcdir)/*.cpp
+
+lib: $(libs)
+
+test: build_test
+	set -e; for b in $(bins) $(tstbins); do \
+		echo -n "running '$${b}' ... "; \
+		LD_LIBRARY_PATH=$(libdir):${LD_LIBRARY_PATH} $${b}; \
+		echo done.; \
+		gcov -bdflmr -o $(objdir) $(srcdir)/`basename $${b}`.cpp; \
+	done
+
+build_test: clean
+	$(MAKE) config=Debug all $(tstbins)
+
+clean:
+	$(RM) GTAGS GRTAGS GPATH
+	$(RM) tags
+	$(RM) -r $(depdir) $(objdir) $(libdir) $(bindir) ./gmon.out ./*.gcov
+	$(RM) -r $(imgdir)
+
+$(bindir)/%: $(objdir)/%.o $(libs)
+	@mkdir -p $(dir $@)
+ifdef extdir
+	$(MAKE) -C $(extdir) lib
+endif
+	$(LINK.cc) -o $@ $< $(LDLIBS)
+
+$(libs): $(filter-out $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(mains)), $(objs))
+	@mkdir -p $(dir $@)
+ifeq ($(link), static)
+	$(AR) rsuv $@ $^
+else ifeq ($(link), shared)
+	$(LINK.cc) --shared -o $@ $^
+endif
+
+$(objdir)/%.o: $(srcdir)/%.cpp
+	@mkdir -p $(dir $@)
+	$(COMPILE.cc) -o $@ $(realpath $<)
+
+$(depdir)/%.d: $(srcdir)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$@ $(patsubst $(depdir)/%.d, $(objdir)/%.o, $@)' -MF $@ $<
+
+# vim: set syntax=make

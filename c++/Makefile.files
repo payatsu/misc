@@ -1,0 +1,23 @@
+incdir := include
+
+tstdir := $(addprefix $(srcdir)/, test)
+tests  := $(wildcard $(tstdir)/*.cpp)
+
+depdir := .dep
+deps   := $(patsubst $(srcdir)/%.cpp, $(depdir)/%.d, $(srcs))
+
+objdir := .obj
+objs   := $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(srcs))
+
+libdir := lib
+ifeq ($(link), static)
+	libs := $(patsubst %, $(libdir)/lib%.a,  $(notdir $(CURDIR)))
+else ifeq ($(link), shared)
+	libs := $(patsubst %, $(libdir)/lib%.so, $(notdir $(CURDIR)))
+endif
+
+bindir  := bin
+bins    := $(patsubst $(srcdir)/%.cpp,$(bindir)/%, $(mains))
+tstbins := $(patsubst $(srcdir)/%.cpp, $(bindir)/%, $(tests))
+
+imgdir := img
