@@ -1,5 +1,6 @@
 ifeq ($(config), Debug)
-	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address
+	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address \
+						-fsanitize=leak -fsanitize=undefined -fstack-protector-all
 else ifeq ($(config), Release)
 	override cxxopt := -O3 -s
 endif
@@ -7,17 +8,17 @@ endif
 ifeq ($(link), static)
 	override CXXFLAGS := --static
 	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)) $(notdir $(extdir)))
-	override cxxopt   := $(filter-out -fsanitize=address, $(cxxopt))
+	override cxxopt   := $(filter-out -fsanitize=address -fsanitize=undefined, $(cxxopt))
 else ifeq ($(link), shared)
 	override CXXFLAGS := -fPIC
 	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%, $(libs)) $(notdir $(extdir)))
 endif
 
 override cxxver   := -std=c++03
-override CPPFLAGS := $(addprefix -I, $(incdir) $(extdir)/include) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
+override CPPFLAGS := $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
 override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-override LDFLAGS  += $(addprefix -L, $(libdir) $(extdir)/lib)
+override LDFLAGS  += $(addprefix -L, $(libdir))
 ifeq ($(enable_tiff), yes)
 	override CPPFLAGS += -DENABLE_TIFF
 	override LDLIBS   += -ltiff -llzma
@@ -32,4 +33,8 @@ ifeq ($(enable_jpeg), yes)
 endif
 ifeq ($(findstring yes, $(enable_tiff) $(enable_png)), yes)
 	override LDLIBS   += -lz
+endif
+ifdef extdir
+	override CPPFLAGS += $(addprefix -I, $(extdir)/include)
+	override LDFLAGS  += $(addprefix -L, $(extdir)/lib)
 endif
