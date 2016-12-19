@@ -15,7 +15,7 @@ else ifeq ($(link), shared)
 endif
 
 override cxxver   := -std=c++03
-override CPPFLAGS := $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
+override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
 override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
 override LDFLAGS  += $(addprefix -L, $(libdir))
