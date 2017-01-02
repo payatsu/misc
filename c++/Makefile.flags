@@ -1,3 +1,4 @@
+comma := ,
 ifeq ($(config), Debug)
 	override cxxopt := -O0 -g3 -pg -fprofile-arcs -ftest-coverage -fsanitize=address \
 						-fsanitize=leak -fsanitize=undefined -fstack-protector-all
@@ -18,7 +19,7 @@ override cxxver   := -std=c++03
 override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
 override CXXFLAGS += $(cxxver) -Werror -pedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wstrict-aliasing \
 						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow $(cxxopt)
-override LDFLAGS  += $(addprefix -L, $(libdir))
+override LDFLAGS  += $(addprefix -L, $(libdir)) $(addprefix -Wl$(comma)-rpath$(comma), $(abspath $(libdir)))
 ifeq ($(enable_tiff), yes)
 	override CPPFLAGS += -DENABLE_TIFF
 	override LDLIBS   += -ltiff -llzma
@@ -36,5 +37,5 @@ ifeq ($(findstring yes, $(enable_tiff) $(enable_png)), yes)
 endif
 ifdef extdir
 	override CPPFLAGS += $(addprefix -I, $(extdir)/include)
-	override LDFLAGS  += $(addprefix -L, $(extdir)/lib)
+	override LDFLAGS  += $(addprefix -L, $(extdir)/lib) $(addprefix -Wl$(comma)-rpath$(comma), $(abspath $(extdir)/lib))
 endif

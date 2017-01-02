@@ -1,4 +1,4 @@
-.PHONY: all gtags tags lib test build_test clean
+.PHONY: all gtags tags lib test build_test clean $(extdir)
 
 all: $(bins)
 
@@ -28,13 +28,20 @@ clean:
 	$(RM) tags
 	$(RM) -r $(depdir) $(objdir) $(libdir) $(bindir) ./gmon.out ./*.gcov
 	$(RM) -r $(imgdir)
-
-$(bindir)/%: $(objdir)/%.o $(libs)
-	@mkdir -p $(dir $@)
 ifdef extdir
-	$(MAKE) -C $(extdir) lib
+	set -e; for d in $(extdir); do \
+		$(MAKE) -C $${d} clean; \
+	done
 endif
+
+$(bindir)/%: $(objdir)/%.o $(libs) $(extdir)
+	@mkdir -p $(dir $@)
 	$(LINK.cc) -o $@ $< $(LDLIBS)
+
+ifdef extdir
+$(extdir):
+	$(MAKE) -C $@ lib
+endif
 
 $(libs): $(filter-out $(patsubst $(srcdir)/%.cpp, $(objdir)/%.o, $(mains)), $(objs))
 	@mkdir -p $(dir $@)
