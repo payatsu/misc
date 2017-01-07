@@ -9,13 +9,14 @@ int main(void)
 	const column_t width  = 1024u;
 	const row_t    height = 1024u;
 	Image image(width, height);
+	typedef Image::pixel_type::value_type value_type;
 
 	mkdir("./img", 0755);
 
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT601);
+				Image::pixel_type p(Image::pixel_type::max/2, static_cast<value_type>(c*Image::pixel_type::max/width), static_cast<value_type>(r*Image::pixel_type::max/height), Image::pixel_type::CS_YCBCR_BT601);
 				image[height - 1 - r][c] = p;
 			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
@@ -27,7 +28,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT709);
+				Image::pixel_type p(Image::pixel_type::max/2, static_cast<value_type>(c*Image::pixel_type::max/width), static_cast<value_type>(r*Image::pixel_type::max/height), Image::pixel_type::CS_YCBCR_BT709);
 				image[height - 1 - r][c] = p;
 			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
@@ -39,7 +40,7 @@ int main(void)
 	for(row_t r = 0; r < height; ++r){
 		for(column_t c = 0; c < width; ++c){
 			try{
-				Image::pixel_type p(Image::pixel_type::max/2, c*Image::pixel_type::max/width, r*Image::pixel_type::max/height, Image::pixel_type::CS_YCBCR_BT2020);
+				Image::pixel_type p(Image::pixel_type::max/2, static_cast<value_type>(c*Image::pixel_type::max/width), static_cast<value_type>(r*Image::pixel_type::max/height), Image::pixel_type::CS_YCBCR_BT2020);
 				image[height - 1 - r][c] = p;
 			}catch(const std::invalid_argument& err){
 				image[height - 1 - r][c] = black;
@@ -56,7 +57,7 @@ int main(void)
 		for(column_t r = 0; r < max_radius; ++r){
 			const double theta = degree/360.0*2.0*M_PI;
 			Pixel<double> p(degree, r*Pixel<double>::max/(max_radius), Pixel<double>::max, Pixel<double>::CS_HSV);
-			image[center_row + r*std::sin(theta)][center_column + r*std::cos(theta)] = p;
+			image[static_cast<row_t>(center_row + r*std::sin(theta))][static_cast<column_t>(center_column + r*std::cos(theta))] = p;
 		}
 	}
 	image >> "./img/HSV1.png";

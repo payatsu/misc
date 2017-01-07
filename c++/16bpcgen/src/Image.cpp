@@ -71,7 +71,7 @@ Image& Image::operator<<=(std::istream& is)
 		if(is.eof()){
 			break;
 		}
-		head_[i] = c;
+		head_[i] = static_cast<byte_t>(c);
 	}
 	return *this;
 }

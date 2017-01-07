@@ -134,12 +134,12 @@ Image& Filter::process(Image& image)const
 	Image result = Image(image.width(), image.height());
 	for(row_t h = 0; h < image.height(); ++h){
 		const row_t h_lowerbound =
-			h - kernel_.size()/2 < image.height() ? h - kernel_.size()/2 : 0 ;
+			static_cast<row_t>(h - kernel_.size()/2 < image.height() ? h - kernel_.size()/2 : 0);
 		const row_t h_upperbound = std::min(
 			static_cast<row_t>(h + kernel_.size()/2 + 1), image.height());
 		for(column_t w = 0; w < image.width(); ++w){
 			const column_t w_lowerbound =
-				w - kernel_[0].size()/2 < image.width() ? w - kernel_[0].size()/2 : 0 ;
+				static_cast<column_t>(w - kernel_[0].size()/2 < image.width() ? w - kernel_[0].size()/2 : 0);
 			const column_t w_upperbound = std::min(
 				static_cast<column_t>(w + kernel_[0].size()/2 + 1), image.width());
 			Pixel<double> pixel = black;

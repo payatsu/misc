@@ -38,7 +38,7 @@ Image& ColorBar::generate(Image& image)const
 
 	std::fill(&image[h2][0],           &image[h2][width/8], yellow);
 	std::fill(&image[h2][width/8 + x], &image[h2][width],   red);
-	std::generate(&image[h2][width/8], &image[h2][width/8 + x], Gradator(white/x));
+	std::generate(&image[h2][width/8], &image[h2][width/8 + x], Gradator(white/static_cast<Image::pixel_type::value_type>(x)));
 	const row_t h3 = h2 + height/12;
 	Row::fill(image[h2 + 1], image[h3], image[h2]);
 
@@ -120,18 +120,22 @@ Image& Ramp::generate(Image& image)const
 {
 	const column_t width = image.width();
 	const row_t   height = image.height();
-	std::generate(&image[0][0],            &image[0][width],            Gradator(red    /width));
-	std::generate(&image[height/12][0],    &image[height/12][width],    Gradator(green  /width));
-	std::generate(&image[height/12*2][0],  &image[height/12*2][width],  Gradator(blue   /width));
-	std::generate(&image[height/12*3][0],  &image[height/12*3][width],  Gradator(cyan   /width));
-	std::generate(&image[height/12*4][0],  &image[height/12*4][width],  Gradator(magenta/width));
-	std::generate(&image[height/12*5][0],  &image[height/12*5][width],  Gradator(yellow /width));
-	std::generate(&image[height/12*6][0],  &image[height/12*6][width],  Gradator(cyan   /width, red));
-	std::generate(&image[height/12*7][0],  &image[height/12*7][width],  Gradator(magenta/width, green));
-	std::generate(&image[height/12*8][0],  &image[height/12*8][width],  Gradator(yellow /width, blue));
-	std::generate(&image[height/12*9][0],  &image[height/12*9][width],  Gradator(red    /width, cyan));
-	std::generate(&image[height/12*10][0], &image[height/12*10][width], Gradator(green  /width, magenta));
-	std::generate(&image[height/12*11][0], &image[height/12*11][width], Gradator(blue   /width, yellow));
+	if(Image::pixel_type::max < width){
+		throw std::runtime_error(": too large image width.");
+	}
+	const Image::pixel_type::value_type w = static_cast<Image::pixel_type::value_type>(width);
+	std::generate(&image[0][0],            &image[0][width],            Gradator(red    /w));
+	std::generate(&image[height/12][0],    &image[height/12][width],    Gradator(green  /w));
+	std::generate(&image[height/12*2][0],  &image[height/12*2][width],  Gradator(blue   /w));
+	std::generate(&image[height/12*3][0],  &image[height/12*3][width],  Gradator(cyan   /w));
+	std::generate(&image[height/12*4][0],  &image[height/12*4][width],  Gradator(magenta/w));
+	std::generate(&image[height/12*5][0],  &image[height/12*5][width],  Gradator(yellow /w));
+	std::generate(&image[height/12*6][0],  &image[height/12*6][width],  Gradator(cyan   /w, red));
+	std::generate(&image[height/12*7][0],  &image[height/12*7][width],  Gradator(magenta/w, green));
+	std::generate(&image[height/12*8][0],  &image[height/12*8][width],  Gradator(yellow /w, blue));
+	std::generate(&image[height/12*9][0],  &image[height/12*9][width],  Gradator(red    /w, cyan));
+	std::generate(&image[height/12*10][0], &image[height/12*10][width], Gradator(green  /w, magenta));
+	std::generate(&image[height/12*11][0], &image[height/12*11][width], Gradator(blue   /w, yellow));
 
 	Row::fill(image[1],                image[height/12],    image[0]);
 	Row::fill(image[height/12    + 1], image[height/12*2],  image[height/12]);
@@ -1405,7 +1409,7 @@ void Character::write(Image& image, row_t row, column_t column,
 			continue;
 		}
 		try{
-			write(image, row, column + j*scale*char_width, str[i], pixel, scale);
+			write(image, row, static_cast<column_t>(column + j*scale*char_width), str[i], pixel, scale);
 			++j;
 		}catch(const std::runtime_error& err){
 			std::cerr << err.what() << std::endl;
@@ -1452,7 +1456,7 @@ Image& Line::generate(Image& image)const
 		const row_t diff = end_row - start_row;
 		const double slope = static_cast<double>(end_col - start_col)/diff;
 		for(row_t r = 0; r < diff; ++r){
-			image[r + start_row][r*slope + start_col] = pixel_;
+			image[r + start_row][static_cast<column_t>(r*slope + start_col)] = pixel_;
 		}
 	}
 	return image;

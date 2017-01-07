@@ -33,9 +33,9 @@ public:
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
 			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
-			R_ = std::min(std::max(Ytmp               + 1.402*Crtmp, 0.0), static_cast<double>(max));
-			G_ = std::min(std::max(Ytmp - 0.344*Cbtmp - 0.714*Crtmp, 0.0), static_cast<double>(max));
-			B_ = std::min(std::max(Ytmp + 1.772*Cbtmp,               0.0), static_cast<double>(max));
+			R_ = static_cast<value_type>(std::min(std::max(Ytmp               + 1.402*Crtmp, 0.0), static_cast<double>(max)));
+			G_ = static_cast<value_type>(std::min(std::max(Ytmp - 0.344*Cbtmp - 0.714*Crtmp, 0.0), static_cast<double>(max)));
+			B_ = static_cast<value_type>(std::min(std::max(Ytmp + 1.772*Cbtmp,               0.0), static_cast<double>(max)));
 			break;
 		}
 		case CS_YCBCR_BT709:{
@@ -47,9 +47,9 @@ public:
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
 			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
-			R_ = std::min(std::max(Ytmp                + 1.5748*Crtmp, 0.0), static_cast<double>(max));
-			G_ = std::min(std::max(Ytmp - 0.1873*Cbtmp - 0.4681*Crtmp, 0.0), static_cast<double>(max));
-			B_ = std::min(std::max(Ytmp + 1.8556*Cbtmp,                0.0), static_cast<double>(max));
+			R_ = static_cast<value_type>(std::min(std::max(Ytmp                + 1.5748*Crtmp, 0.0), static_cast<double>(max)));
+			G_ = static_cast<value_type>(std::min(std::max(Ytmp - 0.1873*Cbtmp - 0.4681*Crtmp, 0.0), static_cast<double>(max)));
+			B_ = static_cast<value_type>(std::min(std::max(Ytmp + 1.8556*Cbtmp,                0.0), static_cast<double>(max)));
 			break;
 		}
 		case CS_YCBCR_BT2020:{
@@ -61,37 +61,37 @@ public:
 			const double  Ytmp = (r_y  -  16.0*max/255.0)*255.0/219.0;
 			const double Cbtmp = (g_cb - 128.0*max/255.0)*255.0/224.0;
 			const double Crtmp = (b_cr - 128.0*max/255.0)*255.0/224.0;
-			R_ = std::min(std::max(Ytmp                + 1.4746*Crtmp, 0.0), static_cast<double>(max));
-			G_ = std::min(std::max(Ytmp - 0.1645*Cbtmp - 0.5713*Crtmp, 0.0), static_cast<double>(max));
-			B_ = std::min(std::max(Ytmp + 1.8814*Cbtmp,                0.0), static_cast<double>(max));
+			R_ = static_cast<value_type>(std::min(std::max(Ytmp                + 1.4746*Crtmp, 0.0), static_cast<double>(max)));
+			G_ = static_cast<value_type>(std::min(std::max(Ytmp - 0.1645*Cbtmp - 0.5713*Crtmp, 0.0), static_cast<double>(max)));
+			B_ = static_cast<value_type>(std::min(std::max(Ytmp + 1.8814*Cbtmp,                0.0), static_cast<double>(max)));
 			break;
 		}
 		case CS_HSV:{
 			const value_type maximum = b_cr;
-			const value_type minimum = maximum - ( g_cb / max * maximum);
+			const value_type minimum = static_cast<value_type>(maximum - ( g_cb / max * maximum));
 			switch(static_cast<int>(r_y / 60.0)){
 			case 0:
 				R_ = maximum;
-				G_ = (r_y / 60.0) * (maximum - minimum) + minimum;
+				G_ = static_cast<value_type>((r_y / 60.0) * (maximum - minimum) + minimum);
 				B_ = minimum;
 				break;
 			case 1:
-				R_ = ((120.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				R_ = static_cast<value_type>(((120.0 - r_y) / 60.0) * (maximum - minimum) + minimum);
 				G_ = maximum;
 				B_ = minimum;
 				break;
 			case 2:
 				R_ = minimum;
 				G_ = maximum;
-				B_ = ((r_y - 120.0) / 60.0) * (maximum - minimum) + minimum;
+				B_ = static_cast<value_type>(((r_y - 120.0) / 60.0) * (maximum - minimum) + minimum);
 				break;
 			case 3:
 				R_ = minimum;
-				G_ = ((240.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				G_ = static_cast<value_type>(((240.0 - r_y) / 60.0) * (maximum - minimum) + minimum);
 				B_ = maximum;
 				break;
 			case 4:
-				R_ = ((r_y - 240.0) / 60.0) * (maximum - minimum) + minimum;
+				R_ = static_cast<value_type>(((r_y - 240.0) / 60.0) * (maximum - minimum) + minimum);
 				G_ = minimum;
 				B_ = maximum;
 				break;
@@ -99,7 +99,7 @@ public:
 			case 6:
 				R_ = maximum;
 				G_ = minimum;
-				B_ = ((360.0 - r_y) / 60.0) * (maximum - minimum) + minimum;
+				B_ = static_cast<value_type>(((360.0 - r_y) / 60.0) * (maximum - minimum) + minimum);
 				break;
 			default:
 				throw std::range_error(__func__ + std::string(": can not set pixel color. color range violation."));
@@ -108,9 +108,9 @@ public:
 			break;
 		}
 		case CS_XYZ:
-			R_ =  0.418452000*r_y - 0.15865200*g_cb - 0.0828342*b_cr;
-			G_ = -0.091164200*r_y + 0.25242400*g_cb + 0.0157058*b_cr;
-			B_ =  0.000920718*r_y - 0.00254938*g_cb + 0.1785950*b_cr;
+			R_ = static_cast<value_type>( 0.418452000*r_y - 0.15865200*g_cb - 0.0828342*b_cr);
+			G_ = static_cast<value_type>(-0.091164200*r_y + 0.25242400*g_cb + 0.0157058*b_cr);
+			B_ = static_cast<value_type>( 0.000920718*r_y - 0.00254938*g_cb + 0.1785950*b_cr);
 			break;
 		default:
 			throw std::runtime_error(__func__ + std::string(": can not set pixel color. unknown color space."));
@@ -136,7 +136,10 @@ public:
 	Pixel operator+(const Pixel<U>& rhs)const
 	{
 		Pixel tmp(rhs);
-		return Pixel(R_ + tmp.R(), G_ + tmp.G(), B_ + tmp.B());
+		return Pixel(
+			static_cast<value_type>(R_ + tmp.R()),
+			static_cast<value_type>(G_ + tmp.G()),
+			static_cast<value_type>(B_ + tmp.B()));
 	}
 	template <typename U>
 	Pixel operator+=(const Pixel<U>& rhs)
@@ -151,7 +154,10 @@ public:
 	Pixel operator-(const Pixel<U>& rhs)const
 	{
 		Pixel tmp(rhs);
-		return Pixel(R_ - tmp.R(), G_ - tmp.G(), B_ - tmp.B());
+		return Pixel(
+			static_cast<value_type>(R_ - tmp.R()),
+			static_cast<value_type>(G_ - tmp.G()),
+			static_cast<value_type>(B_ - tmp.B()));
 	}
 	Pixel operator&(const Pixel& rhs)const
 	{
@@ -218,9 +224,9 @@ public:
 	}
 	Pixel& operator<<=(byte_t rhs)
 	{
-		R_ <<= rhs;
-		G_ <<= rhs;
-		B_ <<= rhs;
+		R_ = static_cast<value_type>(R_ << rhs);
+		G_ = static_cast<value_type>(G_ << rhs);
+		B_ = static_cast<value_type>(B_ << rhs);
 		return *this;
 	}
 	Pixel operator>>(byte_t rhs)const
@@ -232,9 +238,9 @@ public:
 	}
 	Pixel& operator>>=(byte_t rhs)
 	{
-		R_ >>= rhs;
-		G_ >>= rhs;
-		B_ >>= rhs;
+		R_ = static_cast<value_type>(R_ << rhs);
+		G_ = static_cast<value_type>(G_ << rhs);
+		B_ = static_cast<value_type>(B_ << rhs);
 		return *this;
 	}
 	std::ostream& print(std::ostream& os)const

@@ -48,16 +48,16 @@ Image::pixel_type& Offset::convert(Image::pixel_type& pixel)const
 {
 
 	if(ch() & R){
-		pixel.R(invert_ ? std::max(pixel.R() - offset_, 0)
-				: std::min(pixel.R() + offset_, static_cast<int>(Image::pixel_type::max)));
+		pixel.R(static_cast<Image::pixel_type::value_type>(invert_ ? std::max(pixel.R() - offset_, 0)
+				: std::min(pixel.R() + offset_, static_cast<int>(Image::pixel_type::max))));
 	}
 	if(ch() & G){
-		pixel.G(invert_ ? std::max(pixel.G() - offset_, 0)
-				: std::min(pixel.G() + offset_, static_cast<int>(Image::pixel_type::max)));
+		pixel.G(static_cast<Image::pixel_type::value_type>(invert_ ? std::max(pixel.G() - offset_, 0)
+				: std::min(pixel.G() + offset_, static_cast<int>(Image::pixel_type::max))));
 	}
 	if(ch() & B){
-		pixel.B(invert_ ? std::max(pixel.B() - offset_, 0)
-				: std::min(pixel.B() + offset_, static_cast<int>(Image::pixel_type::max)));
+		pixel.B(static_cast<Image::pixel_type::value_type>(invert_ ? std::max(pixel.B() - offset_, 0)
+				: std::min(pixel.B() + offset_, static_cast<int>(Image::pixel_type::max))));
 	}
 	return pixel;
 }
@@ -65,13 +65,13 @@ Image::pixel_type& Offset::convert(Image::pixel_type& pixel)const
 Image::pixel_type& Reversal::convert(Image::pixel_type& pixel)const
 {
 	if(ch() & R){
-		pixel.R(Image::pixel_type::max - pixel.R());
+		pixel.R(static_cast<Image::pixel_type::value_type>(Image::pixel_type::max - pixel.R()));
 	}
 	if(ch() & G){
-		pixel.G(Image::pixel_type::max - pixel.G());
+		pixel.G(static_cast<Image::pixel_type::value_type>(Image::pixel_type::max - pixel.G()));
 	}
 	if(ch() & B){
-		pixel.B(Image::pixel_type::max - pixel.B());
+		pixel.B(static_cast<Image::pixel_type::value_type>(Image::pixel_type::max - pixel.B()));
 	}
 	return pixel;
 }
