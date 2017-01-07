@@ -53,7 +53,7 @@ Image& Normalize::process(Image& image)const
 
 	for(row_t h = area_.offset_y_; h < limit_h; ++h){
 		for(column_t w = area_.offset_x_; w < limit_w; ++w){
-			image[h][w] = Pixel<double>(image[h][w]) / (double)max * Image::pixel_type::max;
+			image[h][w] = Pixel<double>(image[h][w]) / static_cast<double>(max) * Image::pixel_type::max;
 		}
 	}
 	return image;
