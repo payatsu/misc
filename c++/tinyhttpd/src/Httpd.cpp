@@ -67,7 +67,7 @@ std::string Httpd::receive()const
 				const std::size_t remainder = std::atoi(field["Content-Length"].c_str()) - (request.size() - pos - std::strlen(emptyline));
 				std::size_t received = 0;
 				while(received < remainder){
-					const int len = sock_.recv(message, sizeof(message), 0);
+					const ssize_t len = sock_.recv(message, sizeof(message), 0);
 					request += std::string(message, len);
 					received += len;
 				}
