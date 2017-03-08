@@ -1,57 +1,81 @@
 #!/bin/sh -e
 
-vim_server_name=VIM
-
-target1=
-target2=
-sleep=
-parent_process=`ps -U ${USER} | grep -e ${PPID} | grep -oe '[[:graph:]]\+$'`
-case ${parent_process} in
+diff_option=
+parent=`ps -U ${USER} | grep -e ${PPID} | grep -oe '[[:graph:]]\+$'`
+case ${parent} in
 svn)
-	target1=`readlink -m $6`
-	target2=`readlink -m $7`
+	diff_option=${1}
+	while [ ${2} != -L ]; do diff_option="${diff_option} ${2}"; shift; done
+	target1=${6}
+	target2=${7}
 	sleep=1
 	;;
 git)
-	target1=`readlink -m $2`
-	target2=`readlink -m $5`
+	target1=${2}
+	target2=${5}
 	sleep=1
 	;;
 *)
-	target1=`readlink -m $1`
-	target2=`readlink -m $2`
+	target1=${1}
+	target2=${2}
+	sleep=
 esac
 
-cat <<EOF | grep -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
+grep -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' <<EOF && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
 ${target1}
 ${target2}
 EOF
 
-! vim --version | grep -qe '+clientserver' &&
-	echo Error, Vim with "'clientserver'" feature is required, but your Vim does not have the feature... && exit 1
-! vim --serverlist | grep -qe ^${vim_server_name}\$ &&
-	echo Error, Vim server "'${vim_server_name}'" is not running. Try again after "'\$vim --servername ${vim_server_name}'" on another tty.  && exit 1
+vim_diff()
+{
+	error_happened=
+	vim_servername=VIM
+	while getopts s: arg; do
+		case ${arg} in
+		s) vim_servername=${OPTARG};;
+		esac
+	done
+	shift `expr ${OPTIND} - 1`
 
-vim --servername ${vim_server_name} --remote-tab +"\
-	set nocompatible |\
-	syntax on |\
-	filetype plugin indent on |\
-	set splitright |\
-	set fillchars=diff:\\  |\
-	set diffopt=filler,vertical |\
-	set t_Co=256 |\
-	colorscheme morning |\
-	highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue |\
-	highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow    |\
-	highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred  |\
-	highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red       |\
-	view ${target1} |\
-	diffthis |\
-	diffsplit ${target2} |\
-	let t:filetype = &filetype |\
-	wincmd h |\
-	let &filetype = t:filetype |\
-	wincmd l |\
-	windo set nofoldenable" /dev/null
-[ -n "${sleep}" ] && sleep ${sleep}
-exit 0
+	trap '[ -n "${sleep}" -a -n "${error_happened}" ] && kill ${PPID}' EXIT
+	! which vim > /dev/null && echo Error. Vim not found. && { error_happened=true; return 1;}
+	! vim --version | grep -qe '+clientserver' &&
+		echo Error. Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2 && { error_happened=true; return 1;}
+	! vim --serverlist | grep -qe ^${vim_servername}\$ &&
+		echo Error. Vim server "'${vim_servername}'" is not running or X server is not running. Try again after "'\$ vim --servername ${vim_servername}'" on another tty. >&2 && { error_happened=true; return 1;}
+
+	vim --servername ${vim_servername} --remote-tab +"\
+set nocompatible | \
+syntax on | \
+filetype plugin indent on | \
+set splitright | \
+set fillchars=diff:\\  | \
+set diffopt=filler,vertical | \
+set t_Co=256 | \
+colorscheme morning | \
+highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue | \
+highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow    | \
+highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred  | \
+highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red       | \
+view `readlink -m ${1}` | \
+diffthis | \
+diffsplit `readlink -m ${2}` | \
+let t:filetype = &filetype | \
+wincmd h | \
+let &filetype = t:filetype | \
+wincmd l | \
+windo set nofoldenable" /dev/null
+	[ -n "${sleep}" ] && sleep ${sleep}
+}
+
+invoke_diff()
+{
+	case "${diff_option}" in
+	*--orig*)
+		diff `echo ${diff_option} | sed -e 's/--orig//'` ${1} ${2};;
+	*)
+		vim_diff ${1} ${2};;
+	esac
+}
+
+invoke_diff ${target1} ${target2}
