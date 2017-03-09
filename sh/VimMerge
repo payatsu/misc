@@ -1,5 +1,6 @@
 #!/bin/sh -e
 
+command=`basename ${0}`
 diff_option=
 parent=`ps -U ${USER} | grep -e ${PPID} | grep -oe '[[:graph:]]\+$'`
 case ${parent} in
@@ -44,6 +45,10 @@ vim_diff()
 	! vim --serverlist | grep -qe ^${vim_servername}\$ &&
 		echo Error. Vim server "'${vim_servername}'" is not running or X server is not running. Try again after "'\$ vim --servername ${vim_servername}'" on another tty. >&2 && { error_happened=true; return 1;}
 
+	echo ${1} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.XXXXXX`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.XXXXXX`; cp ${2} ${tmp2};}
+	set ${tmp1:-${1}} ${tmp2:-${2}}
+
 	vim --servername ${vim_servername} --remote-tab +"\
 set nocompatible | \
 syntax on | \
@@ -64,7 +69,9 @@ let t:filetype = &filetype | \
 wincmd h | \
 let &filetype = t:filetype | \
 wincmd l | \
-windo set nofoldenable" /dev/null
+windo set nofoldenable | \
+augroup ${command} | \
+autocmd VimLeave * !rm -f ${tmp1} ${tmp2}" /dev/null
 	[ -n "${sleep}" ] && sleep ${sleep}
 }
 
