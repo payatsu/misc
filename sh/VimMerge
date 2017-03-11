@@ -27,6 +27,18 @@ ${target1}
 ${target2}
 EOF
 
+detect_filetype()
+{
+	case `file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'` in
+		'C source'*)           echo c;;
+		'C++ source'*)         echo cpp;;
+		'POSIX shell script'*) echo sh;;
+		'Python script'*)      echo python;;
+		'Ruby script'*)        echo ruby;;
+		*)                     ;;
+	esac
+}
+
 vim_diff()
 {
 	error_happened=
@@ -39,39 +51,54 @@ vim_diff()
 	shift `expr ${OPTIND} - 1`
 
 	trap '[ -n "${sleep}" -a -n "${error_happened}" ] && kill ${PPID}' EXIT
-	! which vim > /dev/null && echo Error. Vim not found. && { error_happened=true; return 1;}
-	! vim --version | grep -qe '+clientserver' &&
-		echo Error. Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2 && { error_happened=true; return 1;}
-	! vim --serverlist | grep -qe ^${vim_servername}\$ &&
-		echo Error. Vim server "'${vim_servername}'" is not running or X server is not running. Try again after "'\$ vim --servername ${vim_servername}'" on another tty. >&2 && { error_happened=true; return 1;}
+	which vim > /dev/null || { error_happened=true; return 1;}
+	vim --version | grep -qe '+clientserver' || {
+		echo Error. Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
+		error_happened=true
+		return 1
+	}
+	vim --serverlist | grep -qe ^${vim_servername}\$ || {
+		cat <<-EOF >&2
+		Error. Vim server not found.
+		confirm that
+		  - Vim server '${vim_servername}' is running (Try again after to invoke vim '\$ vim --servername ${vim_servername}' on another tty)
+		  - X server is running (X11 forwarding is also enabled if via ssh)
+		EOF
+		error_happened=true
+		return 1
+	}
 
-	echo ${1} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.XXXXXX`; cp ${1} ${tmp1};}
-	echo ${2} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.XXXXXX`; cp ${2} ${tmp2};}
+	echo ${1} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.new.XXXXXX`; cp ${2} ${tmp2};}
 	set ${tmp1:-${1}} ${tmp2:-${2}}
 
-	vim --servername ${vim_servername} --remote-tab +"\
-set nocompatible | \
-syntax on | \
-filetype plugin indent on | \
-set splitright | \
-set fillchars=diff:\\  | \
-set diffopt=filler,vertical | \
-set t_Co=256 | \
-colorscheme morning | \
-highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue | \
-highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow    | \
-highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred  | \
-highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red       | \
-view `readlink -m ${1}` | \
-diffthis | \
-diffsplit `readlink -m ${2}` | \
-let t:filetype = &filetype | \
-wincmd h | \
-let &filetype = t:filetype | \
-wincmd l | \
-windo set nofoldenable | \
-augroup ${command} | \
-autocmd VimLeave * !rm -f ${tmp1} ${tmp2}" /dev/null
+	tmp_vimrc=`mktemp --tmpdir ${command}.vimrc.XXXXXX`
+	cat <<EOF > ${tmp_vimrc}
+set nocompatible
+syntax on
+filetype plugin indent on
+set splitright
+set fillchars=diff:\\ 
+set diffopt=filler,vertical
+set t_Co=256
+highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue
+highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow
+highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred
+highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red
+view `readlink -m ${1}`
+diffthis
+diffsplit `readlink -m ${2}`
+${tmp2:+set filetype=`detect_filetype ${tmp2}`}
+let t:filetype = &filetype
+wincmd h
+let &filetype = t:filetype
+wincmd l
+windo set nofoldenable
+augroup ${command}
+	autocmd VimLeave * silent !rm ${tmp_vimrc} ${tmp1} ${tmp2}
+augroup END
+EOF
+	vim --servername ${vim_servername} --remote-tab +"source ${tmp_vimrc}" /dev/null
 	[ -n "${sleep}" ] && sleep ${sleep}
 }
 
