@@ -97,10 +97,10 @@ set splitright
 set fillchars=diff:\\ 
 set diffopt=filler,vertical
 set t_Co=256
-highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue
-highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow
-highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred
-highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red
+" highlight DiffAdd    ctermfg=black ctermbg=lightblue   guifg=black guibg=lightblue
+" highlight DiffChange ctermfg=black ctermbg=lightyellow guifg=black guibg=yellow
+" highlight DiffDelete               ctermbg=lightred    guifg=white guibg=lightred
+" highlight DiffText   ctermfg=white ctermbg=red         guifg=white guibg=red
 view `readlink -m ${1}`
 diffthis
 diffsplit `readlink -m ${2}`
