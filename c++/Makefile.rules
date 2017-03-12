@@ -59,4 +59,4 @@ $(depdir)/%.d: $(srcdir)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$@ $(patsubst $(depdir)/%.d, $(objdir)/%.o, $@)' -MF $@ $<
 
-# vim: set syntax=make
+# vim: set filetype=make :
