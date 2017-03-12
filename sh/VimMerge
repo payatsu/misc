@@ -123,10 +123,8 @@ EOF
 invoke_diff()
 {
 	case "${diff_option}" in
-	*--orig*)
-		diff `echo ${diff_option} | sed -e 's/--orig//'` ${1} ${2};;
-	*)
-		vim_diff ${1} ${2};;
+	*--orig*) diff `echo ${diff_option} | sed -e 's/--orig//'` ${1} ${2};;
+	*)        vim_diff ${1} ${2};;
 	esac
 }
 
