@@ -50,15 +50,16 @@ invoke_vim()
 		error_happened=true
 		return 1
 	}
+	uppercase_1=`echo ${1} | tr a-z A-Z`
 	vim --serverlist | grep -m 1 -qie ^${1}\$ || {
 		vim_setup_time=1
-		detect_multiplexer screen && screen vim --servername ${1} && sleep ${vim_setup_time} && return
-		detect_multiplexer tmux && tmux new-window vim --servername ${1} && sleep ${vim_setup_time} && return
+		detect_multiplexer screen && screen -t ${1} vim --servername ${1} && sleep ${vim_setup_time} && return
+		detect_multiplexer tmux && tmux new-window -n ${1} vim --servername ${1} && sleep ${vim_setup_time} && return
 	} || {
 		cat <<-EOF >&2
 		Error. Vim server not found.
 		confirm that
-		  - Vim server '${1}' is running (Try again after to invoke vim '\$ vim --servername ${1}' on another tty)
+		  - Vim server '${uppercase_1}' is running (Try again after to invoke vim '\$ vim --servername ${uppercase_1}' on another tty)
 		  - X server is running (X11 forwarding is also enabled if via ssh)
 		EOF
 		error_happened=true
@@ -69,12 +70,13 @@ invoke_vim()
 detect_filetype()
 {
 	case `file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'` in
-		'C source'*)           echo c;;
-		'C++ source'*)         echo cpp;;
-		'POSIX shell script'*) echo sh;;
-		'Python script'*)      echo python;;
-		'Ruby script'*)        echo ruby;;
-		*)                     ;;
+		'Bourne-Again shell script'*) echo sh;;
+		'C source'*)                  echo c;;
+		'C++ source'*)                echo cpp;;
+		'POSIX shell script'*)        echo sh;;
+		'Python script'*)             echo python;;
+		'Ruby script'*)               echo ruby;;
+		*)                            ;;
 	esac
 }
 
@@ -83,7 +85,7 @@ vim_diff()
 	error_happened=
 	vim_servername=${command}
 	trap '[ -n "${parent_is_vcs}" -a -n "${error_happened}" ] && kill ${PPID}' EXIT
-	invoke_vim `echo ${vim_servername} | sed -e 's/^.\+$/\U&/'` || return
+	invoke_vim ${vim_servername} || return
 
 	echo ${1} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
 	echo ${2} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.new.XXXXXX`; cp ${2} ${tmp2};}
@@ -113,6 +115,7 @@ windo set nofoldenable
 augroup ${command}
 	autocmd VimLeave * silent !rm ${tmp_vimrc} ${tmp1} ${tmp2}
 augroup END
+bdelete /dev/null
 EOF
 	vim --servername ${vim_servername} --remote-tab +"source ${tmp_vimrc}" /dev/null
 }
