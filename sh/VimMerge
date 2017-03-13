@@ -31,12 +31,12 @@ detect_multiplexer()
 {
 	ps -U ${USER} -o pid,ppid,comm | sed -e 1d | awk '
 	{
-		pids[$1]["ppid"]    = $2
-		pids[$1]["command"] = $3
+		pids[$1, "ppid"]    = $2
+		pids[$1, "command"] = $3
 	}
 	END{
-		for(pid = '${PPID}'; pid != 1; pid = pids[pid]["ppid"]){
-			if(pids[pid]["command"] ~ /'${1}':?/){exit 0}
+		for(pid = '${PPID}'; pid != 1; pid = pids[pid, "ppid"]){
+			if(pids[pid, "command"] ~ /'${1}':?/){exit 0}
 		}
 		exit 1
 	}'
