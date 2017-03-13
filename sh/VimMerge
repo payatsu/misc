@@ -2,8 +2,7 @@
 
 command=`basename ${0}`
 diff_option=
-parent=`ps -U ${USER} | grep -m 1 -e ${PPID} | grep -oe '[[:graph:]]\+$'`
-case ${parent} in
+case `ps --no-headers -o comm -p ${PPID}` in
 svn)
 	diff_option=${1}
 	while [ ${2} != -L ]; do diff_option="${diff_option} ${2}"; shift; done
@@ -29,14 +28,14 @@ EOF
 
 detect_multiplexer()
 {
-	ps -U ${USER} -o pid,ppid,comm | sed -e 1d | awk '
+	ps -o pid,ppid,comm -U ${USER} | sed -e 1d | awk '
 	{
 		pids[$1, "ppid"]    = $2
 		pids[$1, "command"] = $3
 	}
 	END{
 		for(pid = '${PPID}'; pid != 1; pid = pids[pid, "ppid"]){
-			if(pids[pid, "command"] ~ /'${1}':?/){exit 0}
+			if(pids[pid, "command"] ~ /'${1:-screen}':?/){exit 0}
 		}
 		exit 1
 	}'
@@ -44,31 +43,31 @@ detect_multiplexer()
 
 invoke_vim()
 {
-	which vim > /dev/null || { error_happened=true; return 1;}
+	[ $# -eq 1 ] || return
+	which vim > /dev/null || return
 	vim --version | grep -m 1 -qe '+clientserver' || {
-		echo ${command}: error: Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
-		error_happened=true
+		echo `basename ${0}`: error: Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
 		return 1
 	}
 	uppercase_1=`echo ${1} | tr a-z A-Z`
 	vim --serverlist | grep -m 1 -qie ^${1}\$ || {
-		vim_setup_time=1
-		detect_multiplexer screen && screen -t ${1} vim --servername ${1} && sleep ${vim_setup_time} && return
-		detect_multiplexer tmux && tmux new-window -n ${1} vim --servername ${1} && sleep ${vim_setup_time} && return
+		vim_startup_time=1
+		detect_multiplexer screen && screen -t ${1} vim --servername ${1} && sleep ${vim_startup_time} && return
+		detect_multiplexer tmux && tmux new-window -n ${1} vim --servername ${1} && sleep ${vim_startup_time} && return
 	} || {
 		cat <<-EOF >&2
-		${command}: error: Vim server not found
+		`basename ${0}`: error: Vim server not found
 		confirm that
 		  - Vim server '${uppercase_1}' is running (Try again after to invoke vim '\$ vim --servername ${uppercase_1}' on another tty)
 		  - X server is running (X11 forwarding is also enabled if via ssh)
 		EOF
-		error_happened=true
 		return 1
 	}
 }
 
 detect_filetype()
 {
+	[ $# -eq 1 ] || return
 	filetype=`file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'`
 	case ${filetype} in
 		'Bourne-Again shell script'*) echo sh;;
@@ -79,15 +78,14 @@ detect_filetype()
 		'POSIX shell script'*)        echo sh;;
 		'Python script'*)             echo python;;
 		'Ruby script'*)               echo ruby;;
-		*)                            echo ${command}: warning: ${1}: unknown filetype: ${filetype} >&2;;
+		*)                            echo `basename ${0}`: warning: ${1}: unknown filetype: ${filetype} >&2;;
 	esac
 }
 
 vim_diff()
 {
-	error_happened=
 	vim_servername=${command}
-	trap '[ -n "${parent_is_vcs}" -a -n "${error_happened}" ] && kill ${PPID}' EXIT
+	trap '[ -n "${parent_is_vcs}" -a $? -ne 0 ] && kill ${PPID}' EXIT
 	invoke_vim ${vim_servername} || return
 
 	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
