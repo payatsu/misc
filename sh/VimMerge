@@ -22,7 +22,7 @@ git)
 	parent_is_vcs= # not set
 esac
 
-grep -m 1 -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' <<EOF && echo Skipped: "'${target1}'" "'${target2}'" && exit 0
+grep -m 1 -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' <<EOF && echo ${command}: skipped: "'${target1}'" "'${target2}'" && exit 0
 ${target1}
 ${target2}
 EOF
@@ -46,7 +46,7 @@ invoke_vim()
 {
 	which vim > /dev/null || { error_happened=true; return 1;}
 	vim --version | grep -m 1 -qe '+clientserver' || {
-		echo Error. Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
+		echo ${command}: error: Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
 		error_happened=true
 		return 1
 	}
@@ -57,7 +57,7 @@ invoke_vim()
 		detect_multiplexer tmux && tmux new-window -n ${1} vim --servername ${1} && sleep ${vim_setup_time} && return
 	} || {
 		cat <<-EOF >&2
-		Error. Vim server not found.
+		${command}: error: Vim server not found
 		confirm that
 		  - Vim server '${uppercase_1}' is running (Try again after to invoke vim '\$ vim --servername ${uppercase_1}' on another tty)
 		  - X server is running (X11 forwarding is also enabled if via ssh)
@@ -69,14 +69,17 @@ invoke_vim()
 
 detect_filetype()
 {
-	case `file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'` in
+	filetype=`file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'`
+	case ${filetype} in
 		'Bourne-Again shell script'*) echo sh;;
+		*'C program text')            echo c;;
 		'C source'*)                  echo c;;
 		'C++ source'*)                echo cpp;;
+		'makefile script'*)           echo make;;
 		'POSIX shell script'*)        echo sh;;
 		'Python script'*)             echo python;;
 		'Ruby script'*)               echo ruby;;
-		*)                            ;;
+		*)                            echo ${command}: warning: ${1}: unknown filetype: ${filetype} >&2;;
 	esac
 }
 
@@ -87,8 +90,8 @@ vim_diff()
 	trap '[ -n "${parent_is_vcs}" -a -n "${error_happened}" ] && kill ${PPID}' EXIT
 	invoke_vim ${vim_servername} || return
 
-	echo ${1} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
-	echo ${2} | grep -qe '^/tmp/svn-\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.new.XXXXXX`; cp ${2} ${tmp2};}
+	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.new.XXXXXX`; cp ${2} ${tmp2};}
 	set ${tmp1:-${1}} ${tmp2:-${2}}
 	tmp_vimrc=`mktemp --tmpdir ${command}.vimrc.XXXXXX`
 	cat <<EOF > ${tmp_vimrc}
