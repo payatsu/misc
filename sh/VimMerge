@@ -1,41 +1,31 @@
 #!/bin/sh -e
 
-command=`basename ${0}`
-diff_option=
 case `ps --no-headers -o comm -p ${PPID}` in
-svn)
-	diff_option=${1}
-	while [ ${2} != -L ]; do diff_option="${diff_option} ${2}"; shift; done
-	target1=${6}
-	target2=${7}
-	parent_is_vcs=true
-	;;
-git)
-	target1=${2}
-	target2=${5}
-	parent_is_vcs=true
-	;;
-*)
-	target1=${1}
-	target2=${2}
-	parent_is_vcs= # not set
+svn) parent_is_vcs=true;;
+git) set ${2} ${5}; parent_is_vcs=true;;
+*)   parent_is_vcs= ;; # not set
 esac
 
-grep -m 1 -qe '\.\(d\|o\|lo\|html\|jpg\|bdf\|gcda\|gcno\|info\|log\|xml\)$' <<EOF && echo ${command}: skipped: "'${target1}'" "'${target2}'" && exit 0
-${target1}
-${target2}
-EOF
+filter()
+{
+	[ $# -eq 1 ] || return
+	case ${1} in
+	*.d|*.o|*.lo|*.html|*.jpg|*.bdf|*.gcda|*.gcno|*.info|*.log|*.xml) echo `basename ${0}`: skipped: "'${1}'"; return 1;;
+	*) return;;
+	esac
+}
 
 detect_multiplexer()
 {
-	ps -o pid,ppid,comm -U ${USER} | sed -e 1d | awk '
+	[ $# -eq 1 ] && [ ${1} = screen -o ${1} = tmux ] || return
+	ps --no-headers -o pid,ppid,comm -U ${USER} | awk '
 	{
 		pids[$1, "ppid"]    = $2
 		pids[$1, "command"] = $3
 	}
 	END{
 		for(pid = '${PPID}'; pid != 1; pid = pids[pid, "ppid"]){
-			if(pids[pid, "command"] ~ /'${1:-screen}':?/){exit 0}
+			if(pids[pid, "command"] ~ /'${1}':?/){exit 0}
 		}
 		exit 1
 	}'
@@ -49,12 +39,12 @@ invoke_vim()
 		echo `basename ${0}`: error: Vim with "'clientserver'" feature is required, but your Vim does not have the feature... >&2
 		return 1
 	}
-	uppercase_1=`echo ${1} | tr a-z A-Z`
 	vim --serverlist | grep -m 1 -qie ^${1}\$ || {
 		vim_startup_time=1
 		detect_multiplexer screen && screen -t ${1} vim --servername ${1} && sleep ${vim_startup_time} && return
 		detect_multiplexer tmux && tmux new-window -n ${1} vim --servername ${1} && sleep ${vim_startup_time} && return
 	} || {
+		uppercase_1=`echo ${1} | tr a-z A-Z`
 		cat <<-EOF >&2
 		`basename ${0}`: error: Vim server not found
 		confirm that
@@ -84,14 +74,24 @@ detect_filetype()
 
 vim_diff()
 {
-	vim_servername=${command}
+	labels=
+	vim_servername=`basename ${0}`
+	while getopts L:s:u arg; do
+		case ${arg} in
+		L) labels="${labels}${OPTARG}";;
+		s) vim_servername=${OPTARG};;
+		u) ;;
+		esac
+	done
+	shift `expr ${OPTIND} - 1`
+
 	trap '[ -n "${parent_is_vcs}" -a $? -ne 0 ] && kill ${PPID}' EXIT
 	invoke_vim ${vim_servername} || return
 
-	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp1=`mktemp --tmpdir ${command}.old.XXXXXX`; cp ${1} ${tmp1};}
-	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp2=`mktemp --tmpdir ${command}.new.XXXXXX`; cp ${2} ${tmp2};}
+	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp1=`mktemp --tmpdir ${vim_servername}.old.XXXXXX`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp2=`mktemp --tmpdir ${vim_servername}.new.XXXXXX`; cp ${2} ${tmp2};}
 	set ${tmp1:-${1}} ${tmp2:-${2}}
-	tmp_vimrc=`mktemp --tmpdir ${command}.vimrc.XXXXXX`
+	tmp_vimrc=`mktemp --tmpdir ${vim_servername}.vimrc.XXXXXX`
 	cat <<EOF > ${tmp_vimrc}
 set nocompatible
 syntax on
@@ -113,7 +113,7 @@ wincmd h
 let &filetype = t:filetype
 wincmd l
 windo set nofoldenable
-augroup ${command}
+augroup ${vim_servername}
 	autocmd VimLeave * silent !rm ${tmp_vimrc} ${tmp1} ${tmp2}
 augroup END
 bdelete /dev/null
@@ -123,10 +123,10 @@ EOF
 
 invoke_diff()
 {
-	case "${diff_option}" in
-	*--orig*) diff `echo ${diff_option} | sed -e 's/--orig//'` ${1} ${2};;
-	*)        vim_diff ${1} ${2};;
+	case "${1}" in
+	--orig) shift; diff "$@";;
+	*)      vim_diff "$@";;
 	esac
 }
 
-invoke_diff ${target1} ${target2}
+invoke_diff "$@"
