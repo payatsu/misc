@@ -55,44 +55,30 @@ invoke_vim()
 	}
 }
 
-detect_filetype()
-{
-	[ $# -eq 1 ] || return
-	filetype=`file ${1} | sed -e 's/^[^:]\+: \+\([^ ].\+\)$/\1/'`
-	case ${filetype} in
-		'Bourne-Again shell script'*) echo sh;;
-		*'C program text')            echo c;;
-		'C source'*)                  echo c;;
-		'C++ source'*)                echo cpp;;
-		'makefile script'*)           echo make;;
-		'POSIX shell script'*)        echo sh;;
-		'Python script'*)             echo python;;
-		'Ruby script'*)               echo ruby;;
-		*)                            echo `basename ${0}`: warning: ${1}: unknown filetype: ${filetype} >&2;;
-	esac
-}
-
 vim_diff()
 {
 	labels=
 	vim_servername=`basename ${0}`
 	while getopts L:s:u arg; do
 		case ${arg} in
-		L) labels="${labels}${OPTARG}";;
+		L) labels="${labels} `echo ${OPTARG} | cut -d ' ' -f 1`";;
 		s) vim_servername=${OPTARG};;
 		u) ;;
 		esac
 	done
 	shift `expr ${OPTIND} - 1`
 
+	[ $# -eq 2 ] && filter ${2} || return
 	trap '[ -n "${parent_is_vcs}" -a $? -ne 0 ] && kill ${PPID}' EXIT
 	invoke_vim ${vim_servername} || return
 
-	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp1=`mktemp --tmpdir ${vim_servername}.old.XXXXXX`; cp ${1} ${tmp1};}
-	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/' && { tmp2=`mktemp --tmpdir ${vim_servername}.new.XXXXXX`; cp ${2} ${tmp2};}
+	[ -z "${labels}" ] && labels='aaa bbb'
+	tmpdir=`mktemp --tmpdir -d \`basename ${0}\`.XXXXXXXXXX`
+	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/\|^/tmp/' && { tmp1=${tmpdir}/old/`echo ${labels} | cut -d ' ' -f  1`; mkdir -p `dirname ${tmp1}`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/\|^/tmp/' && { tmp2=${tmpdir}/new/`echo ${labels} | cut -d ' ' -f  2`; mkdir -p `dirname ${tmp2}`; cp ${2} ${tmp2};}
 	set ${tmp1:-${1}} ${tmp2:-${2}}
-	tmp_vimrc=`mktemp --tmpdir ${vim_servername}.vimrc.XXXXXX`
-	cat <<EOF > ${tmp_vimrc}
+	vimscript=${tmpdir}/`basename ${0}`.vim
+	cat <<EOF > ${vimscript}
 set nocompatible
 syntax on
 filetype plugin indent on
@@ -107,18 +93,13 @@ set t_Co=256
 view `readlink -m ${1}`
 diffthis
 diffsplit `readlink -m ${2}`
-${tmp2:+set filetype=`detect_filetype ${tmp2}`}
-let t:filetype = &filetype
-wincmd h
-let &filetype = t:filetype
-wincmd l
 windo set nofoldenable
 augroup ${vim_servername}
-	autocmd VimLeave * silent !rm ${tmp_vimrc} ${tmp1} ${tmp2}
+	autocmd VimLeave * silent !rm -r ${tmpdir}
 augroup END
 bdelete /dev/null
 EOF
-	vim --servername ${vim_servername} --remote-tab +"source ${tmp_vimrc}" /dev/null
+	vim --servername ${vim_servername} --remote-tab +"source ${vimscript}" /dev/null
 }
 
 invoke_diff()
