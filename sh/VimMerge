@@ -68,14 +68,14 @@ vim_diff()
 	done
 	shift `expr ${OPTIND} - 1`
 
-	[ $# -eq 2 ] && filter ${2} || return
+	[ $# -eq 2 ] && filter `echo ${labels} | cut -d ' ' -f 2` || return
 	trap '[ -n "${parent_is_vcs}" -a $? -ne 0 ] && kill ${PPID}' EXIT
 	invoke_vim ${vim_servername} || return
 
 	[ -z "${labels}" ] && labels='aaa bbb'
 	tmpdir=`mktemp --tmpdir -d \`basename ${0}\`.XXXXXXXXXX`
-	echo ${1} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/\|^/tmp/' && { tmp1=${tmpdir}/old/`echo ${labels} | cut -d ' ' -f  1 | sed -e 's/\.svn-base$//'`; mkdir -p `dirname ${tmp1}`; cp ${1} ${tmp1};}
-	echo ${2} | grep -qe '^/tmp/svn-\|^/tmp/tempfile\.\|/\.svn/\|^/tmp/' && { tmp2=${tmpdir}/new/`echo ${labels} | cut -d ' ' -f  2 | sed -e 's/\.svn-base$//'`; mkdir -p `dirname ${tmp2}`; cp ${2} ${tmp2};}
+	echo ${1} | grep -qe '/\.svn/\|^/tmp/\|\.svn-base$' && { tmp1=${tmpdir}/old/`echo ${labels} | cut -d ' ' -f  1 | sed -e 's/\.svn-base$//'`; mkdir -p `dirname ${tmp1}`; cp ${1} ${tmp1};}
+	echo ${2} | grep -qe '/\.svn/\|^/tmp/\|\.svn-base$' && { tmp2=${tmpdir}/new/`echo ${labels} | cut -d ' ' -f  2 | sed -e 's/\.svn-base$//'`; mkdir -p `dirname ${tmp2}`; cp ${2} ${tmp2};}
 	set ${tmp1:-${1}} ${tmp2:-${2}}
 	vimscript=${tmpdir}/`basename ${0}`.vim
 	cat <<EOF > ${vimscript}
