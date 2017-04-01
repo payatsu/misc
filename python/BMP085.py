@@ -32,17 +32,17 @@ def initialize():
 def measure_temperature():
 	smbus.SMBus(1).write_byte_data(dev_address, control_register_address, control_register_value_temperature)
 	time.sleep(0.0045)
-	measured_data = smbus.SMBus(1).read_word_data(dev_address, measured_data_register_address)
-	x1 = (measured_data - AC6) * AC5 / 2**15
-	x2 = MC * 2**11 / (x1 + MD)
+	measured_data = smbus.SMBus(1).read_i2c_block_data(dev_address, measured_data_register_address, 2)
+	temperature = measured_data[0] << 8 | measured_data[1]
+	x1 = (temperature - AC6) * AC5 >> 15
+	x2 = (MC << 11) // (x1 + MD)
 	B5 = x1 + x2
-	t = (B5 + 8) / 2**4
+	t = (B5 + 8) >> 4
 	print(t)
-
 
 def measure_pressure():
 	smbus.SMBus(1).write_byte_data(dev_address, control_register_address, control_register_value_pressures[pressure_measure_mode])
-	# time.sleep(0.0045)
+	time.sleep(0.0045)
 	measured_data = smbus.SMBus(1).read_i2c_block_data(dev_address, measured_data_register_address, 3)
 	pressure = (measured_data[0] << 16 | measured_data[1] << 8 | measured_data[2]) >> (8 - pressure_measure_mode)
 
