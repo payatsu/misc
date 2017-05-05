@@ -17,7 +17,7 @@ else ifeq ($(link), shared)
 endif
 
 bindir  := bin
-bins    := $(patsubst $(srcdir)/%.cpp,$(bindir)/%, $(mains))
+bins    := $(patsubst $(srcdir)/%.cpp, $(bindir)/%, $(mains))
 tstbins := $(patsubst $(srcdir)/%.cpp, $(bindir)/%, $(tests))
 
 imgdir := img
