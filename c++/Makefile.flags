@@ -12,7 +12,11 @@ ifeq ($(link), static)
 	override cxxopt   := $(subst -fsanitize=undefined, -static-libubsan, $(subst -fsanitize=address, -static-libasan, $(cxxopt)))
 else ifeq ($(link), shared)
 	override CXXFLAGS := -fPIC
-	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%, $(libs)) $(notdir $(extdir)))
+	ifeq ($(findstring mingw, $(CXX)), mingw)
+		override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.dll,%, $(libs)) $(notdir $(extdir)))
+	else
+		override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%,  $(libs)) $(notdir $(extdir)))
+	endif
 endif
 
 override cxxver   := -std=c++03
