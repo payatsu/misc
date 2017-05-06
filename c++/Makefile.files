@@ -13,7 +13,11 @@ libdir := lib
 ifeq ($(link), static)
 	libs := $(patsubst %, $(libdir)/lib%.a,  $(notdir $(CURDIR)))
 else ifeq ($(link), shared)
-	libs := $(patsubst %, $(libdir)/lib%.so, $(notdir $(CURDIR)))
+	ifeq ($(findstring mingw, $(CXX)), mingw)
+		libs := $(patsubst %, $(libdir)/lib%.dll, $(notdir $(CURDIR)))
+	else
+		libs := $(patsubst %, $(libdir)/lib%.so,  $(notdir $(CURDIR)))
+	endif
 endif
 
 bindir  := bin
