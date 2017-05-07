@@ -9,7 +9,6 @@
 #include <tiffio.h>
 #endif
 #ifdef ENABLE_PNG
-#define PNG_NO_SETJMP
 #include <png.h>
 #endif
 #ifdef ENABLE_JPEG
@@ -296,7 +295,7 @@ void Image::Tiff::error(const char* module, const char* fmt, std::va_list ap)
 {
 	char buffer[1024] = {};
 	if(module){
-		int n = std::snprintf(buffer, sizeof(buffer), "%s: ", module);
+		const int n = std::snprintf(buffer, sizeof(buffer), "%s: ", module);
 		if(0 <= n && static_cast<std::size_t>(n) < sizeof(buffer)){
 			std::vsnprintf(buffer + n, sizeof(buffer) - n, fmt, ap);
 		}
@@ -447,7 +446,7 @@ Image& Image::write_tiff(const std::string& filename)const
 	TIFFSetField(tif, TIFFTAG_SOFTWARE, PROGRAM_NAME);
 	TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, "powered by " PROGRAM_NAME ".");
 	TIFFSetField(tif, TIFFTAG_DATETIME, buf);
-	TIFFWriteEncodedStrip(tif, 0, head(), data_size());
+	TIFFWriteEncodedStrip(tif, 0, head(), static_cast<tmsize_t>(data_size()));
 	return const_cast<Image&>(*this);
 }
 #endif
@@ -601,7 +600,7 @@ void get_current_time(char* buf)
 	if(!(tmp = localtime(&t))){
 		throw std::runtime_error(__func__ + std::string(": ") + std::strerror(errno));
 	}
-	if(!std::strftime(buf, 20, "%Y:%m:%d %T", tmp)){
+	if(!std::strftime(buf, 20, "%Y:%m:%d %H:%M:%S", tmp)){
 		throw std::runtime_error(__func__ + std::string(": can not get current time."));
 	}
 }
@@ -615,7 +614,7 @@ const char* get_current_time_rfc1123()
 	if(!(tmp = localtime(&t))){
 		throw std::runtime_error(__func__ + std::string(": ") + std::strerror(errno));
 	}
-	if(!std::strftime(buf, sizeof(buf), "%a, %d %b %y %T %z", tmp)){
+	if(!std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", tmp)){
 		throw std::runtime_error(__func__ + std::string(": can not get current time."));
 	}
 	return buf;
