@@ -20,6 +20,12 @@ struct png_text_struct;
 #endif
 extern const byte_t pixelsize;
 
+#ifdef __GNUC__
+#define ATTRIBUTE_FORMAT(archetype, strindex, first_to_check) __attribute__((format(archetype, strindex, first_to_check)))
+#else
+#define ATTRIBUTE_FORMAT(archetype, strindex, first_to_check)
+#endif
+
 class Row{
 public:
 	typedef Pixel<> pixel_type;
@@ -121,7 +127,7 @@ private:
 		Tiff(const std::string& filename, const char* mode);
 		~Tiff();
 		operator tiff*()const{return tif_;}
-		static void error(const char* module, const char* fmt, std::va_list ap);
+		static void error(const char* module, const char* fmt, std::va_list ap)ATTRIBUTE_FORMAT(printf, 2, 0);
 	private:
 		Tiff(const Tiff&);
 		Tiff& operator=(const Tiff&);

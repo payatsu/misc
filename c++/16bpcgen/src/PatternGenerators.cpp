@@ -1,5 +1,7 @@
 #include <algorithm>
+#ifdef _MSC_VER
 #define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 #ifndef M_PI
 #define M_PI 3.1415926535
