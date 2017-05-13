@@ -34,6 +34,12 @@ ifdef extdir
 	done
 endif
 
+Makefile: Makefile.config Makefile.files Makefile.flags Makefile.rules
+	sed -i -e 's/\.\.\///' $@
+
+Makefile.%: ../Makefile.%
+	cp -uv $< $@
+
 $(bindir)/%: $(objdir)/%.o $(libs) $(extdir)
 	@mkdir -p $(dir $@)
 	$(LINK.cc) -o $@ $< $(LDLIBS)
