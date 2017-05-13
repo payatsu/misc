@@ -20,7 +20,7 @@ else ifeq ($(link), shared)
 endif
 
 override cxxver   := -std=c++03
-override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
+override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\" -DPROGRAM_REVISION=\"$(shell echo -n rev.\\ $(shell git rev-parse --short HEAD || echo unknown),\\ built\\ at\\ $(shell LANG=C date +'%Y/%m/%d\\ %H:%M:%S'))\"
 override CXXFLAGS += $(cxxver) -march=native -Werror -Wextra -Wcast-align -Wstrict-aliasing -Wshadow \
 					 $(filter-out -Wabi-tag -Wtemplates -Wzero-as-null-pointer-constant, $(shell LANG=C command $(CXX) -fsyntax-only -Q --help=warnings,^joined,^separate,c++ | grep -v '\[enabled\]\|-Wc90-c99-compat\|-Wtraditional[^-]\|-Wsystem-headers' | grep -oe '-W[[:graph:]]\+')) \
 					 -Wno-error=format= -Wno-error=sign-conversion -Wno-error=suggest-attribute=format -Wno-error=suggest-override $(cxxopt)
