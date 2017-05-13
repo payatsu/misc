@@ -7,19 +7,23 @@ else ifeq ($(config), Release)
 endif
 
 ifeq ($(link), static)
-	override CXXFLAGS := --static
-	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)) $(notdir $(extdir)))
-	override cxxopt   := $(subst -fsanitize=undefined, -static-libubsan, $(subst -fsanitize=address, -static-libasan, $(cxxopt)))
+	override CXXFLAGS += --static
+	override LDLIBS   += $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)) $(notdir $(extdir)))
+	override cxxopt   += $(subst -fsanitize=undefined, -static-libubsan, $(subst -fsanitize=address, -static-libasan, $(cxxopt)))
 else ifeq ($(link), shared)
-	override CXXFLAGS := -fPIC
-	override LDLIBS   := $(addprefix -l, $(patsubst $(libdir)/lib%.so,%, $(libs)) $(notdir $(extdir)))
+	override CXXFLAGS += -fPIC
+	ifeq ($(findstring mingw, $(CXX)), mingw)
+		override LDLIBS += $(addprefix -l, $(patsubst $(libdir)/lib%.dll,%, $(libs)) $(notdir $(extdir)))
+	else
+		override LDLIBS += $(addprefix -l, $(patsubst $(libdir)/lib%.so,%,  $(libs)) $(notdir $(extdir)))
+	endif
 endif
 
 override cxxver   := -std=c++03
 override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\"
-override CXXFLAGS += $(cxxver) -march=native -Werror -Wpedantic -Wall -Wextra -Weffc++ -Wcast-align -Wcast-qual -Wconversion -Wold-style-cast -Wstrict-aliasing \
-						-Wformat=2 -Wwrite-strings -Woverloaded-virtual -Wpointer-arith -Wfloat-equal -Wshadow -Wdisabled-optimization -Wlogical-op $(cxxopt) \
-						-Wunsafe-loop-optimizations
+override CXXFLAGS += $(cxxver) -march=native -Werror -Wextra -Wcast-align -Wstrict-aliasing -Wshadow \
+					 $(filter-out -Wabi-tag -Wtemplates -Wzero-as-null-pointer-constant, $(shell LANG=C command $(CXX) -fsyntax-only -Q --help=warnings,^joined,^separate,c++ | grep -v '\[enabled\]\|-Wc90-c99-compat\|-Wtraditional[^-]\|-Wsystem-headers' | grep -oe '-W[[:graph:]]\+')) \
+					 -Wno-error=format= -Wno-error=sign-conversion -Wno-error=suggest-attribute=format -Wno-error=suggest-override $(cxxopt)
 override LDFLAGS  += $(addprefix -L, $(libdir)) $(addprefix -Wl$(comma)-rpath$(comma), $(abspath $(libdir)))
 ifeq ($(enable_tiff), yes)
 	override CPPFLAGS += -DENABLE_TIFF
