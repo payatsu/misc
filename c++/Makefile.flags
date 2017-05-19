@@ -15,9 +15,10 @@ ifeq ($(link), static)
 else ifeq ($(link), shared)
 	override CXXFLAGS += -fPIC
 	ifeq ($(findstring mingw, $(CXX)), mingw)
-		override LDLIBS += $(addprefix -l, $(patsubst $(libdir)/lib%.dll,%, $(libs)) $(notdir $(extdir)))
+		override CXXFLAGS += -static-libgcc
+		override LDLIBS   += $(addprefix -l, $(patsubst $(libdir)/lib%.dll,%, $(libs)) $(notdir $(extdir)))
 	else
-		override LDLIBS += $(addprefix -l, $(patsubst $(libdir)/lib%.so,%,  $(libs)) $(notdir $(extdir)))
+		override LDLIBS   += $(addprefix -l, $(patsubst $(libdir)/lib%.so,%,  $(libs)) $(notdir $(extdir)))
 	endif
 endif
 
