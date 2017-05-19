@@ -10,3 +10,7 @@ tags
 *.gcov
 gmon.out
 color_matching_functions.txt
+Makefile.config
+Makefile.files
+Makefile.flags
+Makefile.rules
