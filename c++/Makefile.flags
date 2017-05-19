@@ -11,7 +11,7 @@ endif
 ifeq ($(link), static)
 	override CXXFLAGS += --static
 	override LDLIBS   += $(addprefix -l, $(patsubst $(libdir)/lib%.a,%,  $(libs)) $(notdir $(extdir)))
-	override cxxopt   += $(subst -fsanitize=undefined, -static-libubsan, $(subst -fsanitize=address, -static-libasan, $(cxxopt)))
+	override cxxopt   := $(subst -fsanitize=undefined, -static-libubsan, $(subst -fsanitize=address, -static-libasan, $(cxxopt)))
 else ifeq ($(link), shared)
 	override CXXFLAGS += -fPIC
 	ifeq ($(findstring mingw, $(CXX)), mingw)
