@@ -2,6 +2,9 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.1415926535
+#endif
 #include <sys/stat.h>
 #include <unistd.h>
 #include "Image.hpp"
