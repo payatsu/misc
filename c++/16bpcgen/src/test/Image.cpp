@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include "Image.hpp"
 #include "PatternGenerators.hpp"
+#ifdef _WIN32
+#define mkdir(name, perm) _mkdir(name)
+#endif
 
 int main(void)
 {

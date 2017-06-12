@@ -4,6 +4,9 @@
 #include "ImageProcesses.hpp"
 #include "PatternGenerators.hpp"
 #include "PixelConverters.hpp"
+#ifdef _WIN32
+#define mkdir(name, perm) _mkdir(name)
+#endif
 
 int main(void)
 {
