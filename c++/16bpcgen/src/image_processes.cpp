@@ -5,6 +5,7 @@
 #include "PatternGenerators.hpp"
 #include "PixelConverters.hpp"
 #ifdef _WIN32
+#include <direct.h>
 #define mkdir(name, perm) _mkdir(name)
 #endif
 

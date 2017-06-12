@@ -7,6 +7,7 @@
 #include "Image.hpp"
 #include "PatternGenerators.hpp"
 #ifdef _WIN32
+#include <direct.h>
 #define mkdir(name, perm) _mkdir(name)
 #endif
 
