@@ -502,7 +502,7 @@ Image& Image::write_png(const std::string& filename)const
 
 	png_text comments[3] = {};
 	construct_tEXt_chunk(comments);
-	png_set_text(png, png, comments, sizeof(comments)/sizeof(comments[0]));
+	png_set_text(png, png, comments, static_cast<int>(sizeof(comments)/sizeof(comments[0])));
 
 	png_time now;
 	png_convert_from_time_t(&now, std::time(NULL));
