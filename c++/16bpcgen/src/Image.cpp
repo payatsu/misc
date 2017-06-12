@@ -9,7 +9,7 @@
 #include <tiffio.h>
 #endif
 #ifdef ENABLE_PNG
-#include <png.h>
+#include <libpng16/png.h>
 #endif
 #ifdef ENABLE_JPEG
 #include <jpeglib.h>
