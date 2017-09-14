@@ -83,7 +83,7 @@ generate_doc()
 	/^INPUT /s%=$%= '"$*"'%
 	/^RECURSIVE /s/= NO$/= YES/
 #	/^EXCLUDE /s%=$%='"${exclude}"'%
-	/^EXCLUDE_PATTERNS /s%=$%= *.d '"`echo ${exclude} | sed -e 's%\<.\+\>%*/&/*%g'`"'%
+	/^EXCLUDE_PATTERNS /s%=$%= *.d '"`echo ${exclude} | sed -e 's%\<[[:graph:]]\+\>%*/&/*%g'`"'%
 	/^SOURCE_BROWSER /s/= NO$/= YES/
 	/^INLINE_SOURCES /s/= NO$/= YES/
 	/^REFERENCED_BY_RELATION /s/= NO$/= YES/
