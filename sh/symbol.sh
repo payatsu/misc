@@ -57,7 +57,7 @@ scan()
 
 	EOF
 	echo "${section_header}" | grep -qe '\.\<bss\>' && { echo Error. Symbol \"${2}\" is located in section \".bss\", whose entity does not exist in \"${1}\". >&2; return 1;}
-	offset=`cat <<EOF | awk '
+	offset=`cat <<-EOF | awk '
 		NR == 2{sym_mem_offset = strtonum("0x"$2)}
 		NR == 4{sec_mem_offset = strtonum("0x"$4); sec_elf_offset = strtonum("0x"$5)}
 		END{printf "Symbol \"'${2}'\" is located at %#x = %#x + (%#x - %#x), and occupies '${symbol_size}' bytes, in \"'${1}'\".\n", sec_elf_offset + (sym_mem_offset - sec_mem_offset), sec_elf_offset, sym_mem_offset, sec_mem_offset}'
@@ -80,7 +80,8 @@ scan()
 overwrite()
 {
 	scan ${1} ${symbol} || return
-	[ `wc -c < ${3}` -le ${symbol_size} ] || {return}
+	file_size=`wc -c < ${3}`
+	[ ${file_size} -le ${symbol_size} ] || { echo Error. File size of \"${3}\"\(${file_size} bytes\) is greater than symbol \"${symbol}\"\'s size\(${symbol_size} bytes\). >&2; return 1;}
 	LANG=C dd if=${3} of=${1} bs=1 count=${symbol_size} seek=`printf '%d' ${symbol_location}` conv=notrunc status=none
 
 	echo And it was overwritten just now as follows:
@@ -92,7 +93,17 @@ overwrite()
 # ${3}: symbol size in ELF file
 dump()
 {
-	od -Ax -j ${2} -N ${3} -tx1z -v ${1} | grep -v '^[[:xdigit:]]\+$'
+	od -Ax -j ${2} -N ${3} -tx1z -w -v ${1} | grep -v '^[[:xdigit:]]\+$' \
+		| sed -e '
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			'
 	echo
 }
 
