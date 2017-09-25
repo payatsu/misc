@@ -45,7 +45,7 @@ scan()
 	[ -n "${2}" ] || { echo Error. Symbol is not specified. >&2; return 1;}
 	symbol_table=`LANG=C readelf -s -W ${1} | grep -e '^   Num:\|\<'${2}'\>$' | grep -e '\<'${2}'\>$' -B 1 || true`
 	echo "${symbol_table}" | grep -qe ${2} || { echo Error. Symbol \"${2}\" is not found in \"${1}\". >&2; return 1;}
-	symbol_size=`echo "${symbol_table}" | awk 'NR == 2{print $3}'`
+	symbol_size=`echo "${symbol_table}" | awk 'NR == 2{print strtonum($3)}'`
 	section=`echo "${symbol_table}" | awk 'NR == 2{print $7}'`
 	section_header=`LANG=C readelf -S -W ${1} | grep -e '^  \[Nr\]\|^  \[ *'${section}'\]'`
 	cat <<-EOF
