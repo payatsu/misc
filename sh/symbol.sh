@@ -80,9 +80,12 @@ scan()
 overwrite()
 {
 	scan ${1} ${symbol} || return
-	file_size=`wc -c < ${3}`
+	tmp=`mktemp`
+	trap 'rm -f ${tmp}' EXIT HUP INT QUIT TERM
+	cat ${3} > ${tmp} || return
+	file_size=`wc -c < ${tmp}`
 	[ ${file_size} -le ${symbol_size} ] || { echo Error. File size of \"${3}\"\(${file_size} bytes\) is greater than symbol \"${symbol}\"\'s size\(${symbol_size} bytes\). >&2; return 1;}
-	LANG=C dd if=${3} of=${1} bs=1 count=${symbol_size} seek=`printf '%d' ${symbol_location}` conv=notrunc status=none
+	LANG=C dd if=${tmp} of=${1} bs=1 count=${symbol_size} seek=`printf '%d' ${symbol_location}` conv=notrunc status=none
 
 	echo And it was overwritten just now as follows:
 	dump ${1} ${symbol_location} ${symbol_size}
