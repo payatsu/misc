@@ -43,11 +43,11 @@ shift `expr ${OPTIND} - 1`
 scan()
 {
 	[ -n "${2}" ] || { echo Error. Symbol is not specified. >&2; return 1;}
-	symbol_table=`LANG=C readelf -s -W ${1} | grep -e '^   Num:\|\<'${2}'\>$' | grep -e '\<'${2}'\>$' -B 1 || true`
+	symbol_table=`LANG=C readelf -s -W ${1} | c++filt | grep -e '^   Num:\|\<'${2}'\>$' | grep -e '\<'${2}'\>$' -B 1 || true`
 	echo "${symbol_table}" | grep -qe ${2} || { echo Error. Symbol \"${2}\" is not found in \"${1}\". >&2; return 1;}
 	symbol_size=`echo "${symbol_table}" | awk 'NR == 2{print strtonum($3)}'`
 	section=`echo "${symbol_table}" | awk 'NR == 2{print $7}'`
-	section_header=`LANG=C readelf -S -W ${1} | grep -e '^  \[Nr\]\|^  \[ *'${section}'\]'`
+	section_header=`LANG=C readelf -S -W ${1} | c++filt | grep -e '^  \[Nr\]\|^  \[ *'${section}'\]'`
 	cat <<-EOF
 		Symbol "${2}"'s symbol table entry is as follows:
 		${symbol_table}
@@ -98,14 +98,10 @@ dump()
 {
 	od -Ax -j ${2} -N ${3} -tx1z -w -v ${1} | grep -v '^[[:xdigit:]]\+$' \
 		| sed -e '
+			: loop
 			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			t loop
+			s/^\([[:xdigit:]]\+[ [:xdigit:]]\{72\}  \) \+>/\1>/
 			'
 	echo
 }
