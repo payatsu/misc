@@ -43,7 +43,7 @@ shift `expr ${OPTIND} - 1`
 scan()
 {
 	[ -n "${2}" ] || { echo Error. Symbol is not specified. >&2; return 1;}
-	symbol_table=`LANG=C readelf -s -W ${1} | c++filt | grep -e '^   Num:\|\<'${2}'\>$' | grep -e '\<'${2}'\>$' -B 1 || true`
+	symbol_table=`LANG=C readelf -s -W ${1} | c++filt | grep -Pe '^   Num:|(?<= )'${2}'$' | grep -Pe '(?<= )'${2}'$' -B 1 || true`
 	echo "${symbol_table}" | grep -qe ${2} || { echo Error. Symbol \"${2}\" is not found in \"${1}\". >&2; return 1;}
 	symbol_size=`echo "${symbol_table}" | awk 'NR == 2{print strtonum($3)}'`
 	section=`echo "${symbol_table}" | awk 'NR == 2{print $7}'`
@@ -85,8 +85,7 @@ overwrite()
 	cat ${3} > ${tmp} || return
 	file_size=`wc -c < ${tmp}`
 	[ ${file_size} -le ${symbol_size} ] || { echo Error. File size of \"${3}\"\(${file_size} bytes\) is greater than symbol \"${symbol}\"\'s size\(${symbol_size} bytes\). >&2; return 1;}
-	LANG=C dd if=${tmp} of=${1} bs=1 count=${symbol_size} seek=`printf '%d' ${symbol_location}` conv=notrunc status=none
-
+	dd if=${tmp} of=${1} bs=1 count=${symbol_size} seek=`printf '%d' ${symbol_location}` conv=notrunc status=none
 	echo And it was overwritten just now as follows:
 	dump ${1} ${symbol_location} ${symbol_size}
 }
@@ -99,8 +98,11 @@ dump()
 	od -Ax -j ${2} -N ${3} -tx1z -w -v ${1} | grep -v '^[[:xdigit:]]\+$' \
 		| sed -e '
 			: loop
-			s/\<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> \<\([[:xdigit:]]\{2\}\)\> /\1\2\3\4 /
+			s/\<\([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\) /\1\2\3\4 /
 			t loop
+			s/\<\([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\)    /\1\2\3   /
+			s/\<\([[:xdigit:]]\{2\}\) \([[:xdigit:]]\{2\}\)       /\1\2     /
+			s/\<\([[:xdigit:]]\{2\}\)          /\1       /
 			s/^\([[:xdigit:]]\+[ [:xdigit:]]\{72\}  \) \+>/\1>/
 			'
 	echo
