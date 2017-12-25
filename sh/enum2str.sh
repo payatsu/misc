@@ -17,6 +17,9 @@ done
 
 generate_source()
 {
+	tmp=`mktemp -p /tmp XXXXXX` || return
+	trap 'rm -f ${tmp}' EXIT HUP INT QUIT TERM
+	tmpname=`basename ${tmp}`
 	sed -e '
 		1{ # insert #include directives
 			i#include <ostream>
@@ -36,6 +39,12 @@ generate_source()
 			H
 			x
 			s/\n//
+			x
+		}
+		/^enum[[:space:]]\+[A-Za-z0-9_]\+.*$/{ # append pseudo scope name(place holder) to hold space
+			H
+			x
+			s/\nenum[[:space:]]\+\([A-Za-z0-9_]\+\).*$/'${tmpname}'::/
 			x
 		}
 		/^}\(;\|.\+namespace\)/{ # clear hold space in case of class declaration end or namespace end
@@ -68,6 +77,7 @@ generate_source()
 		/^[[:space:]]*}.*;/{ # finish function definition
 			s//'"${indent}"'default: return os << "unknown";\n'"${indent}"'}\n}\n/
 		}
+		/'${tmpname}'::/s/// # remove pseudo scope name(place holder)
 		$a// vim: set expandtab shiftwidth=0 tabstop=4 :'
 }
 
