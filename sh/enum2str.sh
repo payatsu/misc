@@ -24,14 +24,14 @@ generate_source()
 			s%[^"]*include/%%
 			p
 		}
-		/^\(class\|struct\)[[:space:]]\+\([A-Za-z0-9_]\+\).*/{ # copy class name to hold space
+		/^\(class\|struct\)[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # copy class name to hold space
 			s//\2::/
 			H
 			x
 			s/\n//
 			x
 		}
-		/^namespace[[:space:]]\+\([A-Za-z0-9_]\+\).*/{ # copy namespace name to hold space
+		/^namespace[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # copy namespace name to hold space
 			s//\1::/
 			H
 			x
@@ -40,32 +40,32 @@ generate_source()
 		}
 		/^};/{ # clear hold space in case of class declaration end
 			x
-			s/.*//
+			s/[^:]\+::$//
 			x
 		}
 		/^}.\+namespace/{ # clear hold space in case of namespace end
 			x
-			s/.*//
+			s/[^:]\+::$//
 			x
 		}
 		/enum/{ # prepend namespace name/class name to enumeration
 			G
-			s/\(enum[[:space:]]\+\)\(.*\)\n\(.\+\)/\1\3\2/
+			s/\(enum[[:space:]]\+\)\(.*\)\n\(.*\)/\1\3\2/
 		}
-		/enum/,/}.*;/p # extract enumeration item
+		/enum/,/}.*;/p # extract enumeration definition
 		d' ${1} |
 	sed -e '
-		/^[[:space:]]*enum[[:space:]]\+\([A-Za-z0-9_:]\+\).*/{ # extract namespace name/class name scope specification
+		/^[[:space:]]*enum[[:space:]]\+\([A-Za-z0-9_:]\+\).*$/{ # extract namespace name/class name scope specification
 			h
 			x
-			s/.\+[[:space:]]\([A-Za-z0-9:]\+::\).*/\1/
+			s/.\+[[:space:]]\([A-Za-z0-9_:]\+::\).*$/\1/
 			x
 		}
-		/^[[:space:]]*enum[[:space:]]\+\([A-Za-z0-9_:]\+\).*/{ # start function definition
+		/^[[:space:]]*enum[[:space:]]\+\([A-Za-z0-9_:]\+\).*$/{ # start function definition
 			s//std::ostream\& operator<<(std::ostream\& os, const \1 item)\n{/
 			a\'"${indent}"'switch(item){
 		}
-		/^[[:space:]]\+\([A-Z0-9_]\+\).*/{ # list enumeration items
+		/^[[:space:]]\+\([A-Z0-9_]\+\).*$/{ # list enumeration items, prepend namespace name/class name scope specification
 			s//'"${indent}"'case \1: return os << "\1";/
 			G
 			s/\(case \)\(.\+\)\n\(.\+\)/\1\3\2/
