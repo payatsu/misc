@@ -47,16 +47,16 @@ generate_source()
 			s/\nenum[[:space:]]\+\([A-Za-z0-9_]\+\).*$/'${tmpname}'::/
 			x
 		}
-		/^}\(;\|.\+namespace\)/{ # clear hold space in case of class declaration end or namespace end
+		/^}\(.*;\|.\+namespace\)/{ # clear hold space in case of class declaration end or namespace end
 			x
 			s/[^:]\+::$//
 			x
 		}
-		/enum/{ # prepend namespace name/class name to enumeration
+		/\<enum\>/{ # prepend namespace name/class name to enumeration
 			G
-			s/\(enum[[:space:]]\+\)\(.*\)\n\(.*\)/\1\3\2/
+			s/\(\<enum[[:space:]]\+\)\(.*\)\n\(.*\)/\1\3\2/
 		}
-		/enum/,/}.*;/p # extract enumeration definition
+		/\<enum\>/,/}.*;/p # extract enumeration definition
 		d' ${1} |
 	sed -e '
 		/^[[:space:]]*enum[[:space:]]\+\([A-Za-z0-9_:]\+\).*$/{ # extract namespace name/class name scope specification
@@ -96,7 +96,10 @@ generate_header_and_source()
 			s/$/;/
 			p
 		}
-		${s/^/\n/;p}
+		${ # copy vim modeline
+			s/^/\n/
+			p
+		}
 		d' > ${header}
 }
 
