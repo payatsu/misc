@@ -24,26 +24,21 @@ generate_source()
 			s%[^"]*include/%%
 			p
 		}
-		/^\(class\|struct\)[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # copy class name to hold space
+		/^\(class\|struct\)[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # append class name to hold space
 			s//\2::/
 			H
 			x
 			s/\n//
 			x
 		}
-		/^namespace[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # copy namespace name to hold space
+		/^namespace[[:space:]]\+\([A-Za-z0-9_]\+\).*$/{ # append namespace name to hold space
 			s//\1::/
 			H
 			x
 			s/\n//
 			x
 		}
-		/^};/{ # clear hold space in case of class declaration end
-			x
-			s/[^:]\+::$//
-			x
-		}
-		/^}.\+namespace/{ # clear hold space in case of namespace end
+		/^}\(;\|.\+namespace\)/{ # clear hold space in case of class declaration end or namespace end
 			x
 			s/[^:]\+::$//
 			x
