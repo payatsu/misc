@@ -25,12 +25,18 @@ endif
 override cxxver   := -std=c++03
 override CPPFLAGS += $(addprefix -I, $(incdir)) -DPROGRAM_NAME=\"$(notdir $(CURDIR))\" -DPROGRAM_REVISION=\"$(shell echo -n rev.\\ $(shell git rev-parse --short HEAD || echo unknown),\\ built\\ at\\ $(shell LANG=C date +'%Y/%m/%d\\ %H:%M:%S'))\"
 override CXXFLAGS += $(cxxver) -march=native -Werror -Wextra -Wcast-align -Wstrict-aliasing -Wshadow \
-					 $(filter-out -Wabi-tag -Wtemplates -Wzero-as-null-pointer-constant -Wsuggest-override, $(shell LANG=C command $(CXX) -fsyntax-only -Q --help=warnings,^joined,^separate,c++ | grep -v '\[enabled\]\|-Wc90-c99-compat\|-Wtraditional[^-]\|-Wsystem-headers' | grep -oe '-W[[:graph:]]\+')) \
-					 -Wno-error=format= -Wno-error=sign-conversion -Wno-error=suggest-attribute=format $(cxxopt)
+					 $(filter-out -Wzero-as-null-pointer-constant -Wsuggest-override, $(shell LANG=C command $(CXX) -fsyntax-only -Q --help=warnings,^joined,^separate,common --help=warnings,^joined,^separate,c++ | grep -v '\[enabled\]\|-Wabi\|-Waggregate-return\|-Wchkp\|-Wc90-c99-compat\|-Wpadded\|-Wsystem-headers\|-Wtraditional[^-]\|-Wnamespaces\|-Wtemplates' | grep -oe '-W[[:graph:]]\+' | sed -e 's/<[0-9,]\+>//')) \
+					 -Wno-error=format= -Wno-error=sign-conversion \
+					 -Wno-error=suggest-attribute=const \
+					 -Wno-error=suggest-attribute=format \
+					 -Wno-error=suggest-attribute=noreturn \
+					 -Wno-error=suggest-attribute=pure \
+					 -Wno-error=suggest-final-types \
+					 -Wno-error=suggest-final-methods $(cxxopt)
 override LDFLAGS  += $(addprefix -L, $(libdir)) $(addprefix -Wl$(comma)-rpath$(comma), $(abspath $(libdir)))
 ifeq ($(enable_tiff), yes)
 	override CPPFLAGS += -DENABLE_TIFF
-	override LDLIBS   += -ltiff -llzma
+	override LDLIBS   += -ltiff -llzma -lzstd
 endif
 ifeq ($(enable_png), yes)
 	override CPPFLAGS += -DENABLE_PNG
